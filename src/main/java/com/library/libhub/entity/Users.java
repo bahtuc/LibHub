@@ -1,30 +1,49 @@
 package com.library.libhub.entity;
 
+import jakarta.persistence.*;
+import java.sql.Timestamp;
 
+@Entity
+@Table(name = "Users")
 public class Users {
 
-  private long userId;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "user_id")
+  private Long userId;
+
+  @Column(name = "username")
   private String username;
+
+  @Column(name = "password_hash")
   private String passwordHash;
+
+  @Column(name = "full_name")
   private String fullName;
+
+  @Column(name = "email")
   private String email;
+
+  @Column(name = "phone")
   private String phone;
+
+  @Column(name = "address")
   private String address;
+
+  @Column(name = "avatar")
   private String avatar;
+
+  @Column(name = "status")
   private String status;
-  private long roleId;
-  private java.sql.Timestamp createdAt;
-  private java.sql.Timestamp lastLogin;
 
+  @Column(name = "role_id")
+  private Long roleId;
 
-  public long getUserId() {
-    return userId;
-  }
+  @Column(name = "created_at")
+  private Timestamp createdAt;
 
-  public void setUserId(long userId) {
-    this.userId = userId;
-  }
-
+  @Column(name = "last_login")
+  private Timestamp lastLogin;
 
   public String getUsername() {
     return username;
@@ -34,6 +53,13 @@ public class Users {
     this.username = username;
   }
 
+  public Long getUserId() {
+    return userId;
+  }
+
+  public void setUserId(Long userId) {
+    this.userId = userId;
+  }
 
   public String getPasswordHash() {
     return passwordHash;
@@ -43,7 +69,6 @@ public class Users {
     this.passwordHash = passwordHash;
   }
 
-
   public String getFullName() {
     return fullName;
   }
@@ -51,7 +76,6 @@ public class Users {
   public void setFullName(String fullName) {
     this.fullName = fullName;
   }
-
 
   public String getEmail() {
     return email;
@@ -61,6 +85,13 @@ public class Users {
     this.email = email;
   }
 
+  public String getAddress() {
+    return address;
+  }
+
+  public void setAddress(String address) {
+    this.address = address;
+  }
 
   public String getPhone() {
     return phone;
@@ -70,16 +101,6 @@ public class Users {
     this.phone = phone;
   }
 
-
-  public String getAddress() {
-    return address;
-  }
-
-  public void setAddress(String address) {
-    this.address = address;
-  }
-
-
   public String getAvatar() {
     return avatar;
   }
@@ -88,6 +109,13 @@ public class Users {
     this.avatar = avatar;
   }
 
+  public Long getRoleId() {
+    return roleId;
+  }
+
+  public void setRoleId(Long roleId) {
+    this.roleId = roleId;
+  }
 
   public String getStatus() {
     return status;
@@ -97,31 +125,19 @@ public class Users {
     this.status = status;
   }
 
-
-  public long getRoleId() {
-    return roleId;
-  }
-
-  public void setRoleId(long roleId) {
-    this.roleId = roleId;
-  }
-
-
-  public java.sql.Timestamp getCreatedAt() {
+  public Timestamp getCreatedAt() {
     return createdAt;
   }
 
-  public void setCreatedAt(java.sql.Timestamp createdAt) {
+  public void setCreatedAt(Timestamp createdAt) {
     this.createdAt = createdAt;
   }
 
-
-  public java.sql.Timestamp getLastLogin() {
+  public Timestamp getLastLogin() {
     return lastLogin;
   }
 
-  public void setLastLogin(java.sql.Timestamp lastLogin) {
+  public void setLastLogin(Timestamp lastLogin) {
     this.lastLogin = lastLogin;
   }
-
 }

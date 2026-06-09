@@ -1,21 +1,29 @@
 package com.library.libhub.entity;
 
+import jakarta.persistence.*;
 
+@Entity
+@Table(name = "Categories")
 public class Categories {
 
-  private long categoryId;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "category_id")
+  private Long categoryId;
+
+  @Column(name = "category_name")
   private String categoryName;
+
+  @Column(name = "description")
   private String description;
 
-
-  public long getCategoryId() {
+  public Long getCategoryId() {
     return categoryId;
   }
 
-  public void setCategoryId(long categoryId) {
+  public void setCategoryId(Long categoryId) {
     this.categoryId = categoryId;
   }
-
 
   public String getCategoryName() {
     return categoryName;
@@ -25,7 +33,6 @@ public class Categories {
     this.categoryName = categoryName;
   }
 
-
   public String getDescription() {
     return description;
   }
@@ -33,5 +40,4 @@ public class Categories {
   public void setDescription(String description) {
     this.description = description;
   }
-
 }

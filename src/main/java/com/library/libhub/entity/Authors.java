@@ -1,18 +1,28 @@
 package com.library.libhub.entity;
 
+import jakarta.persistence.*;
 
+@Entity
+@Table(name = "Authors")
 public class Authors {
 
-  private long authorId;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "author_id")
+  private Long authorId;
+
+  @Column(name = "author_name")
   private String authorName;
+
+  @Column(name = "biography")
   private String biography;
 
 
-  public long getAuthorId() {
+  public Long getAuthorId() {
     return authorId;
   }
 
-  public void setAuthorId(long authorId) {
+  public void setAuthorId(Long authorId) {
     this.authorId = authorId;
   }
 

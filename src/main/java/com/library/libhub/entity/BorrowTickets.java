@@ -1,31 +1,51 @@
 package com.library.libhub.entity;
 
+import jakarta.persistence.*;
+import java.sql.Date;
+import java.sql.Timestamp;
 
+@Entity
+@Table(name = "BorrowTickets")
 public class BorrowTickets {
 
-  private long ticketId;
-  private long userId;
-  private java.sql.Date borrowDate;
-  private java.sql.Date dueDate;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "ticket_id")
+  private Long ticketId;
+
+  @Column(name = "user_id")
+  private Long userId;
+
+  @Column(name = "borrow_date")
+  private Date borrowDate;
+
+  @Column(name = "due_date")
+  private Date dueDate;
+
+  @Column(name = "status")
   private String status;
+
+  @Column(name = "note")
   private String note;
-  private java.sql.Timestamp createdAt;
+
+  @Column(name = "created_at")
+  private Timestamp createdAt;
 
 
-  public long getTicketId() {
+  public Long getTicketId() {
     return ticketId;
   }
 
-  public void setTicketId(long ticketId) {
+  public void setTicketId(Long ticketId) {
     this.ticketId = ticketId;
   }
 
 
-  public long getUserId() {
+  public Long getUserId() {
     return userId;
   }
 
-  public void setUserId(long userId) {
+  public void setUserId(Long userId) {
     this.userId = userId;
   }
 

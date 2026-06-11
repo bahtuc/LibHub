@@ -1,30 +1,47 @@
 package com.library.libhub.entity;
 
+import jakarta.persistence.*;
+import java.sql.Date;
 
+@Entity
+@Table(name = "BookCopies")
 public class BookCopies {
 
-  private long copyId;
-  private long bookId;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "copy_id")
+  private Long copyId;
+
+  @Column(name = "book_id")
+  private Long bookId;
+
+  @Column(name = "barcode")
   private String barcode;
+
+  @Column(name = "shelf_location")
   private String shelfLocation;
+
+  @Column(name = "status")
   private String status;
-  private java.sql.Date acquiredDate;
+
+  @Column(name = "acquired_date")
+  private Date acquiredDate;
 
 
-  public long getCopyId() {
+  public Long getCopyId() {
     return copyId;
   }
 
-  public void setCopyId(long copyId) {
+  public void setCopyId(Long copyId) {
     this.copyId = copyId;
   }
 
 
-  public long getBookId() {
+  public Long getBookId() {
     return bookId;
   }
 
-  public void setBookId(long bookId) {
+  public void setBookId(Long bookId) {
     this.bookId = bookId;
   }
 

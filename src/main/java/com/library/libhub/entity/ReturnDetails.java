@@ -1,37 +1,49 @@
 package com.library.libhub.entity;
 
+import jakarta.persistence.*;
 
+@Entity
+@Table(name = "ReturnDetails")
 public class ReturnDetails {
 
-  private long returnDetailId;
-  private long returnId;
-  private long copyId;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "return_detail_id")
+  private Long returnDetailId;
+
+  @Column(name = "return_id")
+  private Long returnId;
+
+  @Column(name = "copy_id")
+  private Long copyId;
+
+  @Column(name = "condition_book")
   private String conditionBook;
 
 
-  public long getReturnDetailId() {
+  public Long getReturnDetailId() {
     return returnDetailId;
   }
 
-  public void setReturnDetailId(long returnDetailId) {
+  public void setReturnDetailId(Long returnDetailId) {
     this.returnDetailId = returnDetailId;
   }
 
 
-  public long getReturnId() {
+  public Long getReturnId() {
     return returnId;
   }
 
-  public void setReturnId(long returnId) {
+  public void setReturnId(Long returnId) {
     this.returnId = returnId;
   }
 
 
-  public long getCopyId() {
+  public Long getCopyId() {
     return copyId;
   }
 
-  public void setCopyId(long copyId) {
+  public void setCopyId(Long copyId) {
     this.copyId = copyId;
   }
 

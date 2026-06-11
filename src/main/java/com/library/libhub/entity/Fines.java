@@ -1,39 +1,56 @@
 package com.library.libhub.entity;
 
+import jakarta.persistence.*;
+import java.sql.Timestamp;
 
+@Entity
+@Table(name = "Fines")
 public class Fines {
 
-  private long fineId;
-  private long returnDetailId;
-  private double amount;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "fine_id")
+  private Long fineId;
+
+  @Column(name = "return_detail_id")
+  private Long returnDetailId;
+
+  @Column(name = "amount")
+  private Double amount;
+
+  @Column(name = "reason")
   private String reason;
+
+  @Column(name = "paid_status")
   private String paidStatus;
-  private java.sql.Timestamp createdAt;
+
+  @Column(name = "created_at")
+  private Timestamp createdAt;
 
 
-  public long getFineId() {
+  public Long getFineId() {
     return fineId;
   }
 
-  public void setFineId(long fineId) {
+  public void setFineId(Long fineId) {
     this.fineId = fineId;
   }
 
 
-  public long getReturnDetailId() {
+  public Long getReturnDetailId() {
     return returnDetailId;
   }
 
-  public void setReturnDetailId(long returnDetailId) {
+  public void setReturnDetailId(Long returnDetailId) {
     this.returnDetailId = returnDetailId;
   }
 
 
-  public double getAmount() {
+  public Double getAmount() {
     return amount;
   }
 
-  public void setAmount(double amount) {
+  public void setAmount(Double amount) {
     this.amount = amount;
   }
 

@@ -1,18 +1,28 @@
 package com.library.libhub.entity;
 
+import jakarta.persistence.*;
 
+@Entity
+@Table(name = "Roles")
 public class Roles {
 
-  private long roleId;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "role_id")
+  private Long roleId;
+
+  @Column(name = "role_name")
   private String roleName;
+
+  @Column(name = "description")
   private String description;
 
 
-  public long getRoleId() {
+  public Long getRoleId() {
     return roleId;
   }
 
-  public void setRoleId(long roleId) {
+  public void setRoleId(Long roleId) {
     this.roleId = roleId;
   }
 

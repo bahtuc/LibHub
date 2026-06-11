@@ -1,27 +1,56 @@
 package com.library.libhub.entity;
 
+import jakarta.persistence.*;
+import java.sql.Timestamp;
 
+@Entity
+@Table(name = "Books")
 public class Books {
 
-  private long bookId;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "book_id")
+  private Long bookId;
+
+  @Column(name = "title")
   private String title;
+
+  @Column(name = "isbn")
   private String isbn;
-  private long publishYear;
+
+  @Column(name = "publish_year")
+  private Long publishYear;
+
+  @Column(name = "description")
   private String description;
+
+  @Column(name = "cover_image")
   private String coverImage;
+
+  @Column(name = "language")
   private String language;
-  private long pages;
-  private long categoryId;
-  private long authorId;
-  private long publisherId;
-  private java.sql.Timestamp createdAt;
+
+  @Column(name = "pages")
+  private Long pages;
+
+  @Column(name = "category_id")
+  private Long categoryId;
+
+  @Column(name = "author_id")
+  private Long authorId;
+
+  @Column(name = "publisher_id")
+  private Long publisherId;
+
+  @Column(name = "created_at")
+  private Timestamp createdAt;
 
 
-  public long getBookId() {
+  public Long getBookId() {
     return bookId;
   }
 
-  public void setBookId(long bookId) {
+  public void setBookId(Long bookId) {
     this.bookId = bookId;
   }
 
@@ -44,11 +73,11 @@ public class Books {
   }
 
 
-  public long getPublishYear() {
+  public Long getPublishYear() {
     return publishYear;
   }
 
-  public void setPublishYear(long publishYear) {
+  public void setPublishYear(Long publishYear) {
     this.publishYear = publishYear;
   }
 
@@ -80,47 +109,47 @@ public class Books {
   }
 
 
-  public long getPages() {
+  public Long getPages() {
     return pages;
   }
 
-  public void setPages(long pages) {
+  public void setPages(Long pages) {
     this.pages = pages;
   }
 
 
-  public long getCategoryId() {
+  public Long getCategoryId() {
     return categoryId;
   }
 
-  public void setCategoryId(long categoryId) {
+  public void setCategoryId(Long categoryId) {
     this.categoryId = categoryId;
   }
 
 
-  public long getAuthorId() {
+  public Long getAuthorId() {
     return authorId;
   }
 
-  public void setAuthorId(long authorId) {
+  public void setAuthorId(Long authorId) {
     this.authorId = authorId;
   }
 
 
-  public long getPublisherId() {
+  public Long getPublisherId() {
     return publisherId;
   }
 
-  public void setPublisherId(long publisherId) {
+  public void setPublisherId(Long publisherId) {
     this.publisherId = publisherId;
   }
 
 
-  public java.sql.Timestamp getCreatedAt() {
+  public Timestamp getCreatedAt() {
     return createdAt;
   }
 
-  public void setCreatedAt(java.sql.Timestamp createdAt) {
+  public void setCreatedAt(Timestamp createdAt) {
     this.createdAt = createdAt;
   }
 

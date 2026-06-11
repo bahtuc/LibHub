@@ -1,37 +1,49 @@
 package com.library.libhub.entity;
 
+import jakarta.persistence.*;
 
+@Entity
+@Table(name = "BorrowDetails")
 public class BorrowDetails {
 
-  private long detailId;
-  private long ticketId;
-  private long copyId;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "detail_id")
+  private Long detailId;
+
+  @Column(name = "ticket_id")
+  private Long ticketId;
+
+  @Column(name = "copy_id")
+  private Long copyId;
+
+  @Column(name = "borrow_status")
   private String borrowStatus;
 
 
-  public long getDetailId() {
+  public Long getDetailId() {
     return detailId;
   }
 
-  public void setDetailId(long detailId) {
+  public void setDetailId(Long detailId) {
     this.detailId = detailId;
   }
 
 
-  public long getTicketId() {
+  public Long getTicketId() {
     return ticketId;
   }
 
-  public void setTicketId(long ticketId) {
+  public void setTicketId(Long ticketId) {
     this.ticketId = ticketId;
   }
 
 
-  public long getCopyId() {
+  public Long getCopyId() {
     return copyId;
   }
 
-  public void setCopyId(long copyId) {
+  public void setCopyId(Long copyId) {
     this.copyId = copyId;
   }
 

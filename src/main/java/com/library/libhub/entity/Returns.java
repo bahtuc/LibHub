@@ -1,29 +1,44 @@
 package com.library.libhub.entity;
 
+import jakarta.persistence.*;
+import java.sql.Date;
 
+@Entity
+@Table(name = "Returns")
 public class Returns {
 
-  private long returnId;
-  private long ticketId;
-  private java.sql.Date returnDate;
-  private long receivedBy;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "return_id")
+  private Long returnId;
+
+  @Column(name = "ticket_id")
+  private Long ticketId;
+
+  @Column(name = "return_date")
+  private Date returnDate;
+
+  @Column(name = "received_by")
+  private Long receivedBy;
+
+  @Column(name = "note")
   private String note;
 
 
-  public long getReturnId() {
+  public Long getReturnId() {
     return returnId;
   }
 
-  public void setReturnId(long returnId) {
+  public void setReturnId(Long returnId) {
     this.returnId = returnId;
   }
 
 
-  public long getTicketId() {
+  public Long getTicketId() {
     return ticketId;
   }
 
-  public void setTicketId(long ticketId) {
+  public void setTicketId(Long ticketId) {
     this.ticketId = ticketId;
   }
 
@@ -37,11 +52,11 @@ public class Returns {
   }
 
 
-  public long getReceivedBy() {
+  public Long getReceivedBy() {
     return receivedBy;
   }
 
-  public void setReceivedBy(long receivedBy) {
+  public void setReceivedBy(Long receivedBy) {
     this.receivedBy = receivedBy;
   }
 

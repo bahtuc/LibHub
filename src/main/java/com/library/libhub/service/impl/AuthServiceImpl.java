@@ -2,6 +2,7 @@ package com.library.libhub.service.impl;
 
 import java.sql.Timestamp;
 
+import com.library.libhub.DTO.Request.ChangePasswordRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -93,6 +94,11 @@ public class AuthServiceImpl implements IAuthService {
         userRepository.save(user);
 
         return mapToResponse(user);
+    }
+
+    @Override
+    public AuthResponse changePassword(ChangePasswordRequest request) {
+        return null;
     }
 
     // ================= VALIDATE REGISTER =================

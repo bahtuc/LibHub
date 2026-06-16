@@ -1,12 +1,15 @@
 package com.library.libhub.service.impl;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+
 import com.library.libhub.dao.AuthorDAO;
 import com.library.libhub.entity.Authors;
 import com.library.libhub.service.IAuthorService;
+
 import jakarta.transaction.Transactional;
-import org.springframework.stereotype.Service;
-import java.util.List;
-import java.util.Optional;
 
 @Service
 @Transactional
@@ -57,4 +60,7 @@ public class AuthorServiceImpl implements IAuthorService {
                 .filter(a -> a.getAuthorName().toLowerCase().contains(name.toLowerCase()))
                 .findFirst();
     }
+
 }
+
+

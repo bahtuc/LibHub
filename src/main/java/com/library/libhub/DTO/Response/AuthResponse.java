@@ -1,16 +1,11 @@
 package com.library.libhub.DTO.Response;
 
 public class AuthResponse {
-
     private Long userId;
-
     private String username;
-
     private String fullName;
-
     private String role;
-
-    private String token;
+    
 
     public Long getUserId() {
         return userId;
@@ -42,13 +37,5 @@ public class AuthResponse {
 
     public void setRole(String role) {
         this.role = role;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
     }
 }

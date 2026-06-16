@@ -1,7 +1,11 @@
 package com.library.libhub.controller;
 
 import com.library.libhub.entity.BorrowTickets;
+import com.library.libhub.entity.Users;
 import com.library.libhub.service.IBorrowTicketService;
+
+import jakarta.servlet.http.HttpSession;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -56,4 +60,27 @@ public class BorrowTicketController {
     public ResponseEntity<List<BorrowTickets>> findByStatus(@PathVariable String status) {
         return ResponseEntity.ok(borrowTicketService.findByStatus(status));
     }
+
+    @GetMapping("/history")
+    public ResponseEntity<?> getBorrowHistory(
+            HttpSession session) {
+
+        Users user =
+                (Users) session.getAttribute(
+                        "USER_LOGIN");
+
+        if (user == null) {
+
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body("Chưa đăng nhập");
+        }
+
+        List<BorrowTickets> tickets =
+                borrowTicketService.findByUser(
+                        user.getUserId());
+
+        return ResponseEntity.ok(tickets);
+    }
+
 }

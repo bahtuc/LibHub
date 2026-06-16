@@ -14,129 +14,145 @@ import com.library.libhub.entity.Users;
 import com.library.libhub.repository.RoleRepository;
 import com.library.libhub.repository.UserRepository;
 import com.library.libhub.service.IAuthService;
+import com.library.libhub.utils.ValidationUtil;
 
+import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 
 @Service
 @Transactional
-public class AuthServiceImpl
-                implements IAuthService {
+public class AuthServiceImpl implements IAuthService {
 
-        @Autowired
-        private UserRepository userRepository;
+    @Autowired
+    private UserRepository userRepository;
 
-        @Autowired
-        private RoleRepository roleRepository;
+    @Autowired
+    private RoleRepository roleRepository;
 
-        @Autowired
-        private PasswordEncoder passwordEncoder;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-        @Override
-        public AuthResponse register(
-                        RegisterRequest request) {
+    // ================= REGISTER =================
+    @Override
+    public AuthResponse register(RegisterRequest request) {
 
-                if (userRepository.existsByUsername(
-                                request.getUsername())) {
+        validateRegister(request);
 
-                        throw new RuntimeException(
-                                        "Username đã tồn tại");
-                }
-
-                if (userRepository.existsByEmail(
-                                request.getEmail())) {
-
-                        throw new RuntimeException(
-                                        "Email đã tồn tại");
-                }
-
-                Roles role = roleRepository
-                                .findByRoleName("READER")
-                                .orElseThrow();
-
-                Users user = new Users();
-
-                user.setUsername(
-                                request.getUsername());
-
-                user.setFullName(
-                                request.getFullName());
-
-                user.setEmail(
-                                request.getEmail());
-
-                user.setPasswordHash(
-                                passwordEncoder.encode(
-                                                request.getPassword()));
-
-                user.setRole(role);
-
-                user.setStatus("ACTIVE");
-
-                userRepository.save(user);
-
-                AuthResponse response = new AuthResponse();
-
-                response.setUserId(
-                                user.getUserId());
-
-                response.setUsername(
-                                user.getUsername());
-
-                response.setFullName(
-                                user.getFullName());
-
-                response.setRole(
-                                role.getRoleName());
-
-                return response;
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new RuntimeException("Username đã tồn tại");
         }
 
-        @Override
-        public AuthResponse login(
-                        LoginRequest request) {
-
-                Users user = userRepository
-                                .findByUsername(
-                                                request.getUsername())
-                                .orElseThrow(() -> new RuntimeException(
-                                                "Tài khoản không tồn tại"));
-
-                if (!passwordEncoder.matches(
-                                request.getPassword(),
-                                user.getPasswordHash())) {
-
-                        throw new RuntimeException(
-                                        "Sai mật khẩu");
-                }
-
-                if (!"ACTIVE".equals(
-                                user.getStatus())) {
-
-                        throw new RuntimeException(
-                                        "Tài khoản bị khóa");
-                }
-
-                user.setLastLogin(
-                                new Timestamp(
-                                                System.currentTimeMillis()));
-
-                userRepository.save(user);
-
-                AuthResponse response = new AuthResponse();
-
-                response.setUserId(
-                                user.getUserId());
-
-                response.setUsername(
-                                user.getUsername());
-
-                response.setFullName(
-                                user.getFullName());
-
-                response.setRole(
-                                user.getRole()
-                                                .getRoleName());
-
-                return response;
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email đã tồn tại");
         }
+
+        Roles role = roleRepository.findByRoleName("READER")
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy role READER"));
+
+        Users user = new Users();
+        user.setUsername(request.getUsername());
+        user.setFullName(request.getFullName());
+        user.setEmail(request.getEmail());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setRole(role);
+        user.setStatus("ACTIVE");
+        user.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+
+        userRepository.save(user);
+
+        return mapToResponse(user);
+    }
+
+    // ================= LOGIN =================
+    @Autowired
+    private HttpSession session;
+
+    @Override
+    public AuthResponse login(LoginRequest request) {
+
+        validateLogin(request);
+
+        Users user = userRepository.findByUsernameOrEmail(
+                request.getUsernameOrEmail(),
+                request.getUsernameOrEmail()).orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
+
+        if (user.getStatus() == null ||
+                !"ACTIVE".equalsIgnoreCase(user.getStatus())) {
+            throw new RuntimeException("Tài khoản bị khóa");
+        }
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            throw new RuntimeException("Sai mật khẩu");
+        }
+
+        // 🔥 CREATE SESSION
+        session.setAttribute("USER_LOGIN", user);
+        session.setAttribute("ROLE", user.getRole().getRoleName());
+
+        user.setLastLogin(new Timestamp(System.currentTimeMillis()));
+        userRepository.save(user);
+
+        return mapToResponse(user);
+    }
+
+    // ================= VALIDATE REGISTER =================
+    private void validateRegister(RegisterRequest request) {
+
+        if (request == null) {
+            throw new RuntimeException("Dữ liệu không hợp lệ");
+        }
+
+        if (isBlank(request.getUsername())) {
+            throw new RuntimeException("Username không được để trống");
+        }
+
+        if (isBlank(request.getFullName())) {
+            throw new RuntimeException("Họ tên không được để trống");
+        }
+
+        if (isBlank(request.getEmail())) {
+            throw new RuntimeException("Email không được để trống");
+        }
+
+        if (!ValidationUtil.isEmail(request.getEmail())) {
+            throw new RuntimeException("Email không hợp lệ");
+        }
+
+        if (request.getPassword() == null || request.getPassword().length() < 6) {
+            throw new RuntimeException("Mật khẩu phải từ 6 ký tự");
+        }
+    }
+
+    // ================= VALIDATE LOGIN =================
+    private void validateLogin(LoginRequest request) {
+
+        if (request == null) {
+            throw new RuntimeException("Dữ liệu không hợp lệ");
+        }
+
+        if (isBlank(request.getUsernameOrEmail())) {
+            throw new RuntimeException("Username/Email không được để trống");
+        }
+
+        if (isBlank(request.getPassword())) {
+            throw new RuntimeException("Mật khẩu không được để trống");
+        }
+    }
+
+    // ================= MAPPING =================
+    private AuthResponse mapToResponse(Users user) {
+
+        AuthResponse response = new AuthResponse();
+        response.setUserId(user.getUserId());
+        response.setUsername(user.getUsername());
+        response.setFullName(user.getFullName());
+        response.setRole(user.getRole().getRoleName());
+
+        return response;
+    }
+
+    // ================= UTIL =================
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
 }

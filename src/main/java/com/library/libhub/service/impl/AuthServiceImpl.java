@@ -98,6 +98,33 @@ public class AuthServiceImpl implements IAuthService {
 
     @Override
     public AuthResponse changePassword(ChangePasswordRequest request) {
+
+        if (isBlank(request.getUsername())) {
+            throw new RuntimeException("Username không được để trống");
+        }
+
+        if (isBlank(request.getOldPassword())) {
+            throw new RuntimeException("Mật khẩu cũ không được để trống");
+        }
+
+        if (isBlank(request.getNewPassword()) || request.getNewPassword().length() < 6) {
+            throw new RuntimeException("Mật khẩu mới phải từ 6 ký tự");
+        }
+
+        Users user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
+            throw new RuntimeException("Mật khẩu cũ không đúng");
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPasswordHash())) {
+            throw new RuntimeException("Mật khẩu mới không được trùng mật khẩu cũ");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
         return null;
     }
 

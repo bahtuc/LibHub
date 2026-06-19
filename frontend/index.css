@@ -60,6 +60,10 @@
 body {
   margin: 0;
 }
+
+/* ĐÃ SỬA: bỏ width cố định 1126px + border-inline khiến toàn bộ app
+   bị nhét vào khung giữa màn hình. #root giờ chiếm full width,
+   từng trang/section tự quyết định max-width riêng (xem home.css, auth.css). */
 #root {
   width: 100%;
   min-height: 100svh;

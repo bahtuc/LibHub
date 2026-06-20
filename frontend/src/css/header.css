@@ -10,15 +10,16 @@
 }
 
 .header_inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 24px;
+    width: 100%;
+    margin: 0;
+    padding: 0 32px;
     height: 64px;
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: 24px;
     font-family: "Inter", sans-serif;
+    box-sizing: border-box;
 }
 
 .header_logo {
@@ -51,6 +52,7 @@
     align-items: center;
     justify-content: center;
     gap: 28px;
+    max-width: 100%;
 }
 
 .header_nav_link {

@@ -16,7 +16,7 @@
   --mono: ui-monospace, Consolas, monospace;
 
   font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
+  letter-spacing: 1px;
   color-scheme: light dark;
   color: var(--text);
   background: var(--bg);
@@ -61,9 +61,6 @@ body {
   margin: 0;
 }
 
-/* ĐÃ SỬA: bỏ width cố định 1126px + border-inline khiến toàn bộ app
-   bị nhét vào khung giữa màn hình. #root giờ chiếm full width,
-   từng trang/section tự quyết định max-width riêng (xem home.css, auth.css). */
 #root {
   width: 100%;
   min-height: 100svh;
@@ -74,14 +71,14 @@ body {
 
 h1,
 h2 {
-  font-family: var(--heading);
+  font-family: var(--heading), serif;
   font-weight: 500;
   color: var(--text-h);
 }
 
 code,
 .counter {
-  font-family: var(--mono);
+  font-family: var(--mono), serif;
   display: inline-flex;
   border-radius: 4px;
   color: var(--text-h);

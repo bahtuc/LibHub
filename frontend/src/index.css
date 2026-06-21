@@ -70,14 +70,14 @@ body {
 
 h1,
 h2 {
-  font-family: var(--heading);
+  font-family: var(--heading), serif;
   font-weight: 500;
   color: var(--text-h);
 }
 
 code,
 .counter {
-  font-family: var(--mono);
+  font-family: var(--mono), serif;
   display: inline-flex;
   border-radius: 4px;
   color: var(--text-h);

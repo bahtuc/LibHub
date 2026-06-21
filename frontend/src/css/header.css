@@ -46,7 +46,6 @@
     color: #d88a3a;
 }
 
-/* Vùng giữa: nav tự căn giữa trong khoảng còn lại */
 .header_nav {
     display: flex;
     align-items: center;
@@ -74,7 +73,6 @@
     font-weight: 600;
 }
 
-/* Vùng phải: login/user + dark mode toggle */
 .header_actions {
     display: flex;
     align-items: center;

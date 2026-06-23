@@ -11,5 +11,6 @@ import com.library.libhub.entity.BorrowTickets;
 public interface BorrowTicketRepository extends JpaRepository<BorrowTickets, Long> {
 
     List<BorrowTickets> findByUserId(Long userId);
-
+    List<BorrowTickets> findByStatus(String status);
+    
 }

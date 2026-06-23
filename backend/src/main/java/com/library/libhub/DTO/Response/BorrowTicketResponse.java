@@ -5,6 +5,8 @@ import java.sql.Date;
 public class BorrowTicketResponse {
 
     private Long ticketId;
+    private Long userId;
+    private String userName;
     private Date borrowDate;
     private Date dueDate;
     private String status;
@@ -16,6 +18,22 @@ public class BorrowTicketResponse {
 
     public void setTicketId(Long ticketId) {
         this.ticketId = ticketId;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public Date getBorrowDate() {

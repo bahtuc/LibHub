@@ -1,12 +1,23 @@
 package com.library.libhub.controller;
 
-import com.library.libhub.entity.Books;
-import com.library.libhub.service.IBookService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.library.libhub.entity.Books;
+import com.library.libhub.service.IBookService;
 
 @RestController
 @RequestMapping("/api/books")
@@ -20,8 +31,20 @@ public class BookController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Books>> getAllBooks() {
-        return ResponseEntity.ok(bookService.getAllBooks());
+    public ResponseEntity<?> getAllBooks(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "title") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(required = false) String keyword) {
+
+        return ResponseEntity.ok(
+                bookService.getAllBooks(
+                        page,
+                        size,
+                        sortBy,
+                        sortDir,
+                        keyword));
     }
 
     @GetMapping("/{id}")
@@ -37,8 +60,7 @@ public class BookController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Books> updateBook(@PathVariable long id, @RequestBody Books book) {
-        Books updatedBook = bookService.updateBook(id, book);
-        return ResponseEntity.ok(updatedBook);
+        return ResponseEntity.ok(bookService.updateBook(id, book));
     }
 
     @DeleteMapping("/{id}")
@@ -67,3 +89,12 @@ public class BookController {
         return ResponseEntity.ok(bookService.searchByTitle(keyword));
     }
 }
+// Test Postman
+// Request
+// GET http://localhost:8080/api/books
+// Phân trang:
+// GET http://localhost:8080/api/books?page=0&size=5
+// Tìm kiếm:
+// GET http://localhost:8080/api/books?keyword=java
+// Sắp xếp:
+// GET http://localhost:8080/api/books?sortBy=title&sortDir=desc

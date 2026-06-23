@@ -47,8 +47,8 @@ public class AuthServiceImpl implements IAuthService {
             throw new RuntimeException("Email đã tồn tại");
         }
 
-        Roles role = roleRepository.findByRoleName("READER")
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy role READER"));
+        Roles role = roleRepository.findByRoleName("Member")
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy role Member"));
 
         Users user = new Users();
         user.setUsername(request.getUsername());

@@ -2,6 +2,8 @@ package com.library.libhub.entity;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -26,6 +28,7 @@ public class Roles {
     private String description;
 
     @OneToMany(mappedBy = "role")
+    @JsonIgnore
     private List<Users> users;
 
     // ================= GETTER & SETTER =================

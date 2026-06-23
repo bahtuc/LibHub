@@ -2,15 +2,17 @@ package com.library.libhub.DTO.Response;
 
 import java.sql.Date;
 
-public class BorrowTicketResponse {
+public class BorrowHistoryResponse {
 
     private Long ticketId;
-    private Long userId;
-    private String userName;
+
     private Date borrowDate;
+
     private Date dueDate;
+
     private String status;
-    private String note;
+
+    private String bookTitle;
 
     public Long getTicketId() {
         return ticketId;
@@ -18,22 +20,6 @@ public class BorrowTicketResponse {
 
     public void setTicketId(Long ticketId) {
         this.ticketId = ticketId;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
     }
 
     public Date getBorrowDate() {
@@ -60,11 +46,12 @@ public class BorrowTicketResponse {
         this.status = status;
     }
 
-    public String getNote() {
-        return note;
+    public String getBookTitle() {
+        return bookTitle;
     }
 
-    public void setNote(String note) {
-        this.note = note;
+    public void setBookTitle(String bookTitle) {
+        this.bookTitle = bookTitle;
     }
+
 }

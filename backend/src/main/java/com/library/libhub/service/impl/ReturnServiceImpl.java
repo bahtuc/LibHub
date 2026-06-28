@@ -1,5 +1,7 @@
 package com.library.libhub.service.impl;
 
+import com.library.libhub.exception.ResourceNotFoundException;
+
 import com.library.libhub.dao.ReturnDAO;
 import com.library.libhub.entity.Returns;
 import com.library.libhub.service.IReturnService;
@@ -39,7 +41,7 @@ public class ReturnServiceImpl implements IReturnService {
             returns.setReturnId(returnId);
             return returnDAO.save(returns);
         }
-        throw new RuntimeException("Return not found with id: " + returnId);
+        throw new ResourceNotFoundException("Return not found with id: " + returnId);
     }
 
     @Override
@@ -47,7 +49,7 @@ public class ReturnServiceImpl implements IReturnService {
         if (returnDAO.existsById(returnId)) {
             returnDAO.deleteById(returnId);
         } else {
-            throw new RuntimeException("Return not found with id: " + returnId);
+            throw new ResourceNotFoundException("Return not found with id: " + returnId);
         }
     }
 

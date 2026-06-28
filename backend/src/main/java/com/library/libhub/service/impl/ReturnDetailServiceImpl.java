@@ -1,5 +1,7 @@
 package com.library.libhub.service.impl;
 
+import com.library.libhub.exception.ResourceNotFoundException;
+
 import com.library.libhub.dao.ReturnDetailDAO;
 import com.library.libhub.entity.ReturnDetails;
 import com.library.libhub.service.IReturnDetailService;
@@ -39,7 +41,7 @@ public class ReturnDetailServiceImpl implements IReturnDetailService {
             returnDetail.setReturnDetailId(returnDetailId);
             return returnDetailDAO.save(returnDetail);
         }
-        throw new RuntimeException("Return detail not found with id: " + returnDetailId);
+        throw new ResourceNotFoundException("Return detail not found with id: " + returnDetailId);
     }
 
     @Override
@@ -47,7 +49,7 @@ public class ReturnDetailServiceImpl implements IReturnDetailService {
         if (returnDetailDAO.existsById(returnDetailId)) {
             returnDetailDAO.deleteById(returnDetailId);
         } else {
-            throw new RuntimeException("Return detail not found with id: " + returnDetailId);
+            throw new ResourceNotFoundException("Return detail not found with id: " + returnDetailId);
         }
     }
 

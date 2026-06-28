@@ -10,7 +10,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/fines")
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class FineController {
 
     private final IFineService fineService;

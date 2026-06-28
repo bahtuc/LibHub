@@ -1,5 +1,7 @@
 package com.library.libhub.service.impl;
 
+import com.library.libhub.exception.ResourceNotFoundException;
+
 import com.library.libhub.dao.RoleDAO;
 import com.library.libhub.entity.Roles;
 import com.library.libhub.service.IRoleService;
@@ -39,7 +41,7 @@ public class RoleServiceImpl implements IRoleService {
             role.setRoleId(roleId);
             return roleDAO.save(role);
         }
-        throw new RuntimeException("Role not found with id: " + roleId);
+        throw new ResourceNotFoundException("Role not found with id: " + roleId);
     }
 
     @Override
@@ -47,7 +49,7 @@ public class RoleServiceImpl implements IRoleService {
         if (roleDAO.existsById(roleId)) {
             roleDAO.deleteById(roleId);
         } else {
-            throw new RuntimeException("Role not found with id: " + roleId);
+            throw new ResourceNotFoundException("Role not found with id: " + roleId);
         }
     }
 

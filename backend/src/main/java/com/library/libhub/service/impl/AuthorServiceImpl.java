@@ -1,5 +1,7 @@
 package com.library.libhub.service.impl;
 
+import com.library.libhub.exception.ResourceNotFoundException;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -48,7 +50,7 @@ public class AuthorServiceImpl implements IAuthorService {
     @Override
     public Authors updateAuthor(long authorId, Authors author) {
         if (!authorDAO.existsById(authorId)) {
-            throw new RuntimeException("Author not found with id: " + authorId);
+            throw new ResourceNotFoundException("Author not found with id: " + authorId);
         }
 
         validateAuthor(author);
@@ -69,7 +71,7 @@ public class AuthorServiceImpl implements IAuthorService {
         if (authorDAO.existsById(authorId)) {
             authorDAO.deleteById(authorId);
         } else {
-            throw new RuntimeException("Author not found with id: " + authorId);
+            throw new ResourceNotFoundException("Author not found with id: " + authorId);
         }
     }
 

@@ -1,5 +1,7 @@
 package com.library.libhub.service.impl;
 
+import com.library.libhub.exception.ResourceNotFoundException;
+
 import com.library.libhub.dao.BorrowTicketDAO;
 import com.library.libhub.entity.BorrowTickets;
 import com.library.libhub.service.IBorrowTicketService;
@@ -39,7 +41,7 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
             borrowTicket.setTicketId(ticketId);
             return borrowTicketDAO.save(borrowTicket);
         }
-        throw new RuntimeException("Borrow ticket not found with id: " + ticketId);
+        throw new ResourceNotFoundException("Borrow ticket not found with id: " + ticketId);
     }
 
     @Override
@@ -47,7 +49,7 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
         if (borrowTicketDAO.existsById(ticketId)) {
             borrowTicketDAO.deleteById(ticketId);
         } else {
-            throw new RuntimeException("Borrow ticket not found with id: " + ticketId);
+            throw new ResourceNotFoundException("Borrow ticket not found with id: " + ticketId);
         }
     }
 

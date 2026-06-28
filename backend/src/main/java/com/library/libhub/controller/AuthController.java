@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.library.libhub.DTO.Request.LoginRequest;
 import com.library.libhub.DTO.Request.RegisterRequest;
 import com.library.libhub.DTO.Request.ChangePasswordRequest;
+import com.library.libhub.DTO.Response.AuthResponse;
 
 import com.library.libhub.entity.Users;
 
@@ -53,7 +54,14 @@ public class AuthController {
             return ResponseEntity.status(401).body("Chưa đăng nhập");
         }
 
-        return ResponseEntity.ok(user);
+        // Trả về cùng shape với login() để frontend xử lý nhất quán
+        AuthResponse response = new AuthResponse();
+        response.setUserId(user.getUserId());
+        response.setUsername(user.getUsername());
+        response.setFullName(user.getFullName());
+        response.setRole(user.getRole() != null ? user.getRole().getRoleName() : null);
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/change-password")

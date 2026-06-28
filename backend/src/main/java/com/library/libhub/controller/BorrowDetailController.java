@@ -10,7 +10,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/borrow-details")
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class BorrowDetailController {
 
     private final IBorrowDetailService borrowDetailService;

@@ -10,7 +10,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/returns")
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class ReturnController {
 
     private final IReturnService returnService;

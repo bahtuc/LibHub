@@ -1,6 +1,8 @@
 package com.library.libhub.dao;
 
 import com.library.libhub.entity.Books;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -17,4 +19,6 @@ public interface BookDAO extends JpaRepository<Books, Long> {
     List<Books> findByAuthorId(long authorId);
 
     List<Books> findByTitleContainingIgnoreCase(String keyword);
+
+    Page<Books> findByTitleContainingIgnoreCase(String keyword, Pageable pageable);
 }

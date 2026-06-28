@@ -10,7 +10,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/publishers")
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class PublisherController {
 
     private final IPublisherService publisherService;

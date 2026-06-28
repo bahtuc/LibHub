@@ -10,7 +10,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/book-copies")
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class BookCopyController {
 
     private final IBookCopyService bookCopyService;

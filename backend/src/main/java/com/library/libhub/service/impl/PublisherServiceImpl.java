@@ -1,5 +1,7 @@
 package com.library.libhub.service.impl;
 
+import com.library.libhub.exception.ResourceNotFoundException;
+
 import com.library.libhub.dao.PublisherDAO;
 import com.library.libhub.entity.Publishers;
 import com.library.libhub.service.IPublisherService;
@@ -45,7 +47,7 @@ public class PublisherServiceImpl implements IPublisherService {
     @Override
     public Publishers updatePublisher(long publisherId, Publishers publisher) {
         if (!publisherDAO.existsById(publisherId)) {
-            throw new RuntimeException("Publisher not found with id: " + publisherId);
+            throw new ResourceNotFoundException("Publisher not found with id: " + publisherId);
         }
 
         validatePublisher(publisher);
@@ -66,7 +68,7 @@ public class PublisherServiceImpl implements IPublisherService {
         if (publisherDAO.existsById(publisherId)) {
             publisherDAO.deleteById(publisherId);
         } else {
-            throw new RuntimeException("Publisher not found with id: " + publisherId);
+            throw new ResourceNotFoundException("Publisher not found with id: " + publisherId);
         }
     }
 

@@ -10,10 +10,10 @@ import org.springframework.stereotype.Service;
 import com.library.libhub.DTO.Request.LoginRequest;
 import com.library.libhub.DTO.Request.RegisterRequest;
 import com.library.libhub.DTO.Response.AuthResponse;
+import com.library.libhub.dao.RoleDAO;
+import com.library.libhub.dao.UserDAO;
 import com.library.libhub.entity.Roles;
 import com.library.libhub.entity.Users;
-import com.library.libhub.repository.RoleRepository;
-import com.library.libhub.repository.UserRepository;
 import com.library.libhub.service.IAuthService;
 import com.library.libhub.utils.ValidationUtil;
 
@@ -25,10 +25,10 @@ import jakarta.transaction.Transactional;
 public class AuthServiceImpl implements IAuthService {
 
     @Autowired
-    private UserRepository userRepository;
+    private UserDAO userDAO;
 
     @Autowired
-    private RoleRepository roleRepository;
+    private RoleDAO roleDAO;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -39,15 +39,15 @@ public class AuthServiceImpl implements IAuthService {
 
         validateRegister(request);
 
-        if (userRepository.existsByUsername(request.getUsername())) {
+        if (userDAO.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username đã tồn tại");
         }
 
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userDAO.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email đã tồn tại");
         }
 
-        Roles role = roleRepository.findByRoleName("Member")
+        Roles role = roleDAO.findByRoleName("Member")
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy role Member"));
 
         Users user = new Users();
@@ -59,7 +59,7 @@ public class AuthServiceImpl implements IAuthService {
         user.setStatus("ACTIVE");
         user.setCreatedAt(new Timestamp(System.currentTimeMillis()));
 
-        userRepository.save(user);
+        userDAO.save(user);
 
         return mapToResponse(user);
     }
@@ -73,7 +73,7 @@ public class AuthServiceImpl implements IAuthService {
 
         validateLogin(request);
 
-        Users user = userRepository.findByUsernameOrEmail(
+        Users user = userDAO.findByUsernameOrEmail(
                 request.getUsernameOrEmail(),
                 request.getUsernameOrEmail()).orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
 
@@ -91,7 +91,7 @@ public class AuthServiceImpl implements IAuthService {
         session.setAttribute("ROLE", user.getRole().getRoleName());
 
         user.setLastLogin(new Timestamp(System.currentTimeMillis()));
-        userRepository.save(user);
+        userDAO.save(user);
 
         return mapToResponse(user);
     }
@@ -111,7 +111,7 @@ public class AuthServiceImpl implements IAuthService {
             throw new RuntimeException("Mật khẩu mới phải từ 6 ký tự");
         }
 
-        Users user = userRepository.findByUsername(request.getUsername())
+        Users user = userDAO.findByUsername(request.getUsername())
                 .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
 
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
@@ -123,9 +123,9 @@ public class AuthServiceImpl implements IAuthService {
         }
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
-        userRepository.save(user);
+        userDAO.save(user);
 
-        return null;
+        return mapToResponse(user);
     }
 
     // ================= VALIDATE REGISTER =================

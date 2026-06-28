@@ -1,5 +1,7 @@
 package com.library.libhub.service.impl;
 
+import com.library.libhub.exception.ResourceNotFoundException;
+
 import com.library.libhub.dao.BorrowDetailDAO;
 import com.library.libhub.entity.BorrowDetails;
 import com.library.libhub.service.IBorrowDetailService;
@@ -39,7 +41,7 @@ public class BorrowDetailServiceImpl implements IBorrowDetailService {
             borrowDetail.setDetailId(detailId);
             return borrowDetailDAO.save(borrowDetail);
         }
-        throw new RuntimeException("Borrow detail not found with id: " + detailId);
+        throw new ResourceNotFoundException("Borrow detail not found with id: " + detailId);
     }
 
     @Override
@@ -47,7 +49,7 @@ public class BorrowDetailServiceImpl implements IBorrowDetailService {
         if (borrowDetailDAO.existsById(detailId)) {
             borrowDetailDAO.deleteById(detailId);
         } else {
-            throw new RuntimeException("Borrow detail not found with id: " + detailId);
+            throw new ResourceNotFoundException("Borrow detail not found with id: " + detailId);
         }
     }
 

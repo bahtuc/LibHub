@@ -1,5 +1,7 @@
 package com.library.libhub.service.impl;
 
+import com.library.libhub.exception.ResourceNotFoundException;
+
 import com.library.libhub.dao.BookCopyDAO;
 import com.library.libhub.entity.BookCopies;
 import com.library.libhub.service.IBookCopyService;
@@ -35,11 +37,17 @@ public class BookCopyServiceImpl implements IBookCopyService {
 
     @Override
     public BookCopies updateBookCopy(long copyId, BookCopies bookCopy) {
-        if (bookCopyDAO.existsById(copyId)) {
-            bookCopy.setCopyId(copyId);
-            return bookCopyDAO.save(bookCopy);
-        }
-        throw new RuntimeException("Book copy not found with id: " + copyId);
+        BookCopies existing = bookCopyDAO.findById(copyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Book copy not found with id: " + copyId));
+
+        // Chỉ cập nhật field được gửi lên
+        if (bookCopy.getBookId() != null) existing.setBookId(bookCopy.getBookId());
+        if (bookCopy.getBarcode() != null) existing.setBarcode(bookCopy.getBarcode());
+        if (bookCopy.getShelfLocation() != null) existing.setShelfLocation(bookCopy.getShelfLocation());
+        if (bookCopy.getStatus() != null) existing.setStatus(bookCopy.getStatus());
+        if (bookCopy.getAcquiredDate() != null) existing.setAcquiredDate(bookCopy.getAcquiredDate());
+
+        return bookCopyDAO.save(existing);
     }
 
     @Override
@@ -47,7 +55,7 @@ public class BookCopyServiceImpl implements IBookCopyService {
         if (bookCopyDAO.existsById(copyId)) {
             bookCopyDAO.deleteById(copyId);
         } else {
-            throw new RuntimeException("Book copy not found with id: " + copyId);
+            throw new ResourceNotFoundException("Book copy not found with id: " + copyId);
         }
     }
 

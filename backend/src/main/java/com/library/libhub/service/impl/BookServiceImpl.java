@@ -1,10 +1,11 @@
 package com.library.libhub.service.impl;
 
+import com.library.libhub.exception.ResourceNotFoundException;
+
 import com.library.libhub.DTO.Response.BookResponse;
 import com.library.libhub.DTO.Response.PageResponse;
 import com.library.libhub.dao.BookDAO;
 import com.library.libhub.entity.Books;
-import com.library.libhub.repository.BookRepository;
 import com.library.libhub.service.IBookService;
 
 import jakarta.transaction.Transactional;
@@ -23,14 +24,9 @@ import java.util.Optional;
 public class BookServiceImpl implements IBookService {
 
     private final BookDAO bookDAO;
-    private final BookRepository bookRepository;
 
-    public BookServiceImpl(
-            BookDAO bookDAO,
-            BookRepository bookRepository) {
-
+    public BookServiceImpl(BookDAO bookDAO) {
         this.bookDAO = bookDAO;
-        this.bookRepository = bookRepository;
     }
 
     @Override
@@ -50,11 +46,22 @@ public class BookServiceImpl implements IBookService {
 
     @Override
     public Books updateBook(long bookId, Books book) {
-        if (bookDAO.existsById(bookId)) {
-            book.setBookId(bookId);
-            return bookDAO.save(book);
-        }
-        throw new RuntimeException("Book not found with id: " + bookId);
+        Books existing = bookDAO.findById(bookId)
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + bookId));
+
+        // Chỉ cập nhật field được gửi lên; giữ nguyên createdAt
+        if (book.getTitle() != null) existing.setTitle(book.getTitle());
+        if (book.getIsbn() != null) existing.setIsbn(book.getIsbn());
+        if (book.getPublishYear() != null) existing.setPublishYear(book.getPublishYear());
+        if (book.getDescription() != null) existing.setDescription(book.getDescription());
+        if (book.getCoverImage() != null) existing.setCoverImage(book.getCoverImage());
+        if (book.getLanguage() != null) existing.setLanguage(book.getLanguage());
+        if (book.getPages() != null) existing.setPages(book.getPages());
+        if (book.getCategoryId() != null) existing.setCategoryId(book.getCategoryId());
+        if (book.getAuthorId() != null) existing.setAuthorId(book.getAuthorId());
+        if (book.getPublisherId() != null) existing.setPublisherId(book.getPublisherId());
+
+        return bookDAO.save(existing);
     }
 
     @Override
@@ -62,7 +69,7 @@ public class BookServiceImpl implements IBookService {
         if (bookDAO.existsById(bookId)) {
             bookDAO.deleteById(bookId);
         } else {
-            throw new RuntimeException("Book not found with id: " + bookId);
+            throw new ResourceNotFoundException("Book not found with id: " + bookId);
         }
     }
 
@@ -103,10 +110,10 @@ public class BookServiceImpl implements IBookService {
         Page<Books> booksPage;
 
         if (keyword != null && !keyword.isBlank()) {
-            booksPage = bookRepository
+            booksPage = bookDAO
                     .findByTitleContainingIgnoreCase(keyword, pageable);
         } else {
-            booksPage = bookRepository.findAll(pageable);
+            booksPage = bookDAO.findAll(pageable);
         }
 
         List<BookResponse> content = booksPage.getContent()

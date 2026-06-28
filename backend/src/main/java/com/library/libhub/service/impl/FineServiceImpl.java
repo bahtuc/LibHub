@@ -1,5 +1,7 @@
 package com.library.libhub.service.impl;
 
+import com.library.libhub.exception.ResourceNotFoundException;
+
 import com.library.libhub.dao.FineDAO;
 import com.library.libhub.entity.Fines;
 import com.library.libhub.service.IFineService;
@@ -39,7 +41,7 @@ public class FineServiceImpl implements IFineService {
             fine.setFineId(fineId);
             return fineDAO.save(fine);
         }
-        throw new RuntimeException("Fine not found with id: " + fineId);
+        throw new ResourceNotFoundException("Fine not found with id: " + fineId);
     }
 
     @Override
@@ -47,7 +49,7 @@ public class FineServiceImpl implements IFineService {
         if (fineDAO.existsById(fineId)) {
             fineDAO.deleteById(fineId);
         } else {
-            throw new RuntimeException("Fine not found with id: " + fineId);
+            throw new ResourceNotFoundException("Fine not found with id: " + fineId);
         }
     }
 

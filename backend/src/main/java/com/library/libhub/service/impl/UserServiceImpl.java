@@ -1,5 +1,7 @@
 package com.library.libhub.service.impl;
 
+import com.library.libhub.exception.ResourceNotFoundException;
+
 import com.library.libhub.dao.UserDAO;
 import com.library.libhub.entity.Users;
 import com.library.libhub.service.IUserService;
@@ -36,11 +38,20 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public Users updateUser(long userId, Users user) {
-        if (userDAO.existsById(userId)) {
-            user.setUserId(userId);
-            return userDAO.save(user);
-        }
-        throw new RuntimeException("User not found with id: " + userId);
+        Users existing = userDAO.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        // Chỉ cập nhật field được gửi lên; giữ nguyên passwordHash, createdAt, lastLogin
+        if (user.getUsername() != null) existing.setUsername(user.getUsername());
+        if (user.getFullName() != null) existing.setFullName(user.getFullName());
+        if (user.getEmail() != null) existing.setEmail(user.getEmail());
+        if (user.getPhone() != null) existing.setPhone(user.getPhone());
+        if (user.getAddress() != null) existing.setAddress(user.getAddress());
+        if (user.getAvatar() != null) existing.setAvatar(user.getAvatar());
+        if (user.getStatus() != null) existing.setStatus(user.getStatus());
+        if (user.getRole() != null) existing.setRole(user.getRole());
+
+        return userDAO.save(existing);
     }
 
     @Override
@@ -48,7 +59,7 @@ public class UserServiceImpl implements IUserService {
         if (userDAO.existsById(userId)) {
             userDAO.deleteById(userId);
         } else {
-            throw new RuntimeException("User not found with id: " + userId);
+            throw new ResourceNotFoundException("User not found with id: " + userId);
         }
     }
 

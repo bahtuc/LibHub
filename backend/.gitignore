@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# H2 embedded database files
+/data/
+*.mv.db
+*.trace.db

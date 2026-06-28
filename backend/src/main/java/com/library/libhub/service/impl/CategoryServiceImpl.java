@@ -1,5 +1,7 @@
 package com.library.libhub.service.impl;
 
+import com.library.libhub.exception.ResourceNotFoundException;
+
 import com.library.libhub.dao.CategoryDAO;
 import com.library.libhub.entity.Categories;
 import com.library.libhub.service.ICategoryService;
@@ -45,7 +47,7 @@ public class CategoryServiceImpl implements ICategoryService {
     @Override
     public Categories updateCategory(long categoryId, Categories category) {
         if (!categoryDAO.existsById(categoryId)) {
-            throw new RuntimeException("Category not found with id: " + categoryId);
+            throw new ResourceNotFoundException("Category not found with id: " + categoryId);
         }
 
         validateCategory(category);
@@ -67,7 +69,7 @@ public class CategoryServiceImpl implements ICategoryService {
         if (categoryDAO.existsById(categoryId)) {
             categoryDAO.deleteById(categoryId);
         } else {
-            throw new RuntimeException("Category not found with id: " + categoryId);
+            throw new ResourceNotFoundException("Category not found with id: " + categoryId);
         }
     }
 

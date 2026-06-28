@@ -17,7 +17,11 @@ public interface UserDAO extends JpaRepository<Users, Long> {
 
     Optional<Users> findByEmail(String email);
 
+    Optional<Users> findByUsernameOrEmail(String username, String email);
+
     boolean existsByUsername(String username);
+
+    boolean existsByEmail(String email);
 
     @Modifying
     @Query("UPDATE Users u SET u.lastLogin = :lastLogin WHERE u.userId = :userId")

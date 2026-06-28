@@ -2,6 +2,8 @@ package com.library.libhub.entity;
 
 import java.sql.Timestamp;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -24,6 +26,8 @@ public class Users {
     @Column(name = "username", nullable = false, unique = true)
     private String username;
 
+    // Nhận khi tạo/đăng ký nhưng không bao giờ serialize ra response
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 

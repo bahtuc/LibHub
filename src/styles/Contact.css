@@ -1,0 +1,81 @@
+.lh-contact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  align-items: start;
+}
+
+.lh-contact__copy .lh-h2 {
+  margin: 10px 0 14px;
+}
+
+.lh-contact__list {
+  list-style: none;
+  margin: 28px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lh-contact__list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.94rem;
+  color: var(--lh-ink-soft);
+}
+
+.lh-contact__list li .lh-icon {
+  color: var(--lh-forest);
+  flex-shrink: 0;
+}
+
+.lh-contact__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid var(--lh-border);
+  border-radius: var(--lh-radius-lg);
+  padding: 28px;
+}
+
+.lh-contact__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--lh-ink-soft);
+}
+
+.lh-contact__form input,
+.lh-contact__form textarea {
+  font-family: var(--lh-font-body);
+  font-size: 0.95rem;
+  padding: 11px 13px;
+  border-radius: var(--lh-radius-sm);
+  border: 1px solid var(--lh-border);
+  background: var(--lh-paper);
+  color: var(--lh-text);
+  resize: vertical;
+}
+
+.lh-contact__form input:focus,
+.lh-contact__form textarea:focus {
+  outline: 2px solid var(--lh-gold);
+  outline-offset: 1px;
+}
+
+.lh-contact__form .lh-btn {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+@media (max-width: 860px) {
+  .lh-contact {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+}

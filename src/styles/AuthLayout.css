@@ -1,0 +1,206 @@
+/* src/styles/AuthLayout.css
+   Concept: "thẻ mượn sách" nổi giữa một khung cảnh hiệu sách mờ ảo phía sau —
+   thay cho layout chia đôi màn hình thường thấy. Chuyển động: ảnh nền zoom
+   chậm (khí quyển), thẻ bay lên khi vào trang, tab trượt khi đổi chế độ. */
+
+.lh-auth {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  font-family: var(--lh-font-body);
+}
+
+.lh-auth__bg {
+  position: absolute;
+  inset: -20px;
+  background-image: url("https://i.pinimg.com/736x/30/a3/f0/30a3f06eee97552692794dd0cea33d24.jpg");
+  background-size: cover;
+  background-position: center;
+  filter: blur(3px) saturate(0.9);
+  animation: lh-auth-kenburns 24s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes lh-auth-kenburns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
+
+.lh-auth__overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+      120% 90% at 50% 15%,
+      rgba(28, 38, 32, 0.55) 0%,
+      rgba(28, 38, 32, 0.86) 60%,
+      rgba(20, 27, 23, 0.95) 100%
+    );
+}
+
+.lh-auth__stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 440px;
+}
+
+.lh-auth__home-link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(247, 242, 230, 0.75);
+  font-size: 0.88rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.lh-auth__home-link:hover {
+  color: var(--lh-paper);
+  transform: translateX(-2px);
+}
+
+/* --- Signature: thẻ mượn sách kiểu card catalog --- */
+
+.lh-auth-card {
+  position: relative;
+  width: 100%;
+  background: var(--lh-paper);
+  border-radius: var(--lh-radius-lg);
+  padding: 44px 36px 34px;
+  box-shadow: 0 30px 60px rgba(10, 14, 11, 0.45), 0 2px 0 rgba(255, 255, 255, 0.4) inset;
+  animation: lh-auth-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes lh-auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.lh-auth-card__tab {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 56px;
+  height: 48px;
+  border-radius: 12px 12px 0 0;
+  background: var(--lh-ink);
+  color: var(--lh-gold);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 -4px 14px rgba(10, 14, 11, 0.25);
+}
+
+.lh-auth-card__perforation {
+  height: 0;
+  margin: 0 -36px 26px;
+  border-top: 2px dashed var(--lh-border);
+}
+
+.lh-auth-card__switch {
+  position: relative;
+  display: flex;
+  background: var(--lh-paper-soft);
+  border: 1px solid var(--lh-border);
+  border-radius: 999px;
+  padding: 4px;
+  margin-bottom: 26px;
+}
+
+.lh-auth-card__switch-btn {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  text-align: center;
+  padding: 9px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--lh-text-muted);
+  border-radius: 999px;
+  transition: color 0.2s ease;
+}
+
+.lh-auth-card__switch-btn.is-active {
+  color: var(--lh-ink);
+}
+
+.lh-auth-card__switch-highlight {
+  position: absolute;
+  z-index: 0;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  height: calc(100% - 8px);
+  background: #fff;
+  border-radius: 999px;
+  box-shadow: var(--lh-shadow-sm);
+  transition: transform 0.3s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.lh-auth-card__title {
+  font-family: var(--lh-font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--lh-ink);
+  margin: 0 0 6px;
+  text-align: center;
+}
+
+.lh-auth-card__subtitle {
+  font-size: 0.9rem;
+  color: var(--lh-text-muted);
+  text-align: center;
+  margin: 0 0 26px;
+  line-height: 1.5;
+}
+
+.lh-auth__bullets {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 18px;
+}
+
+.lh-auth__bullets li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: rgba(247, 242, 230, 0.75);
+}
+
+.lh-auth__bullets .lh-icon {
+  color: var(--lh-gold);
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .lh-auth-card {
+    padding: 40px 22px 28px;
+  }
+  .lh-auth-card__perforation {
+    margin: 0 -22px 22px;
+  }
+}

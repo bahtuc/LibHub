@@ -1,0 +1,75 @@
+// src/pages/AuthLayout.jsx
+//
+// Signature concept: thẻ mượn sách kiểu "card catalog" xưa — 1 tấm thẻ nổi
+// giữa trang, có "tab" ở mép trên (như tab của thẻ phích trong tủ mục lục
+// thư viện) và 1 đường răng cưa (perforation) ngăn phần tab với nội dung.
+// Ảnh nền chỉ còn là lớp khí quyển mờ phía sau, không còn chia đôi màn hình.
+
+import { Link } from "react-router-dom";
+import Icon from "../components/Icon";
+import "../styles/AuthLayout.css";
+
+export default function AuthLayout({ mode, title, subtitle, children, hideTabs = false }) {
+  return (
+    <div className="lh-auth lh-root">
+      <div className="lh-auth__bg" aria-hidden="true" />
+      <div className="lh-auth__overlay" aria-hidden="true" />
+
+      <div className="lh-auth__stage">
+        <Link to="/" className="lh-auth__home-link">
+          <span aria-hidden="true">←</span> Về trang chủ
+        </Link>
+
+        <div className="lh-auth-card">
+          <div className="lh-auth-card__tab">
+            <Icon name="book-open" size={20} />
+          </div>
+          <div className="lh-auth-card__perforation" aria-hidden="true" />
+
+          {!hideTabs && (
+            <div className="lh-auth-card__switch" role="tablist" aria-label="Chuyển đăng nhập / đăng ký">
+              <Link
+                to="/login"
+                role="tab"
+                aria-selected={mode === "login"}
+                className={`lh-auth-card__switch-btn ${mode === "login" ? "is-active" : ""}`}
+              >
+                Đăng nhập
+              </Link>
+              <Link
+                to="/register"
+                role="tab"
+                aria-selected={mode === "register"}
+                className={`lh-auth-card__switch-btn ${mode === "register" ? "is-active" : ""}`}
+              >
+                Đăng ký
+              </Link>
+              <span
+                className="lh-auth-card__switch-highlight"
+                style={{ transform: mode === "register" ? "translateX(100%)" : "translateX(0%)" }}
+                aria-hidden="true"
+              />
+            </div>
+          )}
+
+          <h1 className="lh-auth-card__title">{title}</h1>
+          <p className="lh-auth-card__subtitle">{subtitle}</p>
+
+          {children}
+        </div>
+
+        <ul className="lh-auth__bullets">
+          <li>
+            <Icon name="check-circle" size={15} /> Theo dõi phiếu mượn thời gian thực
+          </li>
+          <li>
+            <Icon name="check-circle" size={15} /> Hàng nghìn đầu sách
+          </li>
+          <li>
+            <Icon name="check-circle" size={15} /> Gia hạn trong vài giây
+          </li>
+        </ul>
+      </div>
+    </div>
+  );
+}

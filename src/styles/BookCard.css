@@ -1,0 +1,119 @@
+/* src/styles/BookCard.css
+   Bìa sách tỉ lệ dọc 2:3 (giống bìa sách thật) thay vì dải ngang ngắn. */
+
+.lh-book-card {
+  background: #fff;
+  border: 1px solid var(--lh-border);
+  border-radius: var(--lh-radius-md);
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.lh-book-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--lh-shadow-md);
+}
+
+.lh-book-card__cover {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  background: var(--spine);
+  background: linear-gradient(155deg, var(--spine) 0%, color-mix(in srgb, var(--spine) 65%, #1c2620) 100%);
+  overflow: hidden;
+}
+
+.lh-book-card__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lh-book-card__initial {
+  font-family: var(--lh-font-display);
+  font-size: 3.6rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.lh-book-card__status {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-family: var(--lh-font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.03em;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  z-index: 1;
+}
+
+.lh-book-card__status.is-available {
+  color: var(--lh-forest);
+}
+
+.lh-book-card__status.is-borrowed {
+  color: var(--lh-rust);
+}
+
+.lh-book-card__body {
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.lh-book-card__tag {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border: 1px solid;
+  border-radius: 999px;
+  padding: 3px 10px;
+  margin-bottom: 9px;
+}
+
+.lh-book-card__title {
+  font-family: var(--lh-font-display);
+  font-size: 1.02rem;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--lh-ink);
+  margin: 0 0 5px;
+}
+
+.lh-book-card__meta {
+  font-size: 0.82rem;
+  color: var(--lh-text-muted);
+  margin: 0 0 12px;
+}
+
+.lh-book-card__link {
+  margin-top: auto;
+  font-size: 0.83rem;
+}
+
+/* Lưới thẻ sách: cột hẹp hơn để mỗi card trông giống 1 cuốn sách đứng trên kệ */
+.lh-books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 22px;
+}
+
+@media (max-width: 560px) {
+  .lh-books-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+}

@@ -1,0 +1,218 @@
+/* src/styles/AuthForm.css — form fields dùng chung cho Login/Register */
+
+.lh-auth-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lh-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--lh-ink-soft);
+  opacity: 0;
+  animation: lh-field-in 0.45s ease both;
+}
+
+/* Stagger nhẹ từng dòng khi thẻ vừa hiện ra, không lặp lại sau đó */
+.lh-field:nth-child(1) { animation-delay: 0.05s; }
+.lh-field:nth-child(2) { animation-delay: 0.1s; }
+.lh-field:nth-child(3) { animation-delay: 0.15s; }
+.lh-field:nth-child(4) { animation-delay: 0.2s; }
+
+@keyframes lh-field-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.lh-field__label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lh-field__forgot {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--lh-forest);
+}
+
+.lh-field__forgot:hover {
+  color: var(--lh-gold-dark);
+}
+
+.lh-field__control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.lh-field__icon {
+  position: absolute;
+  left: 13px;
+  color: var(--lh-text-muted);
+  pointer-events: none;
+  transition: color 0.15s ease;
+}
+
+.lh-field__control input {
+  width: 100%;
+  font-family: var(--lh-font-body);
+  font-size: 0.95rem;
+  padding: 11px 13px 11px 40px;
+  border-radius: var(--lh-radius-sm);
+  border: 1px solid var(--lh-border);
+  background: #fff;
+  color: var(--lh-text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lh-field__control input:focus {
+  outline: none;
+  border-color: var(--lh-gold);
+  box-shadow: 0 0 0 3px rgba(185, 131, 42, 0.16);
+}
+
+.lh-field__control input:focus + .lh-field__icon,
+.lh-field__control input:focus ~ .lh-field__icon {
+  color: var(--lh-gold);
+}
+
+.lh-auth-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.lh-auth-form__error,
+.lh-auth-form__success {
+  font-size: 0.85rem;
+  padding: 10px 12px;
+  border-radius: var(--lh-radius-sm);
+  margin: 0;
+  animation: lh-field-in 0.3s ease both;
+}
+
+.lh-auth-form__error {
+  background: rgba(166, 61, 38, 0.1);
+  border: 1px solid rgba(166, 61, 38, 0.3);
+  color: var(--lh-rust);
+}
+
+.lh-auth-form__success {
+  background: rgba(61, 102, 82, 0.1);
+  border: 1px solid rgba(61, 102, 82, 0.3);
+  color: var(--lh-forest);
+}
+
+.lh-auth-form__submit {
+  justify-content: center;
+  margin-top: 6px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.lh-auth-form__submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(185, 131, 42, 0.35);
+}
+
+.lh-auth-form__submit:active {
+  transform: translateY(0);
+}
+
+.lh-auth-form__switch-line {
+  margin-top: 20px;
+  font-size: 0.85rem;
+  color: var(--lh-text-muted);
+  text-align: center;
+}
+
+.lh-auth-form__switch-line a {
+  color: var(--lh-forest);
+  font-weight: 600;
+}
+
+.lh-auth-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.lh-auth-steps span {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--lh-border);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.lh-auth-steps span.is-active {
+  background: var(--lh-gold);
+  transform: scale(1.3);
+}
+
+.lh-auth-steps span.is-done {
+  background: var(--lh-forest);
+}
+
+.lh-otp-input {
+  width: 100%;
+  text-align: center;
+  font-family: var(--lh-font-mono);
+  font-size: 1.4rem;
+  letter-spacing: 0.5em;
+  padding: 12px 13px;
+  border-radius: var(--lh-radius-sm);
+  border: 1px solid var(--lh-border);
+  background: #fff;
+  color: var(--lh-ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lh-otp-input:focus {
+  outline: none;
+  border-color: var(--lh-gold);
+  box-shadow: 0 0 0 3px rgba(185, 131, 42, 0.16);
+}
+
+.lh-auth-form__submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.lh-auth-form__linklike {
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin-top: 12px;
+  background: none;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--lh-forest);
+  cursor: pointer;
+}
+
+.lh-auth-form__linklike:hover {
+  color: var(--lh-gold-dark);
+}
+
+@media (max-width: 420px) {
+  .lh-auth-form__row {
+    grid-template-columns: 1fr;
+  }
+}

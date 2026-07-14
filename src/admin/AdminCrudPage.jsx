@@ -17,6 +17,8 @@ export default function AdminCrudPage({
   fields,
   emptyItem,
   canDelete, // (item) => boolean, mặc định luôn cho xóa
+  hideDelete = false, // ẩn hẳn nút xóa (vd: trang Thủ thư chỉ được Ẩn/Hiện, không được xóa)
+  rowActions, // (item) => JSX, render thêm nút riêng trước nút Sửa/Xóa
 }) {
   const items = store.useCollection();
   const [editing, setEditing] = useState(null);
@@ -151,6 +153,7 @@ export default function AdminCrudPage({
                     <td key={c.key}>{c.render ? c.render(item) : item[c.key]}</td>
                   ))}
                   <td className="lh-admin-table__actions">
+                    {rowActions && rowActions(item)}
                     <button
                       className="lh-admin-icon-btn"
                       aria-label="Sửa"
@@ -159,29 +162,30 @@ export default function AdminCrudPage({
                       <Icon name="edit" size={16} />
                     </button>
 
-                    {confirmId === item[idField] ? (
-                      <span className="lh-admin-confirm">
+                    {!hideDelete &&
+                      (confirmId === item[idField] ? (
+                        <span className="lh-admin-confirm">
+                          <button
+                            className="lh-admin-confirm__yes"
+                            onClick={() => handleDelete(item[idField])}
+                          >
+                            Xóa?
+                          </button>
+                          <button className="lh-admin-confirm__no" onClick={() => setConfirmId(null)}>
+                            <Icon name="x" size={14} />
+                          </button>
+                        </span>
+                      ) : (
                         <button
-                          className="lh-admin-confirm__yes"
-                          onClick={() => handleDelete(item[idField])}
+                          className="lh-admin-icon-btn lh-admin-icon-btn--danger"
+                          aria-label="Xóa"
+                          disabled={!deletable}
+                          title={!deletable ? "Không thể xóa mục này" : undefined}
+                          onClick={() => setConfirmId(item[idField])}
                         >
-                          Xóa?
+                          <Icon name="trash" size={16} />
                         </button>
-                        <button className="lh-admin-confirm__no" onClick={() => setConfirmId(null)}>
-                          <Icon name="x" size={14} />
-                        </button>
-                      </span>
-                    ) : (
-                      <button
-                        className="lh-admin-icon-btn lh-admin-icon-btn--danger"
-                        aria-label="Xóa"
-                        disabled={!deletable}
-                        title={!deletable ? "Không thể xóa mục này" : undefined}
-                        onClick={() => setConfirmId(item[idField])}
-                      >
-                        <Icon name="trash" size={16} />
-                      </button>
-                    )}
+                      ))}
                   </td>
                 </tr>
               );

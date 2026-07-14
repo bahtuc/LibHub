@@ -8,10 +8,9 @@ import BookCard from "../components/BookCard";
 import StarRating from "../components/StarRating";
 import {
   getAuthorName,
-  getBookById,
   getCategory,
-  getRelatedBooks,
 } from "../data/libraryData";
+import { booksStore } from "../data/adminStore";
 import { getAverageRating, getReviewsForBook, addReview } from "../data/reviews";
 import { useBookCovers } from "../data/useBookCovers";
 import "../styles/theme.css";
@@ -21,7 +20,9 @@ import "../styles/BookDetail.css";
 export default function BookDetail() {
   const { bookId } = useParams();
   const covers = useBookCovers();
-  const book = getBookById(bookId);
+  const allBooks = booksStore.useCollection();
+  // Sách bị thủ thư ẩn thì khách xem như không tồn tại (giống trạng thái 404).
+  const book = allBooks.find((b) => b.book_id === Number(bookId) && !b.is_hidden);
 
   const [reviews, setReviews] = useState(() => getReviewsForBook(bookId));
   const [form, setForm] = useState({ reviewer_name: "", rating: 5, comment: "" });
@@ -49,7 +50,9 @@ export default function BookDetail() {
   const available = book.status === "available";
   const coverUrl = covers[book.book_id] || book.cover_image;
   const { average, count } = getAverageRating(book.book_id);
-  const related = getRelatedBooks(book.book_id, 4);
+  const related = allBooks
+    .filter((b) => b.category_id === book.category_id && b.book_id !== book.book_id && !b.is_hidden)
+    .slice(0, 4);
 
   function handleSubmitReview(e) {
     e.preventDefault();

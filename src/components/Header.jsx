@@ -47,6 +47,11 @@ export default function Header() {
                   Quản trị
                 </Link>
               )}
+              {(user.role_name === "Librarian" || user.role_name === "Admin") && (
+                <Link to="/librarian" className="lh-btn lh-btn--ghost lh-header__cta">
+                  Thủ thư
+                </Link>
+              )}
               <button className="lh-btn lh-btn--ghost lh-header__cta" onClick={logout}>
                 Đăng xuất
               </button>
@@ -80,6 +85,11 @@ export default function Header() {
               {user.role_name === "Admin" && (
                 <Link to="/admin" onClick={() => setOpen(false)}>
                   Quản trị
+                </Link>
+              )}
+              {(user.role_name === "Librarian" || user.role_name === "Admin") && (
+                <Link to="/librarian" onClick={() => setOpen(false)}>
+                  Thủ thư
                 </Link>
               )}
               <button

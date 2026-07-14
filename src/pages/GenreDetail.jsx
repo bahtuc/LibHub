@@ -4,14 +4,18 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
 import BookCard from "../components/BookCard";
-import { categories, getBooksByCategory } from "../data/libraryData";
+import { categories } from "../data/libraryData";
+import { booksStore } from "../data/adminStore";
 import "../styles/theme.css";
 import "../styles/Library.css";
 
 export default function GenreDetail() {
   const { categoryId } = useParams();
   const category = categories.find((c) => c.category_id === Number(categoryId));
-  const booksInGenre = getBooksByCategory(categoryId);
+  const allBooks = booksStore.useCollection();
+  const booksInGenre = allBooks.filter(
+    (b) => b.category_id === Number(categoryId) && !b.is_hidden
+  );
 
   if (!category) {
     return (

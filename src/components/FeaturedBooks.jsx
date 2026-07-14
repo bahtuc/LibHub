@@ -1,9 +1,14 @@
 import { Link } from "react-router-dom";
 import Icon from "./Icon";
 import BookCard from "./BookCard";
-import { featuredBooks } from "../data/libraryData";
+import { booksStore } from "../data/adminStore";
 
 export default function FeaturedBooks() {
+  // Đọc từ booksStore (chung với Admin/Thủ thư) để sách bị ẩn hoặc vừa thêm
+  // luôn khớp với những gì hiển thị công khai ở đây.
+  const books = booksStore.useCollection();
+  const featured = books.filter((b) => b.is_featured && !b.is_hidden);
+
   return (
     <section className="lh-section" id="featured-books">
       <div className="lh-container">
@@ -18,7 +23,7 @@ export default function FeaturedBooks() {
         </div>
 
         <div className="lh-books-grid">
-          {featuredBooks.map((book) => (
+          {featured.map((book) => (
             <BookCard key={book.book_id} book={book} />
           ))}
         </div>

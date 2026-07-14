@@ -15,6 +15,7 @@ const AuthContext = createContext(null);
 const SESSION_KEY = "libhub_session";
 const REGISTERED_KEY = "libhub_registered_users";
 const PASSWORD_OVERRIDES_KEY = "libhub_password_overrides";
+const PROFILE_OVERRIDES_KEY = "libhub_profile_overrides";
 const OTP_KEY = "libhub_otp_requests";
 
 const OTP_TTL_MS = 5 * 60 * 1000; // mã OTP demo có hạn 5 phút
@@ -37,6 +38,15 @@ function loadPasswordOverrides() {
   }
 }
 
+function loadProfileOverrides() {
+  try {
+    const raw = localStorage.getItem(PROFILE_OVERRIDES_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
 function loadOtpStore() {
   try {
     const raw = localStorage.getItem(OTP_KEY);
@@ -48,8 +58,10 @@ function loadOtpStore() {
 
 function getAllUsers() {
   const overrides = loadPasswordOverrides();
+  const profiles = loadProfileOverrides();
   return [...mockUsers, ...loadRegisteredUsers()].map((u) => ({
     ...u,
+    ...(profiles[u.username] || {}),
     password: overrides[u.username] ?? u.password,
   }));
 }
@@ -90,6 +102,9 @@ export function AuthProvider({ children }) {
       user_id: found.user_id,
       username: found.username,
       full_name: found.full_name,
+      email: found.email ?? "",
+      phone: found.phone ?? "",
+      address: found.address ?? "",
       role_id: found.role_id,
       role_name: role?.role_name ?? "User",
     };
@@ -113,6 +128,9 @@ export function AuthProvider({ children }) {
       username: cleanUsername,
       password,
       full_name: full_name.trim(),
+      email: "",
+      phone: "",
+      address: "",
       role_id: 2, // tài khoản tự đăng ký mặc định là "User" (bạn đọc)
     };
     localStorage.setItem(
@@ -124,6 +142,38 @@ export function AuthProvider({ children }) {
 
   function logout() {
     setUser(null);
+  }
+
+  // --- Tài khoản của tôi (cần đã đăng nhập) ---
+
+  function updateProfile(patch) {
+    if (!user) return { ok: false, message: "Chưa đăng nhập." };
+
+    const overrides = loadProfileOverrides();
+    overrides[user.username] = { ...overrides[user.username], ...patch };
+    localStorage.setItem(PROFILE_OVERRIDES_KEY, JSON.stringify(overrides));
+
+    // Cập nhật session ngay để Header/trang tài khoản phản ánh liền, không cần đăng nhập lại.
+    const updated = { ...user, ...patch };
+    setUser(updated);
+    return { ok: true };
+  }
+
+  function changePassword(currentPassword, newPassword) {
+    if (!user) return { ok: false, message: "Chưa đăng nhập." };
+
+    const found = getAllUsers().find((u) => u.username === user.username);
+    if (!found || found.password !== currentPassword) {
+      return { ok: false, message: "Mật khẩu hiện tại không đúng." };
+    }
+    if (newPassword.length < 6) {
+      return { ok: false, message: "Mật khẩu mới cần tối thiểu 6 ký tự." };
+    }
+
+    const overrides = loadPasswordOverrides();
+    overrides[user.username] = newPassword;
+    localStorage.setItem(PASSWORD_OVERRIDES_KEY, JSON.stringify(overrides));
+    return { ok: true };
   }
 
   // --- Quên mật khẩu (demo, chưa nối SMS/email thật) ---
@@ -186,6 +236,8 @@ export function AuthProvider({ children }) {
         login,
         register,
         logout,
+        updateProfile,
+        changePassword,
         requestPasswordReset,
         verifyOtp,
         resetPassword,

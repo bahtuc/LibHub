@@ -5,13 +5,18 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
 import BookCard from "../components/BookCard";
-import { books, categories, getAuthorName } from "../data/libraryData";
+import { categories, getAuthorName } from "../data/libraryData";
+import { booksStore } from "../data/adminStore";
 import "../styles/theme.css";
 import "../styles/Library.css";
 
 export default function Library() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [query, setQuery] = useState("");
+
+  // Đọc từ booksStore (chung với Admin/Thủ thư) để sách bị ẩn không hiện ở đây.
+  const allBooks = booksStore.useCollection();
+  const books = allBooks.filter((b) => !b.is_hidden);
 
   const filteredBooks = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -24,7 +29,7 @@ export default function Library() {
         getAuthorName(book.author_id).toLowerCase().includes(q);
       return matchesCategory && matchesQuery;
     });
-  }, [activeCategory, query]);
+  }, [activeCategory, query, books]);
 
   return (
     <div className="lh-root">

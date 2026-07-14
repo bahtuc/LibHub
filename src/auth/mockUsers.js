@@ -18,6 +18,9 @@ export const mockUsers = [
     username: "admin",
     password: "admin123",
     full_name: "Quản trị viên",
+    email: "admin@libhub.vn",
+    phone: "0900000001",
+    address: "",
     role_id: 1,
   },
   {
@@ -25,6 +28,9 @@ export const mockUsers = [
     username: "user",
     password: "user123",
     full_name: "Bạn đọc demo",
+    email: "user@libhub.vn",
+    phone: "0900000002",
+    address: "",
     role_id: 2,
   },
   {
@@ -32,6 +38,9 @@ export const mockUsers = [
     username: "librian",
     password: "librian123",
     full_name: "Thủ thư demo",
+    email: "librarian@libhub.vn",
+    phone: "0900000003",
+    address: "",
     role_id: 3,
   },
 ];

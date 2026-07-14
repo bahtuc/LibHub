@@ -22,6 +22,14 @@ import AdminCategories from "../admin/AdminCategories.jsx";
 import AdminAuthors from "../admin/AdminAuthors.jsx";
 import AdminUsers from "../admin/AdminUsers.jsx";
 
+import RequireLibrarian from "../librarian/RequireLibrarian.jsx";
+import LibrarianLayout from "../librarian/LibrarianLayout.jsx";
+import LibrarianDashboard from "../librarian/LibrarianDashboard.jsx";
+import LibrarianBooks from "../librarian/LibrarianBooks.jsx";
+import LibrarianBorrow from "../librarian/LibrarianBorrow.jsx";
+import LibrarianTickets from "../librarian/LibrarianTickets.jsx";
+import LibrarianFines from "../librarian/LibrarianFines.jsx";
+
 export default function AppRouter() {
   return (
     <Routes>
@@ -48,6 +56,21 @@ export default function AppRouter() {
         <Route path="categories" element={<AdminCategories />} />
         <Route path="authors" element={<AdminAuthors />} />
         <Route path="users" element={<AdminUsers />} />
+      </Route>
+
+      <Route
+        path="/librarian"
+        element={
+          <RequireLibrarian>
+            <LibrarianLayout />
+          </RequireLibrarian>
+        }
+      >
+        <Route index element={<LibrarianDashboard />} />
+        <Route path="books" element={<LibrarianBooks />} />
+        <Route path="borrow" element={<LibrarianBorrow />} />
+        <Route path="tickets" element={<LibrarianTickets />} />
+        <Route path="fines" element={<LibrarianFines />} />
       </Route>
     </Routes>
   );

@@ -26,6 +26,8 @@ const paths = {
   plus: "M12 5v14 M5 12h14",
   dashboard: "M4 4h7v7H4V4Z M13 4h7v4h-7V4Z M13 11h7v9h-7v-9Z M4 14h7v6H4v-6Z",
   x: "M6 6l12 12 M18 6 6 18",
+  eye: "M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z",
+  "eye-off": "M3 3l18 18 M10.6 5.2A9.8 9.8 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-3.1 4 M6.5 6.6C3.9 8.3 2.5 12 2.5 12s3.5 7 9.5 7c1.3 0 2.5-.2 3.6-.7 M9.9 9.9a3 3 0 0 0 4.2 4.2",
 };
 
 export default function Icon({ name, size = 20, strokeWidth = 1.6, className = "" }) {

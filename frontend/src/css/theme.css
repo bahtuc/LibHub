@@ -1,0 +1,258 @@
+/* ============================================================
+   LibHub design system — clean library-catalog / ILS look.
+   Neutral slate + blue, white surfaces, dense and functional.
+   Shared primitives are prefixed `lh-`.
+   ============================================================ */
+
+:root {
+    /* Surfaces */
+    --lh-bg: #f5f7fa;
+    --lh-surface: #ffffff;
+    --lh-surface-2: #f8fafc;
+    --lh-border: #e2e8f0;
+    --lh-border-strong: #cbd5e1;
+
+    /* Text */
+    --lh-text: #1e293b;
+    --lh-text-soft: #64748b;
+    --lh-text-faint: #94a3b8;
+
+    /* Brand */
+    --lh-brand: #2563eb;
+    --lh-brand-dark: #1d4ed8;
+    --lh-brand-bg: #eff6ff;
+
+    /* Status */
+    --lh-green: #15803d;
+    --lh-green-bg: #dcfce7;
+    --lh-red: #b91c1c;
+    --lh-red-bg: #fee2e2;
+    --lh-amber: #b45309;
+    --lh-amber-bg: #fef3c7;
+    --lh-slate: #475569;
+    --lh-slate-bg: #f1f5f9;
+
+    --lh-radius: 8px;
+    --lh-radius-sm: 6px;
+    --lh-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+    --lh-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+
+    --lh-font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ---------- Page shell ---------- */
+.lh-page {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 24px 64px;
+    box-sizing: border-box;
+    font-family: var(--lh-font);
+    color: var(--lh-text);
+}
+
+.lh-page-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+}
+
+.lh-page-title {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0;
+    color: var(--lh-text);
+}
+
+.lh-page-sub {
+    font-size: 14px;
+    color: var(--lh-text-soft);
+    margin: 4px 0 0;
+}
+
+.lh-section-title {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--lh-text-soft);
+    margin: 0 0 12px;
+}
+
+/* ---------- Buttons ---------- */
+.lh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 9px 15px;
+    border-radius: var(--lh-radius-sm);
+    border: 1px solid var(--lh-border-strong);
+    background: var(--lh-surface);
+    color: var(--lh-text);
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.lh-btn:hover:not(:disabled) { background: var(--lh-surface-2); border-color: var(--lh-text-faint); }
+.lh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.lh-btn--primary { background: var(--lh-brand); border-color: var(--lh-brand); color: #fff; }
+.lh-btn--primary:hover:not(:disabled) { background: var(--lh-brand-dark); border-color: var(--lh-brand-dark); }
+
+.lh-btn--danger { background: #fff; border-color: #fca5a5; color: var(--lh-red); }
+.lh-btn--danger:hover:not(:disabled) { background: var(--lh-red-bg); }
+
+.lh-btn--ghost { border-color: transparent; background: transparent; color: var(--lh-brand-dark); padding-left: 6px; padding-right: 6px; }
+.lh-btn--ghost:hover:not(:disabled) { background: var(--lh-brand-bg); }
+
+.lh-btn--sm { font-size: 13px; padding: 6px 11px; }
+
+.lh-btn:focus-visible { outline: 2px solid var(--lh-brand); outline-offset: 2px; }
+
+/* ---------- Badges ---------- */
+.lh-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: var(--lh-slate-bg);
+    color: var(--lh-slate);
+    white-space: nowrap;
+}
+.lh-badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+.lh-badge--plain::before { display: none; }
+.lh-badge--green { background: var(--lh-green-bg); color: var(--lh-green); }
+.lh-badge--red   { background: var(--lh-red-bg);   color: var(--lh-red); }
+.lh-badge--amber { background: var(--lh-amber-bg); color: var(--lh-amber); }
+.lh-badge--blue  { background: var(--lh-brand-bg); color: var(--lh-brand-dark); }
+
+/* ---------- Forms ---------- */
+.lh-field { display: flex; flex-direction: column; gap: 6px; }
+.lh-label { font-size: 13px; font-weight: 600; color: var(--lh-text); }
+.lh-input, .lh-select, .lh-textarea {
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--lh-text);
+    background: var(--lh-surface);
+    border: 1px solid var(--lh-border-strong);
+    border-radius: var(--lh-radius-sm);
+    padding: 9px 12px;
+    min-height: 40px;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    box-sizing: border-box;
+    width: 100%;
+}
+.lh-textarea { min-height: 84px; resize: vertical; }
+.lh-input:focus, .lh-select:focus, .lh-textarea:focus {
+    border-color: var(--lh-brand);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+.lh-input::placeholder { color: var(--lh-text-faint); }
+
+/* ---------- Cards / panels ---------- */
+.lh-card {
+    background: var(--lh-surface);
+    border: 1px solid var(--lh-border);
+    border-radius: var(--lh-radius);
+    box-shadow: var(--lh-shadow);
+}
+.lh-panel { background: var(--lh-surface); border: 1px solid var(--lh-border); border-radius: var(--lh-radius); padding: 20px; }
+
+/* ---------- Tables ---------- */
+.lh-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.lh-table th {
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--lh-text-soft);
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--lh-border);
+    background: var(--lh-surface-2);
+    white-space: nowrap;
+}
+.lh-table td { padding: 12px 14px; border-bottom: 1px solid var(--lh-border); vertical-align: middle; }
+.lh-table tbody tr:last-child td { border-bottom: none; }
+.lh-table tbody tr:hover { background: var(--lh-surface-2); }
+.lh-table--wrap { overflow: hidden; border: 1px solid var(--lh-border); border-radius: var(--lh-radius); background: var(--lh-surface); box-shadow: var(--lh-shadow); }
+
+/* ---------- Alerts ---------- */
+.lh-alert {
+    font-size: 13.5px;
+    padding: 11px 14px;
+    border-radius: var(--lh-radius-sm);
+    border-left: 3px solid;
+    margin-bottom: 16px;
+}
+.lh-alert--error   { background: var(--lh-red-bg);   color: var(--lh-red);   border-color: var(--lh-red); }
+.lh-alert--success { background: var(--lh-green-bg); color: var(--lh-green); border-color: var(--lh-green); }
+.lh-alert--info    { background: var(--lh-brand-bg); color: var(--lh-brand-dark); border-color: var(--lh-brand); }
+
+/* ---------- States ---------- */
+.lh-empty {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--lh-text-soft);
+    font-size: 14px;
+}
+.lh-empty-title { font-size: 16px; font-weight: 600; color: var(--lh-text); margin: 0 0 6px; }
+
+.lh-spinner {
+    width: 22px; height: 22px;
+    border: 2.5px solid var(--lh-border-strong);
+    border-top-color: var(--lh-brand);
+    border-radius: 50%;
+    animation: lh-spin 0.7s linear infinite;
+}
+.lh-loading { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 48px; color: var(--lh-text-soft); }
+@keyframes lh-spin { to { transform: rotate(360deg); } }
+
+/* ---------- Utility ---------- */
+.lh-muted { color: var(--lh-text-soft); }
+.lh-mono { font-variant-numeric: tabular-nums; }
+.lh-row { display: flex; align-items: center; gap: 10px; }
+.lh-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 560px) { .lh-grid-2 { grid-template-columns: 1fr; } }
+
+@media (prefers-reduced-motion: reduce) {
+    .lh-btn, .lh-input, .lh-select, .lh-textarea { transition: none; }
+    .lh-spinner { animation-duration: 1.4s; }
+}
+
+/* ---------- Payment result icon ---------- */
+.pay_icon {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1;
+}
+.pay_icon--green { background: var(--lh-green-bg); color: var(--lh-green); }
+.pay_icon--red   { background: var(--lh-red-bg);   color: var(--lh-red); }
+.pay_icon--amber { background: var(--lh-amber-bg); color: var(--lh-amber); }

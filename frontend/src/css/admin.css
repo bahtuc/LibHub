@@ -1,0 +1,63 @@
+.adm_tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--lh-border);
+    margin-bottom: 22px;
+}
+.adm_tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--lh-text-soft);
+    cursor: pointer;
+    margin-bottom: -1px;
+}
+.adm_tab:hover { color: var(--lh-text); }
+.adm_tab.is-active { color: var(--lh-brand-dark); border-bottom-color: var(--lh-brand); }
+
+.adm_bar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.adm_form { margin-bottom: 22px; }
+.adm_form_title { font-size: 16px; font-weight: 700; margin: 0 0 16px; }
+.adm_form_grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 14px;
+}
+.adm_form_actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.adm_copyform {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr 1fr auto;
+    gap: 14px;
+    align-items: end;
+    margin-bottom: 22px;
+}
+.adm_copyform .lh-btn { min-height: 40px; }
+
+.adm_status_sel { min-height: 34px; padding: 4px 8px; font-size: 13px; width: auto; min-width: 130px; }
+
+@media (max-width: 820px) {
+    .adm_form_grid { grid-template-columns: 1fr 1fr; }
+    .adm_copyform { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 520px) {
+    .adm_form_grid { grid-template-columns: 1fr; }
+    .adm_copyform { grid-template-columns: 1fr; }
+}

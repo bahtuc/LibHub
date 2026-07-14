@@ -87,14 +87,16 @@ export function AuthProvider({ children }) {
     else localStorage.removeItem(SESSION_KEY);
   }, [user]);
 
-  function login(username, password) {
-    const cleanUsername = username.trim();
+  function login(usernameOrEmail, password) {
+    const key = usernameOrEmail.trim().toLowerCase();
     const found = getAllUsers().find(
-      (u) => u.username === cleanUsername && u.password === password
+      (u) =>
+        (u.username.toLowerCase() === key || (u.email && u.email.toLowerCase() === key)) &&
+        u.password === password
     );
 
     if (!found) {
-      return { ok: false, message: "Sai tên đăng nhập hoặc mật khẩu." };
+      return { ok: false, message: "Sai tên đăng nhập/email hoặc mật khẩu." };
     }
 
     const role = getRole(found.role_id);
@@ -105,6 +107,7 @@ export function AuthProvider({ children }) {
       email: found.email ?? "",
       phone: found.phone ?? "",
       address: found.address ?? "",
+      member_since: found.member_since ?? "",
       role_id: found.role_id,
       role_name: role?.role_name ?? "User",
     };
@@ -112,14 +115,21 @@ export function AuthProvider({ children }) {
     return { ok: true, user: session };
   }
 
-  function register({ full_name, username, password }) {
+  function register({ full_name, username, email, password }) {
     const cleanUsername = username.trim();
+    const cleanEmail = (email || "").trim().toLowerCase();
 
-    if (!full_name.trim() || !cleanUsername || !password) {
+    if (!full_name.trim() || !cleanUsername || !cleanEmail || !password) {
       return { ok: false, message: "Vui lòng điền đầy đủ thông tin." };
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      return { ok: false, message: "Email không hợp lệ." };
     }
     if (getAllUsers().some((u) => u.username === cleanUsername)) {
       return { ok: false, message: "Tên đăng nhập này đã được sử dụng." };
+    }
+    if (getAllUsers().some((u) => (u.email || "").toLowerCase() === cleanEmail)) {
+      return { ok: false, message: "Email này đã được sử dụng." };
     }
 
     const registered = loadRegisteredUsers();
@@ -128,9 +138,10 @@ export function AuthProvider({ children }) {
       username: cleanUsername,
       password,
       full_name: full_name.trim(),
-      email: "",
+      email: cleanEmail,
       phone: "",
       address: "",
+      member_since: new Date().toISOString().slice(0, 10),
       role_id: 2, // tài khoản tự đăng ký mặc định là "User" (bạn đọc)
     };
     localStorage.setItem(
@@ -178,9 +189,11 @@ export function AuthProvider({ children }) {
 
   // --- Quên mật khẩu (demo, chưa nối SMS/email thật) ---
 
-  function requestPasswordReset(username) {
-    const cleanUsername = username.trim();
-    const found = getAllUsers().find((u) => u.username === cleanUsername);
+  function requestPasswordReset(usernameOrEmail) {
+    const key = usernameOrEmail.trim().toLowerCase();
+    const found = getAllUsers().find(
+      (u) => u.username.toLowerCase() === key || (u.email && u.email.toLowerCase() === key)
+    );
 
     if (!found) {
       return { ok: false, message: "Không tìm thấy tài khoản này." };
@@ -188,12 +201,12 @@ export function AuthProvider({ children }) {
 
     const code = generateOtp();
     const store = loadOtpStore();
-    store[cleanUsername] = { code, expiresAt: Date.now() + OTP_TTL_MS };
+    store[found.username] = { code, expiresAt: Date.now() + OTP_TTL_MS };
     localStorage.setItem(OTP_KEY, JSON.stringify(store));
 
     // Demo: chưa có dịch vụ gửi email/SMS thật nên trả mã OTP về thẳng UI.
     // Khi có backend, bỏ trường devCode này đi — OTP chỉ nên nằm trong email/SMS.
-    return { ok: true, devCode: code };
+    return { ok: true, devCode: code, username: found.username };
   }
 
   function verifyOtp(username, code) {

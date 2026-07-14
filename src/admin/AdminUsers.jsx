@@ -15,7 +15,7 @@ export default function AdminUsers() {
       subtitle="Quản lý tài khoản và phân quyền (Admin / User / Librarian)."
       store={usersStore}
       idField="user_id"
-      emptyItem={{ username: "", full_name: "", role_id: 2, status: "active" }}
+      emptyItem={{ username: "", full_name: "", email: "", role_id: 2, status: "active" }}
       canDelete={(item) => item.user_id !== currentUser?.user_id}
       columns={[
         {
@@ -29,6 +29,7 @@ export default function AdminUsers() {
           ),
         },
         { key: "full_name", label: "Họ tên" },
+        { key: "email", label: "Email", render: (i) => i.email || "—" },
         {
           key: "role_id",
           label: "Vai trò",
@@ -51,6 +52,7 @@ export default function AdminUsers() {
       fields={[
         { name: "username", label: "Tên đăng nhập", required: true },
         { name: "full_name", label: "Họ và tên", required: true },
+        { name: "email", label: "Email", type: "email" },
         { name: "role_id", label: "Vai trò", type: "select", options: ROLE_OPTIONS, numeric: true, required: true },
         {
           name: "status",

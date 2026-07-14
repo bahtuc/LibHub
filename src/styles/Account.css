@@ -1,8 +1,123 @@
+/* src/styles/Account.css */
+
+.lh-account {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+/* --- Thẻ thành viên: cùng ngôn ngữ "thẻ mượn sách" với trang Đăng nhập --- */
+.lh-member-card {
+  position: sticky;
+  top: 96px;
+  margin-top: 22px;
+  background: var(--lh-ink);
+  color: rgba(247, 242, 230, 0.85);
+  border-radius: var(--lh-radius-lg);
+  padding: 40px 26px 26px;
+  text-align: center;
+  box-shadow: var(--lh-shadow-md);
+}
+
+.lh-member-card__tab {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 42px;
+  border-radius: 10px 10px 0 0;
+  background: var(--lh-gold);
+  color: var(--lh-ink);
+  display: grid;
+  place-items: center;
+}
+
+.lh-member-card__perforation {
+  height: 0;
+  margin: 0 -26px 20px;
+  border-top: 2px dashed rgba(247, 242, 230, 0.18);
+}
+
+.lh-member-card__avatar {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 12px;
+  border-radius: 999px;
+  background: rgba(247, 242, 230, 0.08);
+  border: 1px solid rgba(247, 242, 230, 0.16);
+  color: var(--lh-gold);
+  font-family: var(--lh-font-display);
+  font-size: 1.6rem;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+}
+
+.lh-member-card__name {
+  font-family: var(--lh-font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--lh-paper);
+  margin: 0 0 10px;
+}
+
+.lh-member-card__meta {
+  margin: 20px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid rgba(247, 242, 230, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.lh-member-card__meta dt {
+  font-family: var(--lh-font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(247, 242, 230, 0.45);
+  margin-bottom: 2px;
+}
+
+.lh-member-card__meta dd {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--lh-paper);
+}
+
+.lh-member-card__stats {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(247, 242, 230, 0.12);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.lh-member-card__stat-value {
+  display: block;
+  font-family: var(--lh-font-mono);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--lh-gold);
+}
+
+.lh-member-card__stat-label {
+  display: block;
+  font-size: 0.72rem;
+  color: rgba(247, 242, 230, 0.55);
+  margin-top: 2px;
+}
+
+/* --- Tabs --- */
 .lh-account__tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 26px;
+  margin-bottom: 22px;
   border-bottom: 1px solid var(--lh-border);
   padding-bottom: 14px;
 }
@@ -10,17 +125,29 @@
 .lh-account__tab {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   font-family: var(--lh-font-body);
-  font-size: 0.88rem;
+  font-size: 0.87rem;
   font-weight: 600;
-  padding: 9px 16px;
+  padding: 7px 14px 7px 7px;
   border-radius: 999px;
   border: 1px solid var(--lh-border);
   background: #fff;
   color: var(--lh-ink-soft);
   cursor: pointer;
   transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.lh-account__tab-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--lh-paper-soft);
+  color: var(--lh-forest);
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .lh-account__tab:hover {
@@ -34,8 +161,13 @@
   color: #fff;
 }
 
+.lh-account__tab.is-active .lh-account__tab-icon {
+  background: var(--lh-gold);
+  color: var(--lh-ink);
+}
+
 .lh-account__panel {
-  max-width: 760px;
+  max-width: 720px;
 }
 
 .lh-account__form {
@@ -47,9 +179,47 @@
   border-radius: var(--lh-radius-lg);
   padding: 26px;
   max-width: 560px;
+  box-shadow: var(--lh-shadow-sm);
 }
 
 .lh-account__form input:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.lh-account__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 50px 20px;
+  color: var(--lh-text-muted);
+  background: #fff;
+  border: 1px solid var(--lh-border);
+  border-radius: var(--lh-radius-lg);
+  text-align: center;
+}
+
+.lh-account__book-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 3px 0;
+}
+
+.lh-account__book-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 860px) {
+  .lh-account {
+    grid-template-columns: 1fr;
+  }
+  .lh-member-card {
+    position: static;
+    max-width: 340px;
+  }
 }

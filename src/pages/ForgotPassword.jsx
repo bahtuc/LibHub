@@ -34,6 +34,9 @@ export default function ForgotPassword() {
       setError(result.message);
       return;
     }
+    // Người dùng có thể đã nhập email — chuẩn hoá về đúng username nội bộ
+    // để các bước xác thực OTP/đổi mật khẩu sau tra đúng.
+    setUsername(result.username);
     setDevCode(result.devCode);
     setStep(STEP_OTP);
   }
@@ -106,14 +109,14 @@ export default function ForgotPassword() {
         {step === STEP_REQUEST && (
           <form onSubmit={handleRequest} noValidate>
             <label className="lh-field">
-              Tên đăng nhập
+              Tên đăng nhập hoặc email
               <span className="lh-field__control">
                 <Icon name="user" size={17} className="lh-field__icon" />
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="vd: admin"
+                  placeholder="vd: admin hoặc admin@libhub.vn"
                   autoComplete="username"
                   required
                 />

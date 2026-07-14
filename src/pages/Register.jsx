@@ -13,6 +13,7 @@ export default function Register() {
   const [form, setForm] = useState({
     full_name: "",
     username: "",
+    email: "",
     password: "",
     confirm: "",
   });
@@ -40,6 +41,7 @@ export default function Register() {
     const result = register({
       full_name: form.full_name,
       username: form.username,
+      email: form.email,
       password: form.password,
     });
 
@@ -84,6 +86,21 @@ export default function Register() {
                 onChange={update("username")}
                 placeholder="vd: nguyenvana"
                 autoComplete="username"
+                required
+              />
+            </span>
+          </label>
+
+          <label className="lh-field">
+            Email
+            <span className="lh-field__control">
+              <Icon name="mail" size={17} className="lh-field__icon" />
+              <input
+                type="email"
+                value={form.email}
+                onChange={update("email")}
+                placeholder="ban@email.com"
+                autoComplete="email"
                 required
               />
             </span>

@@ -41,7 +41,9 @@ export default function Header() {
 
           {user ? (
             <div className="lh-header__user">
-              <span className="lh-header__user-name">Xin chào, {user.full_name}</span>
+              <Link to="/account" className="lh-header__user-name">
+                Xin chào, {user.full_name}
+              </Link>
               {user.role_name === "Admin" && (
                 <Link to="/admin" className="lh-btn lh-btn--ghost lh-header__cta">
                   Quản trị
@@ -92,6 +94,9 @@ export default function Header() {
                   Thủ thư
                 </Link>
               )}
+              <Link to="/account" onClick={() => setOpen(false)}>
+                Tài khoản của tôi
+              </Link>
               <button
                 className="lh-btn lh-btn--ghost"
                 style={{ marginTop: 8 }}

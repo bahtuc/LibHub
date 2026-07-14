@@ -98,9 +98,9 @@ function buildCopiesSeed() {
 // có 1 nguồn Users trung tâm; khi có backend, cả 2 nơi sẽ cùng gọi chung 1 API.
 function buildUsersSeed() {
   return [
-    { user_id: 1, username: "admin", full_name: "Quản trị viên", role_id: 1, status: "active" },
-    { user_id: 2, username: "user", full_name: "Bạn đọc demo", role_id: 2, status: "active" },
-    { user_id: 3, username: "librian", full_name: "Thủ thư demo", role_id: 3, status: "active" },
+    { user_id: 1, username: "admin", full_name: "Quản trị viên", email: "admin@libhub.vn", role_id: 1, status: "active" },
+    { user_id: 2, username: "user", full_name: "Bạn đọc demo", email: "user@libhub.vn", role_id: 2, status: "active" },
+    { user_id: 3, username: "librian", full_name: "Thủ thư demo", email: "librarian@libhub.vn", role_id: 3, status: "active" },
   ];
 }
 

@@ -52,14 +52,14 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} noValidate>
           <label className="lh-field">
-            Tên đăng nhập
+            Tên đăng nhập hoặc email
             <span className="lh-field__control">
               <Icon name="user" size={17} className="lh-field__icon" />
               <input
                 type="text"
                 value={form.username}
                 onChange={update("username")}
-                placeholder="vd: admin"
+                placeholder="vd: admin hoặc admin@libhub.vn"
                 autoComplete="username"
                 required
               />

@@ -21,6 +21,7 @@ export const mockUsers = [
     email: "admin@libhub.vn",
     phone: "0900000001",
     address: "",
+    member_since: "2022-01-10",
     role_id: 1,
   },
   {
@@ -31,6 +32,7 @@ export const mockUsers = [
     email: "user@libhub.vn",
     phone: "0900000002",
     address: "",
+    member_since: "2024-03-02",
     role_id: 2,
   },
   {
@@ -41,6 +43,7 @@ export const mockUsers = [
     email: "librarian@libhub.vn",
     phone: "0900000003",
     address: "",
+    member_since: "2023-06-20",
     role_id: 3,
   },
 ];

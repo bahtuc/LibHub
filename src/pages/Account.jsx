@@ -1,7 +1,6 @@
 // src/pages/Account.jsx
-// Trang tài khoản cá nhân: sửa hồ sơ, đổi mật khẩu, xem phiếu mượn + phạt của
-// chính người dùng đang đăng nhập (không phân biệt role — Admin/Librarian/User
-// đều có trang này).
+// Trang tài khoản cá nhân — có "thẻ thành viên" bên trái (ăn theo motif thẻ
+// mượn sách ở trang Đăng nhập/Đăng ký) + nội dung tab bên phải.
 import { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -9,6 +8,7 @@ import Icon from "../components/Icon";
 import Badge from "../admin/Badge";
 import { useAuth } from "../auth/useAuth";
 import { booksStore } from "../data/adminStore";
+import { categories } from "../data/libraryData";
 import { useTickets, getTicketStatus } from "../data/librarianStore";
 import "../styles/theme.css";
 import "../styles/Library.css";
@@ -28,9 +28,24 @@ const TICKET_BADGE = {
   returned: { tone: "neutral", text: "Đã trả" },
 };
 
+const ROLE_TONE = { Admin: "warning", User: "success", Librarian: "info" };
+
+function formatDate(iso) {
+  if (!iso) return "—";
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+
 export default function Account() {
   const { user } = useAuth();
   const [tab, setTab] = useState("profile");
+
+  const allTickets = useTickets();
+  const myTickets = allTickets.filter((t) => t.user_id === user.user_id);
+  const activeCount = myTickets.filter((t) => getTicketStatus(t) !== "returned").length;
+  const unpaidFines = myTickets
+    .flatMap((t) => t.items)
+    .filter((it) => it.fine_amount > 0 && !it.fine_paid).length;
 
   return (
     <div className="lh-root">
@@ -47,25 +62,64 @@ export default function Account() {
       </section>
 
       <section className="lh-section" style={{ paddingTop: 28 }}>
-        <div className="lh-container">
-          <div className="lh-account__tabs">
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                className={`lh-account__tab ${tab === t.id ? "is-active" : ""}`}
-                onClick={() => setTab(t.id)}
-              >
-                <Icon name={t.icon} size={16} />
-                {t.label}
-              </button>
-            ))}
-          </div>
+        <div className="lh-container lh-account">
+          {/* --- Thẻ thành viên --- */}
+          <aside className="lh-member-card">
+            <div className="lh-member-card__tab">
+              <Icon name="book-open" size={18} />
+            </div>
+            <div className="lh-member-card__perforation" aria-hidden="true" />
 
-          <div className="lh-account__panel">
-            {tab === "profile" && <ProfileTab />}
-            {tab === "password" && <PasswordTab />}
-            {tab === "tickets" && <TicketsTab userId={user.user_id} />}
-            {tab === "fines" && <FinesTab userId={user.user_id} />}
+            <div className="lh-member-card__avatar">{user.full_name?.charAt(0)}</div>
+            <h2 className="lh-member-card__name">{user.full_name}</h2>
+            <Badge tone={ROLE_TONE[user.role_name] ?? "neutral"}>{user.role_name}</Badge>
+
+            <dl className="lh-member-card__meta">
+              <div>
+                <dt>Tên đăng nhập</dt>
+                <dd>{user.username}</dd>
+              </div>
+              <div>
+                <dt>Thành viên từ</dt>
+                <dd>{formatDate(user.member_since)}</dd>
+              </div>
+            </dl>
+
+            <div className="lh-member-card__stats">
+              <div>
+                <span className="lh-member-card__stat-value">{activeCount}</span>
+                <span className="lh-member-card__stat-label">Đang mượn</span>
+              </div>
+              <div>
+                <span className="lh-member-card__stat-value">{unpaidFines}</span>
+                <span className="lh-member-card__stat-label">Phạt chưa thu</span>
+              </div>
+            </div>
+          </aside>
+
+          {/* --- Tabs + nội dung --- */}
+          <div className="lh-account__main">
+            <div className="lh-account__tabs">
+              {TABS.map((t) => (
+                <button
+                  key={t.id}
+                  className={`lh-account__tab ${tab === t.id ? "is-active" : ""}`}
+                  onClick={() => setTab(t.id)}
+                >
+                  <span className="lh-account__tab-icon">
+                    <Icon name={t.icon} size={15} />
+                  </span>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="lh-account__panel">
+              {tab === "profile" && <ProfileTab />}
+              {tab === "password" && <PasswordTab />}
+              {tab === "tickets" && <TicketsTab tickets={myTickets} />}
+              {tab === "fines" && <FinesTab tickets={myTickets} />}
+            </div>
           </div>
         </div>
       </section>
@@ -104,28 +158,43 @@ function ProfileTab() {
       <div className="lh-auth-form__row">
         <label className="lh-field">
           Họ và tên
-          <input type="text" value={form.full_name} onChange={update("full_name")} required />
+          <span className="lh-field__control">
+            <Icon name="user" size={16} className="lh-field__icon" />
+            <input type="text" value={form.full_name} onChange={update("full_name")} required />
+          </span>
         </label>
         <label className="lh-field">
           Tên đăng nhập
-          <input type="text" value={user.username} disabled />
+          <span className="lh-field__control">
+            <Icon name="lock" size={16} className="lh-field__icon" />
+            <input type="text" value={user.username} disabled />
+          </span>
         </label>
       </div>
 
       <div className="lh-auth-form__row">
         <label className="lh-field">
           Email
-          <input type="email" value={form.email} onChange={update("email")} placeholder="ban@email.com" />
+          <span className="lh-field__control">
+            <Icon name="mail" size={16} className="lh-field__icon" />
+            <input type="email" value={form.email} onChange={update("email")} placeholder="ban@email.com" />
+          </span>
         </label>
         <label className="lh-field">
           Số điện thoại
-          <input type="tel" value={form.phone} onChange={update("phone")} placeholder="09xxxxxxxx" />
+          <span className="lh-field__control">
+            <Icon name="phone" size={16} className="lh-field__icon" />
+            <input type="tel" value={form.phone} onChange={update("phone")} placeholder="09xxxxxxxx" />
+          </span>
         </label>
       </div>
 
       <label className="lh-field">
         Địa chỉ
-        <input type="text" value={form.address} onChange={update("address")} placeholder="—" />
+        <span className="lh-field__control">
+          <Icon name="map-pin" size={16} className="lh-field__icon" />
+          <input type="text" value={form.address} onChange={update("address")} placeholder="—" />
+        </span>
       </label>
 
       {success && <p className="lh-auth-form__success">Đã lưu thông tin.</p>}
@@ -171,16 +240,25 @@ function PasswordTab() {
     <form className="lh-account__form" onSubmit={handleSubmit}>
       <label className="lh-field">
         Mật khẩu hiện tại
-        <input type="password" value={form.current} onChange={update("current")} required />
+        <span className="lh-field__control">
+          <Icon name="lock" size={16} className="lh-field__icon" />
+          <input type="password" value={form.current} onChange={update("current")} required />
+        </span>
       </label>
       <div className="lh-auth-form__row">
         <label className="lh-field">
           Mật khẩu mới
-          <input type="password" value={form.next} onChange={update("next")} required />
+          <span className="lh-field__control">
+            <Icon name="lock" size={16} className="lh-field__icon" />
+            <input type="password" value={form.next} onChange={update("next")} required />
+          </span>
         </label>
         <label className="lh-field">
           Nhập lại mật khẩu mới
-          <input type="password" value={form.confirm} onChange={update("confirm")} required />
+          <span className="lh-field__control">
+            <Icon name="lock" size={16} className="lh-field__icon" />
+            <input type="password" value={form.confirm} onChange={update("confirm")} required />
+          </span>
         </label>
       </div>
 
@@ -194,19 +272,22 @@ function PasswordTab() {
   );
 }
 
-function TicketsTab({ userId }) {
-  const allTickets = useTickets();
+function TicketsTab({ tickets }) {
   const books = booksStore.useCollection();
-  const myTickets = allTickets
-    .filter((t) => t.user_id === userId)
-    .sort((a, b) => b.ticket_id - a.ticket_id);
+  const sorted = [...tickets].sort((a, b) => b.ticket_id - a.ticket_id);
 
-  function bookTitle(book_id) {
-    return books.find((b) => b.book_id === book_id)?.title ?? "—";
+  function bookInfo(book_id) {
+    const b = books.find((x) => x.book_id === book_id);
+    return { title: b?.title ?? "—", category_id: b?.category_id };
   }
 
-  if (myTickets.length === 0) {
-    return <p style={{ color: "var(--lh-text-muted)" }}>Bạn chưa mượn cuốn sách nào.</p>;
+  if (sorted.length === 0) {
+    return (
+      <div className="lh-account__empty">
+        <Icon name="layers" size={26} />
+        <p>Bạn chưa mượn cuốn sách nào.</p>
+      </div>
+    );
   }
 
   return (
@@ -223,12 +304,26 @@ function TicketsTab({ userId }) {
             </tr>
           </thead>
           <tbody>
-            {myTickets.map((t) => {
+            {sorted.map((t) => {
               const s = TICKET_BADGE[getTicketStatus(t)];
               return (
                 <tr key={t.ticket_id}>
                   <td>#{t.ticket_id}</td>
-                  <td>{t.items.map((it) => bookTitle(it.book_id)).join(", ")}</td>
+                  <td>
+                    {t.items.map((it, idx) => {
+                      const info = bookInfo(it.book_id);
+                      const cat = categories.find((c) => c.category_id === info.category_id);
+                      return (
+                        <span className="lh-account__book-cell" key={idx}>
+                          <span
+                            className="lh-account__book-dot"
+                            style={{ background: cat?.color ?? "var(--lh-gold)" }}
+                          />
+                          {info.title}
+                        </span>
+                      );
+                    })}
+                  </td>
                   <td>{t.borrow_date}</td>
                   <td>{t.due_date}</td>
                   <td>
@@ -244,12 +339,10 @@ function TicketsTab({ userId }) {
   );
 }
 
-function FinesTab({ userId }) {
-  const allTickets = useTickets();
+function FinesTab({ tickets }) {
   const books = booksStore.useCollection();
 
-  const myFines = allTickets
-    .filter((t) => t.user_id === userId)
+  const myFines = tickets
     .flatMap((t) =>
       t.items
         .filter((it) => it.fine_amount > 0)
@@ -267,41 +360,56 @@ function FinesTab({ userId }) {
   }
 
   if (myFines.length === 0) {
-    return <p style={{ color: "var(--lh-text-muted)" }}>Bạn không có khoản phạt nào. 🎉</p>;
+    return (
+      <div className="lh-account__empty">
+        <Icon name="check-circle" size={26} />
+        <p>Bạn không có khoản phạt nào.</p>
+      </div>
+    );
   }
 
+  const totalUnpaid = myFines.filter((f) => !f.fine_paid).reduce((s, f) => s + f.fine_amount, 0);
+
   return (
-    <div className="lh-admin-table-wrap">
-      <div className="lh-admin-table-scroll">
-        <table className="lh-admin-table">
-          <thead>
-            <tr>
-              <th>Phiếu</th>
-              <th>Sách</th>
-              <th>Lý do</th>
-              <th>Số tiền</th>
-              <th>Trạng thái</th>
-            </tr>
-          </thead>
-          <tbody>
-            {myFines.map((f) => (
-              <tr key={`${f.ticket_id}-${f.copy_id}`}>
-                <td>#{f.ticket_id}</td>
-                <td>{bookTitle(f.book_id)}</td>
-                <td>{reasonLabel(f.condition_book)}</td>
-                <td>{f.fine_amount.toLocaleString("vi-VN")}đ</td>
-                <td>
-                  {f.fine_paid ? (
-                    <Badge tone="success">Đã thu</Badge>
-                  ) : (
-                    <Badge tone="danger">Chưa thu</Badge>
-                  )}
-                </td>
+    <>
+      {totalUnpaid > 0 && (
+        <p className="lh-auth-form__error" style={{ marginBottom: 16 }}>
+          Tổng còn nợ: <strong>{totalUnpaid.toLocaleString("vi-VN")}đ</strong> — liên hệ quầy thủ
+          thư để thanh toán.
+        </p>
+      )}
+      <div className="lh-admin-table-wrap">
+        <div className="lh-admin-table-scroll">
+          <table className="lh-admin-table">
+            <thead>
+              <tr>
+                <th>Phiếu</th>
+                <th>Sách</th>
+                <th>Lý do</th>
+                <th>Số tiền</th>
+                <th>Trạng thái</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {myFines.map((f) => (
+                <tr key={`${f.ticket_id}-${f.copy_id}`}>
+                  <td>#{f.ticket_id}</td>
+                  <td>{bookTitle(f.book_id)}</td>
+                  <td>{reasonLabel(f.condition_book)}</td>
+                  <td>{f.fine_amount.toLocaleString("vi-VN")}đ</td>
+                  <td>
+                    {f.fine_paid ? (
+                      <Badge tone="success">Đã thu</Badge>
+                    ) : (
+                      <Badge tone="danger">Chưa thu</Badge>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

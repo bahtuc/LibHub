@@ -1,143 +1,109 @@
-import { useEffect, useState } from "react";
-import { getBooks } from "../services/BookService";
-
-const PAGE_SIZE = 12;
+// src/pages/Library.jsx
+// Hiển thị toàn bộ kho sách, lọc theo thể loại + tìm theo tên/tác giả.
+import { useMemo, useState } from "react";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import Icon from "../components/Icon";
+import BookCard from "../components/BookCard";
+import { categories, getAuthorName } from "../data/libraryData";
+import { booksStore } from "../data/adminStore";
+import "../styles/theme.css";
+import "../styles/Library.css";
 
 export default function Library() {
-    const [books, setBooks] = useState([]);
-    const [page, setPage] = useState(0);
-    const [totalPages, setTotalPages] = useState(0);
-    const [keyword, setKeyword] = useState("");
-    const [search, setSearch] = useState("");
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [query, setQuery] = useState("");
 
-    useEffect(() => {
-        let cancelled = false;
-        setLoading(true);
-        setError("");
+  // Đọc từ booksStore (chung với Admin/Thủ thư) để sách bị ẩn không hiện ở đây.
+  const allBooks = booksStore.useCollection();
+  const books = allBooks.filter((b) => !b.is_hidden);
 
-        getBooks({ page, size: PAGE_SIZE, keyword: search || undefined })
-            .then((data) => {
-                if (cancelled) return;
-                setBooks(data?.content ?? []);
-                setTotalPages(data?.totalPages ?? 0);
-            })
-            .catch((err) => {
-                if (cancelled) return;
-                setError(err.message || "Không tải được danh sách sách.");
-                setBooks([]);
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false);
-            });
+  const filteredBooks = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return books.filter((book) => {
+      const matchesCategory =
+        activeCategory === "all" || book.category_id === Number(activeCategory);
+      const matchesQuery =
+        !q ||
+        book.title.toLowerCase().includes(q) ||
+        getAuthorName(book.author_id).toLowerCase().includes(q);
+      return matchesCategory && matchesQuery;
+    });
+  }, [activeCategory, query, books]);
 
-        return () => {
-            cancelled = true;
-        };
-    }, [page, search]);
+  return (
+    <div className="lh-root">
+      <Header />
 
-    function handleSubmit(e) {
-        e.preventDefault();
-        setPage(0);
-        setSearch(keyword.trim());
-    }
+      <section className="lh-library-hero">
+        <div className="lh-container">
+          <p className="lh-eyebrow">Kho sách</p>
+          <h1 className="lh-h1" style={{ fontSize: "clamp(2rem, 3.4vw, 2.8rem)" }}>
+            Toàn bộ thư viện
+          </h1>
+          <p className="lh-lede">
+            {books.length} đầu sách đang có tại LibHub — lọc theo thể loại hoặc tìm theo tên
+            sách, tác giả.
+          </p>
 
-    return (
-        <div style={{ padding: "40px 24px", maxWidth: 1100, margin: "0 auto" }}>
-            <h1 style={{ textAlign: "center" }}>Thư viện</h1>
-
-            <form
-                onSubmit={handleSubmit}
-                style={{ display: "flex", gap: 8, justifyContent: "center", margin: "24px 0" }}
-            >
-                <input
-                    type="text"
-                    value={keyword}
-                    onChange={(e) => setKeyword(e.target.value)}
-                    placeholder="Tìm theo tên sách..."
-                    style={{ padding: "8px 12px", minWidth: 280, borderRadius: 6, border: "1px solid #ccc" }}
-                />
-                <button type="submit" style={{ padding: "8px 16px", borderRadius: 6, cursor: "pointer" }}>
-                    Tìm
-                </button>
-            </form>
-
-            {loading && <p style={{ textAlign: "center" }}>Đang tải...</p>}
-
-            {error && !loading && (
-                <p style={{ textAlign: "center", color: "crimson" }}>
-                    {error}
-                    <br />
-                    <small>Bạn cần đăng nhập để xem danh sách sách.</small>
-                </p>
-            )}
-
-            {!loading && !error && books.length === 0 && (
-                <p style={{ textAlign: "center" }}>Chưa có sách nào.</p>
-            )}
-
-            {!loading && !error && books.length > 0 && (
-                <>
-                    <div
-                        style={{
-                            display: "grid",
-                            gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-                            gap: 16,
-                        }}
-                    >
-                        {books.map((book) => (
-                            <div
-                                key={book.bookId}
-                                style={{ border: "1px solid #e0e0e0", borderRadius: 8, padding: 16 }}
-                            >
-                                {book.coverImage && (
-                                    <img
-                                        src={book.coverImage}
-                                        alt={book.title}
-                                        style={{ width: "100%", height: 220, objectFit: "cover", borderRadius: 4 }}
-                                    />
-                                )}
-                                <h3 style={{ fontSize: 16, margin: "12px 0 4px" }}>{book.title}</h3>
-                                {book.publishYear && (
-                                    <p style={{ fontSize: 13, color: "#666", margin: 0 }}>
-                                        Năm: {book.publishYear}
-                                    </p>
-                                )}
-                                {book.language && (
-                                    <p style={{ fontSize: 13, color: "#666", margin: 0 }}>
-                                        Ngôn ngữ: {book.language}
-                                    </p>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-
-                    {totalPages > 1 && (
-                        <div
-                            style={{ display: "flex", gap: 12, justifyContent: "center", alignItems: "center", marginTop: 24 }}
-                        >
-                            <button
-                                onClick={() => setPage((p) => Math.max(0, p - 1))}
-                                disabled={page === 0}
-                                style={{ padding: "6px 14px", cursor: page === 0 ? "default" : "pointer" }}
-                            >
-                                Trước
-                            </button>
-                            <span>
-                                Trang {page + 1} / {totalPages}
-                            </span>
-                            <button
-                                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                                disabled={page >= totalPages - 1}
-                                style={{ padding: "6px 14px", cursor: page >= totalPages - 1 ? "default" : "pointer" }}
-                            >
-                                Sau
-                            </button>
-                        </div>
-                    )}
-                </>
-            )}
+          <div className="lh-library-search">
+            <Icon name="search" size={18} />
+            <input
+              type="text"
+              placeholder="Tìm theo tên sách hoặc tác giả…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
         </div>
-    );
+      </section>
+
+      <section className="lh-section" style={{ paddingTop: 28 }}>
+        <div className="lh-container">
+          <div className="lh-library-filters">
+            <button
+              className={`lh-library-filter ${activeCategory === "all" ? "is-active" : ""}`}
+              onClick={() => setActiveCategory("all")}
+            >
+              Tất cả ({books.length})
+            </button>
+            {categories.map((cat) => {
+              const count = books.filter((b) => b.category_id === cat.category_id).length;
+              return (
+                <button
+                  key={cat.category_id}
+                  className={`lh-library-filter ${
+                    activeCategory === cat.category_id ? "is-active" : ""
+                  }`}
+                  style={
+                    activeCategory === cat.category_id
+                      ? { background: cat.color, borderColor: cat.color }
+                      : undefined
+                  }
+                  onClick={() => setActiveCategory(cat.category_id)}
+                >
+                  {cat.category_name} ({count})
+                </button>
+              );
+            })}
+          </div>
+
+          {filteredBooks.length > 0 ? (
+            <div className="lh-books-grid" style={{ marginTop: 28 }}>
+              {filteredBooks.map((book) => (
+                <BookCard key={book.book_id} book={book} />
+              ))}
+            </div>
+          ) : (
+            <div className="lh-library-empty">
+              <Icon name="search" size={28} />
+              <p>Không tìm thấy sách phù hợp. Thử từ khoá khác xem sao.</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  );
 }

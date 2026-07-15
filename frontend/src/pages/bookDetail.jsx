@@ -1,168 +1,220 @@
-import { useEffect, useState } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
-import { getBookById } from "../services/BookService";
-import { findCopiesByBook } from "../services/BookCopyService";
-import { getAuthors } from "../services/AuthorService";
-import { getCategories } from "../services/CategoryService";
-import { getPublishers } from "../services/PublisherService";
-import { useAuth } from "../context/AuthContext";
-import { borrowBook, isAvailable, summarizeCopies } from "../utils/loans";
-import { formatDate } from "../utils/format";
-import "../css/detail.css";
-
-function copyBadge(status) {
-    const s = (status || "").toLowerCase();
-    if (s === "available") return "lh-badge--green";
-    if (s === "borrowed") return "lh-badge--amber";
-    return "lh-badge--slate";
-}
+// src/pages/BookDetail.jsx
+import { useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import Icon from "../components/Icon";
+import BookCard from "../components/BookCard";
+import StarRating from "../components/StarRating";
+import {
+  getAuthorName,
+  getCategory,
+} from "../data/libraryData";
+import { booksStore } from "../data/adminStore";
+import { getAverageRating, getReviewsForBook, addReview } from "../data/reviews";
+import { useBookCovers } from "../data/useBookCovers";
+import "../styles/theme.css";
+import "../styles/Library.css";
+import "../styles/BookDetail.css";
 
 export default function BookDetail() {
-    const { id } = useParams();
-    const navigate = useNavigate();
-    const { user } = useAuth();
+  const { bookId } = useParams();
+  const covers = useBookCovers();
+  const allBooks = booksStore.useCollection();
+  // Sách bị thủ thư ẩn thì khách xem như không tồn tại (giống trạng thái 404).
+  const book = allBooks.find((b) => b.book_id === Number(bookId) && !b.is_hidden);
 
-    const [book, setBook] = useState(null);
-    const [copies, setCopies] = useState([]);
-    const [names, setNames] = useState({ author: null, category: null, publisher: null });
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [notice, setNotice] = useState("");
-    const [busy, setBusy] = useState(false);
+  const [reviews, setReviews] = useState(() => getReviewsForBook(bookId));
+  const [form, setForm] = useState({ reviewer_name: "", rating: 5, comment: "" });
+  const [submitted, setSubmitted] = useState(false);
 
-    async function load() {
-        try {
-            const raw = await getBookById(id);
-            const b = raw && raw.present !== undefined ? (raw.value ?? null) : raw; // tolerate Optional shape
-            if (!b || !b.bookId) throw new Error("Không tìm thấy sách.");
-            setBook(b);
-
-            const [cps, authors, cats, pubs] = await Promise.all([
-                findCopiesByBook(id),
-                getAuthors().catch(() => []),
-                getCategories().catch(() => []),
-                getPublishers().catch(() => []),
-            ]);
-            setCopies(Array.isArray(cps) ? cps : []);
-            setNames({
-                author: (authors || []).find((a) => a.authorId === b.authorId)?.authorName || null,
-                category: (cats || []).find((c) => c.categoryId === b.categoryId)?.categoryName || null,
-                publisher: (pubs || []).find((p) => p.publisherId === b.publisherId)?.publisherName || null,
-            });
-            setError("");
-        } catch (err) {
-            setError(err.message || "Không tải được thông tin sách.");
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    useEffect(() => { load(); /* eslint-disable-next-line */ }, [id]);
-
-    async function handleBorrow() {
-        setBusy(true);
-        setNotice("");
-        setError("");
-        try {
-            await borrowBook(book, user.userId);
-            setNotice("Đã mượn thành công. Hạn trả sau 14 ngày.");
-            await load();
-        } catch (err) {
-            setError(err.message || "Mượn sách thất bại.");
-        } finally {
-            setBusy(false);
-        }
-    }
-
-    if (loading) return <div className="lh-page"><div className="lh-loading"><span className="lh-spinner" /> Đang tải…</div></div>;
-
-    if (error && !book) {
-        return (
-            <div className="lh-page">
-                <div className="lh-alert lh-alert--error">{error}</div>
-                <Link to="/catalog" className="lh-btn">← Về danh mục</Link>
-            </div>
-        );
-    }
-
-    const { total, available } = summarizeCopies(copies);
-
+  if (!book) {
     return (
-        <div className="lh-page">
-            <button className="lh-btn lh-btn--ghost lh-btn--sm" onClick={() => navigate(-1)} style={{ marginBottom: 14 }}>← Quay lại</button>
+      <div className="lh-root">
+        <Header />
+        <section className="lh-section">
+          <div className="lh-container lh-library-empty">
+            <Icon name="book-open" size={28} />
+            <p>Không tìm thấy cuốn sách này.</p>
+            <Link to="/library" className="lh-btn lh-btn--ghost" style={{ marginTop: 12 }}>
+              ← Quay lại thư viện
+            </Link>
+          </div>
+        </section>
+        <Footer />
+      </div>
+    );
+  }
 
-            {notice && <div className="lh-alert lh-alert--success">{notice}</div>}
-            {error && <div className="lh-alert lh-alert--error">{error}</div>}
+  const category = getCategory(book.category_id);
+  const available = book.status === "available";
+  const coverUrl = covers[book.book_id] || book.cover_image;
+  const { average, count } = getAverageRating(book.book_id);
+  const related = allBooks
+    .filter((b) => b.category_id === book.category_id && b.book_id !== book.book_id && !b.is_hidden)
+    .slice(0, 4);
 
-            <div className="det_head">
-                <div className="det_cover">
-                    {book.coverImage
-                        ? <img src={book.coverImage} alt="" />
-                        : <span className="det_cover_ph">{(book.title || "?").charAt(0)}</span>}
-                </div>
-                <div className="det_info">
-                    <h1 className="det_title">{book.title}</h1>
-                    {names.author && <p className="det_author">{names.author}</p>}
+  function handleSubmitReview(e) {
+    e.preventDefault();
+    if (!form.comment.trim()) return;
+    addReview(book.book_id, form);
+    setReviews(getReviewsForBook(book.book_id));
+    setForm({ reviewer_name: "", rating: 5, comment: "" });
+    setSubmitted(true);
+    setTimeout(() => setSubmitted(false), 3000);
+  }
 
-                    <div className="det_facts">
-                        <Fact label="Thể loại" value={names.category} />
-                        <Fact label="Nhà xuất bản" value={names.publisher} />
-                        <Fact label="Năm xuất bản" value={book.publishYear} />
-                        <Fact label="Ngôn ngữ" value={book.language} />
-                        <Fact label="Số trang" value={book.pages} />
-                        <Fact label="ISBN" value={book.isbn} mono />
-                    </div>
+  return (
+    <div className="lh-root">
+      <Header />
 
-                    <div className="det_borrow">
-                        <span className={`lh-badge ${available > 0 ? "lh-badge--green" : total === 0 ? "lh-badge--slate" : "lh-badge--red"}`}>
-                            {total === 0 ? "Chưa có bản sao" : available > 0 ? `Còn ${available}/${total} bản` : "Đã mượn hết"}
-                        </span>
-                        <button className="lh-btn lh-btn--primary" disabled={available === 0 || busy} onClick={handleBorrow}>
-                            {busy ? "Đang mượn…" : "Mượn sách"}
-                        </button>
-                    </div>
-                </div>
-            </div>
+      <section className="lh-library-hero">
+        <div className="lh-container">
+          <Link to="/library" className="lh-link-arrow" style={{ display: "inline-flex" }}>
+            <Icon name="arrow" size={14} style={{ transform: "rotate(180deg)" }} /> Quay lại thư
+            viện
+          </Link>
+        </div>
+      </section>
 
-            {book.description && (
-                <div className="lh-panel det_desc">
-                    <h2 className="lh-section-title">Giới thiệu</h2>
-                    <p>{book.description}</p>
-                </div>
-            )}
-
-            <h2 className="lh-section-title" style={{ marginTop: 26 }}>Các bản sao ({total})</h2>
-            {total === 0 ? (
-                <div className="lh-card lh-empty">Sách này chưa có bản sao vật lý trong kho.</div>
+      <section className="lh-section" style={{ paddingTop: 20 }}>
+        <div className="lh-container lh-book-detail">
+          <div
+            className="lh-book-detail__cover"
+            style={{ "--spine": category?.color ?? "#3d6652" }}
+          >
+            {coverUrl ? (
+              <img src={coverUrl} alt={book.title} />
             ) : (
-                <div className="lh-table--wrap">
-                    <table className="lh-table">
-                        <thead>
-                            <tr><th>Mã vạch</th><th>Vị trí kệ</th><th>Trạng thái</th><th>Ngày nhập</th></tr>
-                        </thead>
-                        <tbody>
-                            {copies.map((c) => (
-                                <tr key={c.copyId}>
-                                    <td className="lh-mono">{c.barcode || `#${c.copyId}`}</td>
-                                    <td>{c.shelfLocation || "—"}</td>
-                                    <td><span className={`lh-badge ${copyBadge(c.status)}`}>{isAvailable(c) ? "Sẵn sàng" : c.status || "—"}</span></td>
-                                    <td>{formatDate(c.acquiredDate)}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+              <span className="lh-book-detail__initial">{book.title.charAt(0)}</span>
             )}
-        </div>
-    );
-}
+          </div>
 
-function Fact({ label, value, mono }) {
-    if (value === null || value === undefined || value === "") return null;
-    return (
-        <div className="det_fact">
-            <span className="det_fact_label">{label}</span>
-            <span className={`det_fact_value ${mono ? "lh-mono" : ""}`}>{value}</span>
+          <div className="lh-book-detail__info">
+            <span
+              className="lh-book-card__tag"
+              style={{ color: category?.color, borderColor: category?.color }}
+            >
+              {category?.category_name}
+            </span>
+
+            <h1 className="lh-h1" style={{ fontSize: "clamp(1.7rem, 3vw, 2.3rem)", margin: "10px 0 8px" }}>
+              {book.title}
+            </h1>
+
+            <p className="lh-book-detail__meta">
+              {getAuthorName(book.author_id)} · {book.publish_year} · {book.pages} trang
+            </p>
+
+            <div className="lh-book-detail__rating">
+              <StarRating value={average} />
+              <span>
+                {average > 0 ? average : "Chưa có"} {count > 0 && `(${count} đánh giá)`}
+              </span>
+            </div>
+
+            <span className={`lh-book-card__status ${available ? "is-available" : "is-borrowed"} lh-book-detail__status`}>
+              {available ? "Còn sách" : "Đã mượn hết"}
+            </span>
+
+            <p className="lh-book-detail__description">{book.description}</p>
+
+            <button type="button" className="lh-btn lh-btn--primary" disabled={!available}>
+              {available ? "Mượn sách này" : "Hiện đã hết sách"}
+            </button>
+          </div>
         </div>
-    );
+      </section>
+
+      <section className="lh-section lh-section--soft">
+        <div className="lh-container lh-book-detail__reviews">
+          <h2 className="lh-h2" style={{ marginBottom: 22 }}>
+            Đánh giá từ độc giả ({reviews.length})
+          </h2>
+
+          {reviews.length > 0 ? (
+            <div className="lh-review-list">
+              {reviews.map((r) => (
+                <div className="lh-review-card" key={r.review_id}>
+                  <div className="lh-review-card__head">
+                    <span className="lh-review-card__avatar">{r.reviewer_name.charAt(0)}</span>
+                    <div>
+                      <p className="lh-review-card__name">{r.reviewer_name}</p>
+                      <StarRating value={r.rating} size={14} />
+                    </div>
+                    <span className="lh-review-card__date">{r.created_at}</span>
+                  </div>
+                  <p className="lh-review-card__comment">{r.comment}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ color: "var(--lh-text-muted)" }}>Chưa có đánh giá nào, hãy là người đầu tiên!</p>
+          )}
+
+          <form className="lh-review-form" onSubmit={handleSubmitReview}>
+            <h3 className="lh-h3" style={{ marginBottom: 14 }}>
+              Viết đánh giá của bạn
+            </h3>
+
+            <label className="lh-field">
+              Tên của bạn
+              <input
+                type="text"
+                value={form.reviewer_name}
+                onChange={(e) => setForm((f) => ({ ...f, reviewer_name: e.target.value }))}
+                placeholder="Nguyễn Văn A"
+              />
+            </label>
+
+            <label className="lh-field">
+              Đánh giá
+              <StarRating
+                value={form.rating}
+                interactive
+                onChange={(n) => setForm((f) => ({ ...f, rating: n }))}
+              />
+            </label>
+
+            <label className="lh-field">
+              Bình luận
+              <textarea
+                rows={3}
+                value={form.comment}
+                onChange={(e) => setForm((f) => ({ ...f, comment: e.target.value }))}
+                placeholder="Cảm nhận của bạn về cuốn sách này…"
+                required
+              />
+            </label>
+
+            {submitted && <p className="lh-auth-form__success">Cảm ơn bạn đã đánh giá!</p>}
+
+            <button type="submit" className="lh-btn lh-btn--primary" style={{ alignSelf: "flex-start" }}>
+              Gửi đánh giá
+            </button>
+          </form>
+        </div>
+      </section>
+
+      {related.length > 0 && (
+        <section className="lh-section">
+          <div className="lh-container">
+            <div className="lh-section-head">
+              <div>
+                <p className="lh-eyebrow">Có thể bạn cũng thích</p>
+                <h2 className="lh-h2">Sách cùng thể loại</h2>
+              </div>
+            </div>
+            <div className="lh-books-grid">
+              {related.map((b) => (
+                <BookCard key={b.book_id} book={b} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <Footer />
+    </div>
+  );
 }

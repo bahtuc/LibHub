@@ -1,0 +1,24 @@
+.lh-stars {
+  display: inline-flex;
+  gap: 2px;
+  color: var(--lh-gold);
+}
+
+.lh-star {
+  display: inline-flex;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  line-height: 0;
+}
+
+.lh-stars.is-interactive .lh-star {
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.lh-stars.is-interactive .lh-star:hover {
+  transform: scale(1.15);
+}

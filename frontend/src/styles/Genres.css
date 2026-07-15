@@ -1,0 +1,55 @@
+.lh-genres-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 20px;
+}
+
+.lh-genre-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid var(--lh-border);
+  border-radius: var(--lh-radius-md);
+  padding: 24px 22px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.lh-genre-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--lh-shadow-md);
+  border-color: var(--lh-gold);
+}
+
+.lh-genre-card__icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.lh-genre-card__name {
+  font-family: var(--lh-font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--lh-ink);
+}
+
+.lh-genre-card__count {
+  font-size: 0.85rem;
+  color: var(--lh-text-muted);
+  margin-bottom: 10px;
+}
+
+.lh-genre-card__go {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--lh-forest);
+}

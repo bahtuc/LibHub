@@ -24,7 +24,8 @@ export async function apiRequest(endpoint, options = {}) {
         response = await fetch(`${API_BASE_URL}${endpoint}`, config);
     } catch (networkErr) {
         throw new Error(
-            "Không thể kết nối tới server. Kiểm tra backend đã chạy chưa hoặc cấu hình CORS."
+            "Không thể kết nối tới server. Kiểm tra backend đã chạy chưa hoặc cấu hình CORS.",
+            { cause: networkErr }
         );
     }
 

@@ -66,7 +66,14 @@ public class AuthController {
 
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(
-            @RequestBody ChangePasswordRequest request) {
+            @RequestBody ChangePasswordRequest request,
+            HttpSession session) {
+        Users currentUser = (Users) session.getAttribute("USER_LOGIN");
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body("Chưa đăng nhập");
+        }
+        // Never trust a username supplied by the browser for this operation.
+        request.setUsername(currentUser.getUsername());
         return ResponseEntity.ok(
                 authService.changePassword(request));
     }

@@ -1,4 +1,5 @@
 import { Link, useSearchParams } from "react-router-dom";
+import "../styles/Payments.css";
 
 function formatVnd(amountX100) {
     const v = Number(amountX100 || 0) / 100; // VNPay amounts are ×100

@@ -4,6 +4,9 @@ import com.library.libhub.config.VNPayConfig;
 import com.library.libhub.entity.Fines;
 import com.library.libhub.entity.Users;
 import com.library.libhub.service.IFineService;
+import com.library.libhub.service.IBorrowTicketService;
+import com.library.libhub.service.IReturnDetailService;
+import com.library.libhub.service.IReturnService;
 import com.library.libhub.utils.VNPayUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +24,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -40,10 +44,31 @@ public class PaymentController {
 
     private final VNPayConfig vnp;
     private final IFineService fineService;
+    private final IReturnDetailService returnDetailService;
+    private final IReturnService returnService;
+    private final IBorrowTicketService borrowTicketService;
 
-    public PaymentController(VNPayConfig vnp, IFineService fineService) {
+    public PaymentController(VNPayConfig vnp, IFineService fineService, IReturnDetailService returnDetailService,
+                             IReturnService returnService, IBorrowTicketService borrowTicketService) {
         this.vnp = vnp;
         this.fineService = fineService;
+        this.returnDetailService = returnDetailService;
+        this.returnService = returnService;
+        this.borrowTicketService = borrowTicketService;
+    }
+
+    /** Returns only the fines owned by the signed-in member. */
+    @GetMapping("/fines")
+    public ResponseEntity<?> getMyFines(HttpSession session) {
+        Users user = (Users) session.getAttribute("USER_LOGIN");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(err("Chưa đăng nhập"));
+        }
+
+        List<Fines> fines = fineService.getAllFines().stream()
+                .filter(fine -> belongsToUser(fine, user.getUserId()))
+                .toList();
+        return ResponseEntity.ok(fines);
     }
 
     @PostMapping("/vnpay/create")
@@ -66,7 +91,7 @@ public class PaymentController {
         if (fine == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err("Không tìm thấy khoản phạt"));
         }
-        if (fine.getUserId() != null && !fine.getUserId().equals(user.getUserId())) {
+        if (!belongsToUser(fine, user.getUserId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(err("Khoản phạt không thuộc về bạn"));
         }
         if ("Paid".equalsIgnoreCase(fine.getPaidStatus())) {
@@ -75,6 +100,11 @@ public class PaymentController {
         double amount = fine.getAmount() == null ? 0 : fine.getAmount();
         if (amount <= 0) {
             return ResponseEntity.badRequest().body(err("Số tiền không hợp lệ"));
+        }
+        if (isBlank(vnp.getTmnCode()) || isBlank(vnp.getHashSecret()) || isBlank(vnp.getPayUrl())
+                || isBlank(vnp.getReturnUrl())) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(err("VNPay chưa được cấu hình. Vui lòng liên hệ quản trị viên."));
         }
 
         String txnRef = fineId + "_" + VNPayUtil.randomTxnRef();
@@ -86,7 +116,7 @@ public class PaymentController {
         params.put("vnp_Command", "pay");
         params.put("vnp_TmnCode", vnp.getTmnCode());
         // VNPay expects the amount in the smallest unit (VND x 100).
-        params.put("vnp_Amount", String.valueOf((long) (amount * 100)));
+        params.put("vnp_Amount", String.valueOf(Math.round(amount * 100)));
         params.put("vnp_CurrCode", "VND");
         params.put("vnp_TxnRef", txnRef);
         params.put("vnp_OrderInfo", "Thanh toan phat thu vien #" + fineId);
@@ -117,10 +147,15 @@ public class PaymentController {
             }
         }
 
-        boolean validSig = VNPayUtil.verifySignature(fields, vnp.getHashSecret());
+        boolean configured = !isBlank(vnp.getHashSecret()) && !isBlank(vnp.getFrontendResultUrl());
+        boolean validSig = configured && VNPayUtil.verifySignature(fields, vnp.getHashSecret());
         String responseCode = fields.get("vnp_ResponseCode");
+        String transactionStatus = fields.get("vnp_TransactionStatus");
         String txnRef = fields.getOrDefault("vnp_TxnRef", "");
-        boolean success = validSig && "00".equals(responseCode);
+        String returnedAmount = fields.getOrDefault("vnp_Amount", "");
+        boolean success = validSig && "00".equals(responseCode)
+                && (transactionStatus == null || "00".equals(transactionStatus))
+                && paymentAmountMatches(txnRef, returnedAmount);
 
         String status;
         if (!validSig) {
@@ -157,6 +192,27 @@ public class PaymentController {
         }
     }
 
+    private boolean paymentAmountMatches(String txnRef, String returnedAmount) {
+        try {
+            long fineId = Long.parseLong(txnRef.split("_")[0]);
+            long amount = Long.parseLong(returnedAmount);
+            return fineService.getFineById(fineId)
+                    .map(fine -> fine.getAmount() != null && Math.round(fine.getAmount() * 100) == amount)
+                    .orElse(false);
+        } catch (RuntimeException ex) {
+            return false;
+        }
+    }
+
+    private boolean belongsToUser(Fines fine, Long userId) {
+        if (fine.getReturnDetailId() == null || userId == null) return false;
+        return returnDetailService.getReturnDetailById(fine.getReturnDetailId())
+                .flatMap(detail -> returnService.getReturnById(detail.getReturnId()))
+                .flatMap(returnRecord -> borrowTicketService.getBorrowTicketById(returnRecord.getTicketId()))
+                .map(ticket -> userId.equals(ticket.getUserId()))
+                .orElse(false);
+    }
+
     private static Map<String, Object> err(String message) {
         Map<String, Object> m = new HashMap<>();
         m.put("message", message);
@@ -174,5 +230,9 @@ public class PaymentController {
         }
         String ip = request.getRemoteAddr();
         return ip == null ? "127.0.0.1" : ip;
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }

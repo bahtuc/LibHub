@@ -24,6 +24,7 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         ensureRole("Admin", "Quản trị viên");
         ensureRole("Member", "Thành viên");
+        ensureRole("Librarian", "Library staff");
     }
 
     private void ensureRole(String name, String description) {

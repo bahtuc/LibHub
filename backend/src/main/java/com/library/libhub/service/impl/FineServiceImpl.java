@@ -9,6 +9,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
+import java.sql.Timestamp;
 
 @Service
 @Transactional
@@ -22,6 +23,10 @@ public class FineServiceImpl implements IFineService {
 
     @Override
     public Fines createFine(Fines fine) {
+        if (fine == null || fine.getReturnDetailId() == null || fine.getAmount() == null || fine.getAmount() <= 0)
+            throw new IllegalArgumentException("Khoản phạt không hợp lệ");
+        if (fine.getPaidStatus() == null || fine.getPaidStatus().isBlank()) fine.setPaidStatus("Unpaid");
+        if (fine.getCreatedAt() == null) fine.setCreatedAt(new Timestamp(System.currentTimeMillis()));
         return fineDAO.save(fine);
     }
 
@@ -37,11 +42,16 @@ public class FineServiceImpl implements IFineService {
 
     @Override
     public Fines updateFine(long fineId, Fines fine) {
-        if (fineDAO.existsById(fineId)) {
-            fine.setFineId(fineId);
-            return fineDAO.save(fine);
+        Fines existing = fineDAO.findById(fineId)
+                .orElseThrow(() -> new ResourceNotFoundException("Fine not found with id: " + fineId));
+        if (fine.getReturnDetailId() != null) existing.setReturnDetailId(fine.getReturnDetailId());
+        if (fine.getAmount() != null) {
+            if (fine.getAmount() <= 0) throw new IllegalArgumentException("Số tiền phạt phải lớn hơn 0");
+            existing.setAmount(fine.getAmount());
         }
-        throw new ResourceNotFoundException("Fine not found with id: " + fineId);
+        if (fine.getReason() != null) existing.setReason(fine.getReason());
+        if (fine.getPaidStatus() != null) existing.setPaidStatus(fine.getPaidStatus());
+        return fineDAO.save(existing);
     }
 
     @Override

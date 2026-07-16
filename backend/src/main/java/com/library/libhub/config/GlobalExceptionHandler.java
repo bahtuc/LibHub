@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import com.library.libhub.exception.ResourceNotFoundException;
 
@@ -34,13 +36,18 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
 
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class, HttpMessageNotReadableException.class})
+    public ResponseEntity<Map<String, Object>> handleBadRequest(Exception ex, HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, "Dữ liệu yêu cầu không hợp lệ", request);
+    }
+
     // Các lỗi còn lại → 500, vẫn kèm message để dễ debug
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleOther(
             Exception ex,
             HttpServletRequest request) {
 
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), request);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Đã xảy ra lỗi hệ thống", request);
     }
 
     private ResponseEntity<Map<String, Object>> build(

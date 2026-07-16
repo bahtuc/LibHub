@@ -2,6 +2,7 @@
 // Trang tài khoản cá nhân — có "thẻ thành viên" bên trái (ăn theo motif thẻ
 // mượn sách ở trang Đăng nhập/Đăng ký) + nội dung tab bên phải.
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
@@ -41,6 +42,9 @@ export default function Account() {
   const [tab, setTab] = useState("profile");
 
   const allTickets = useTickets();
+  if (!user) {
+    return <div className="lh-root"><Header /><section className="lh-section"><div className="lh-container lh-library-empty"><Icon name="user" size={28} /><h1 className="lh-h2">Guest account</h1><p>Browse books as a guest. Sign in to save loan history and manage your account.</p></div></section><Footer /></div>;
+  }
   const myTickets = allTickets.filter((t) => t.user_id === user.user_id);
   const activeCount = myTickets.filter((t) => getTicketStatus(t) !== "returned").length;
   const unpaidFines = myTickets
@@ -138,19 +142,24 @@ function ProfileTab() {
     address: user.address || "",
   });
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
 
   function update(field) {
     return (e) => {
       setSuccess(false);
+      setError("");
       setForm((f) => ({ ...f, [field]: e.target.value }));
     };
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    updateProfile(form);
+    const result = await updateProfile(form);
+    if (!result?.ok) {
+      setError(result?.message || "Không thể cập nhật hồ sơ.");
+      return;
+    }
     setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
   }
 
   return (
@@ -197,6 +206,7 @@ function ProfileTab() {
         </span>
       </label>
 
+      {error && <p className="lh-auth-form__error">{error}</p>}
       {success && <p className="lh-auth-form__success">Đã lưu thông tin.</p>}
 
       <button type="submit" className="lh-btn lh-btn--primary" style={{ alignSelf: "flex-start" }}>
@@ -220,20 +230,19 @@ function PasswordTab() {
     };
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     if (form.next !== form.confirm) {
       setError("Mật khẩu mới nhập lại không khớp.");
       return;
     }
-    const result = changePassword(form.current, form.next);
-    if (!result.ok) {
-      setError(result.message);
-      return;
+    try {
+      await changePassword(form.current, form.next);
+      setForm({ current: "", next: "", confirm: "" });
+      setSuccess(true);
+    } catch (err) {
+      setError(err.message || "Không thể đổi mật khẩu.");
     }
-    setForm({ current: "", next: "", confirm: "" });
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
   }
 
   return (
@@ -364,6 +373,7 @@ function FinesTab({ tickets }) {
       <div className="lh-account__empty">
         <Icon name="check-circle" size={26} />
         <p>Bạn không có khoản phạt nào.</p>
+        <Link to="/fines" className="lh-btn lh-btn--primary">Kiểm tra khoản phạt trên hệ thống</Link>
       </div>
     );
   }
@@ -374,8 +384,8 @@ function FinesTab({ tickets }) {
     <>
       {totalUnpaid > 0 && (
         <p className="lh-auth-form__error" style={{ marginBottom: 16 }}>
-          Tổng còn nợ: <strong>{totalUnpaid.toLocaleString("vi-VN")}đ</strong> — liên hệ quầy thủ
-          thư để thanh toán.
+          Tổng còn nợ: <strong>{totalUnpaid.toLocaleString("vi-VN")}đ</strong>
+          {" — "}<Link to="/fines" style={{ textDecoration: "underline", fontWeight: 700 }}>Thanh toán khoản phạt</Link>
         </p>
       )}
       <div className="lh-admin-table-wrap">

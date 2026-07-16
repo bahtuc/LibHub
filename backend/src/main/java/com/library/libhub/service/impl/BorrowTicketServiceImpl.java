@@ -9,6 +9,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
+import java.sql.Timestamp;
 
 @Service
 @Transactional
@@ -22,6 +23,12 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
 
     @Override
     public BorrowTickets createBorrowTicket(BorrowTickets borrowTicket) {
+        if (borrowTicket == null || borrowTicket.getUserId() == null || borrowTicket.getBorrowDate() == null
+                || borrowTicket.getDueDate() == null) throw new IllegalArgumentException("Thiếu thông tin phiếu mượn");
+        if (borrowTicket.getDueDate().before(borrowTicket.getBorrowDate()))
+            throw new IllegalArgumentException("Hạn trả không thể trước ngày mượn");
+        if (borrowTicket.getStatus() == null || borrowTicket.getStatus().isBlank()) borrowTicket.setStatus("Borrowed");
+        if (borrowTicket.getCreatedAt() == null) borrowTicket.setCreatedAt(new Timestamp(System.currentTimeMillis()));
         return borrowTicketDAO.save(borrowTicket);
     }
 
@@ -37,11 +44,17 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
 
     @Override
     public BorrowTickets updateBorrowTicket(long ticketId, BorrowTickets borrowTicket) {
-        if (borrowTicketDAO.existsById(ticketId)) {
-            borrowTicket.setTicketId(ticketId);
-            return borrowTicketDAO.save(borrowTicket);
-        }
-        throw new ResourceNotFoundException("Borrow ticket not found with id: " + ticketId);
+        BorrowTickets existing = borrowTicketDAO.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Borrow ticket not found with id: " + ticketId));
+        if (borrowTicket.getUserId() != null) existing.setUserId(borrowTicket.getUserId());
+        if (borrowTicket.getBorrowDate() != null) existing.setBorrowDate(borrowTicket.getBorrowDate());
+        if (borrowTicket.getDueDate() != null) existing.setDueDate(borrowTicket.getDueDate());
+        if (borrowTicket.getStatus() != null) existing.setStatus(borrowTicket.getStatus());
+        if (borrowTicket.getNote() != null) existing.setNote(borrowTicket.getNote());
+        if (existing.getBorrowDate() != null && existing.getDueDate() != null
+                && existing.getDueDate().before(existing.getBorrowDate()))
+            throw new IllegalArgumentException("Hạn trả không thể trước ngày mượn");
+        return borrowTicketDAO.save(existing);
     }
 
     @Override

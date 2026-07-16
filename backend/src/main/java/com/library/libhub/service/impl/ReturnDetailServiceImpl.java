@@ -22,6 +22,8 @@ public class ReturnDetailServiceImpl implements IReturnDetailService {
 
     @Override
     public ReturnDetails createReturnDetail(ReturnDetails returnDetail) {
+        if (returnDetail == null || returnDetail.getReturnId() == null || returnDetail.getCopyId() == null)
+            throw new IllegalArgumentException("Thiếu thông tin chi tiết trả sách");
         return returnDetailDAO.save(returnDetail);
     }
 
@@ -37,11 +39,12 @@ public class ReturnDetailServiceImpl implements IReturnDetailService {
 
     @Override
     public ReturnDetails updateReturnDetail(long returnDetailId, ReturnDetails returnDetail) {
-        if (returnDetailDAO.existsById(returnDetailId)) {
-            returnDetail.setReturnDetailId(returnDetailId);
-            return returnDetailDAO.save(returnDetail);
-        }
-        throw new ResourceNotFoundException("Return detail not found with id: " + returnDetailId);
+        ReturnDetails existing = returnDetailDAO.findById(returnDetailId)
+                .orElseThrow(() -> new ResourceNotFoundException("Return detail not found with id: " + returnDetailId));
+        if (returnDetail.getReturnId() != null) existing.setReturnId(returnDetail.getReturnId());
+        if (returnDetail.getCopyId() != null) existing.setCopyId(returnDetail.getCopyId());
+        if (returnDetail.getConditionBook() != null) existing.setConditionBook(returnDetail.getConditionBook());
+        return returnDetailDAO.save(existing);
     }
 
     @Override

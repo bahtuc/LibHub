@@ -1,5 +1,11 @@
 import { apiRequest } from "../JS/APi.js";
 
+// Member-safe endpoint: the backend resolves fine -> return -> ticket and
+// only returns fines belonging to the current session user.
+export function getMyFines() {
+    return apiRequest("/payments/fines", { method: "GET" });
+}
+
 export function getFines() {
     return apiRequest("/fines", { method: "GET" });
 }

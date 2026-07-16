@@ -75,7 +75,7 @@ public class AuthServiceImpl implements IAuthService {
 
         Users user = userDAO.findByUsernameOrEmail(
                 request.getUsernameOrEmail(),
-                request.getUsernameOrEmail()).orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
+                request.getUsernameOrEmail()).orElseThrow(() -> new RuntimeException("Tên đăng nhập hoặc mật khẩu không đúng"));
 
         if (user.getStatus() == null ||
                 !"ACTIVE".equalsIgnoreCase(user.getStatus())) {
@@ -83,7 +83,7 @@ public class AuthServiceImpl implements IAuthService {
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new RuntimeException("Sai mật khẩu");
+            throw new RuntimeException("Tên đăng nhập hoặc mật khẩu không đúng");
         }
 
         // 🔥 CREATE SESSION

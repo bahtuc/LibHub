@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getMyFines } from "../services/FineService";
 import { createVnpayPayment } from "../services/PaymentService";
 import { formatDate } from "../utils/format";
+import "../styles/Payments.css";
 
 function formatVnd(n) {
     const v = Number(n || 0);
@@ -46,7 +47,7 @@ export default function Fines() {
         try {
             const { payUrl } = await createVnpayPayment(fine.fineId);
             if (!payUrl) throw new Error("Không tạo được liên kết thanh toán.");
-            window.location.assign(payUrl); // hand off to VNPay
+            window.location.assign(payUrl);
         } catch (err) {
             setError(err.message || "Không khởi tạo được thanh toán VNPay.");
             setPayingId(null);
@@ -60,7 +61,7 @@ export default function Fines() {
                     <h1 className="lh-page-title">Khoản phạt của tôi</h1>
                     <p className="lh-page-sub">Thanh toán phí trả sách trễ qua VNPay.</p>
                 </div>
-                <Link to="/loans" className="lh-btn">← Phiếu mượn</Link>
+                <Link to="/account" className="lh-btn">← Tài khoản</Link>
             </div>
 
             {unpaidTotal > 0 && (

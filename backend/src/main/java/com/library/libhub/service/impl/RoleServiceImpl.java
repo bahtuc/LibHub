@@ -22,6 +22,9 @@ public class RoleServiceImpl implements IRoleService {
 
     @Override
     public Roles createRole(Roles role) {
+        validate(role);
+        if (roleDAO.findByRoleName(role.getRoleName()).isPresent())
+            throw new IllegalArgumentException("Tên vai trò đã tồn tại");
         return roleDAO.save(role);
     }
 
@@ -37,11 +40,15 @@ public class RoleServiceImpl implements IRoleService {
 
     @Override
     public Roles updateRole(long roleId, Roles role) {
-        if (roleDAO.existsById(roleId)) {
-            role.setRoleId(roleId);
-            return roleDAO.save(role);
-        }
-        throw new ResourceNotFoundException("Role not found with id: " + roleId);
+        Roles existing = roleDAO.findById(roleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
+        if (role.getRoleName() != null) existing.setRoleName(role.getRoleName());
+        if (role.getDescription() != null) existing.setDescription(role.getDescription());
+        validate(existing);
+        roleDAO.findByRoleName(existing.getRoleName())
+                .filter(other -> !other.getRoleId().equals(roleId))
+                .ifPresent(other -> { throw new IllegalArgumentException("Tên vai trò đã tồn tại"); });
+        return roleDAO.save(existing);
     }
 
     @Override
@@ -56,5 +63,10 @@ public class RoleServiceImpl implements IRoleService {
     @Override
     public Optional<Roles> findByName(String roleName) {
         return roleDAO.findByRoleName(roleName);
+    }
+
+    private void validate(Roles role) {
+        if (role == null || role.getRoleName() == null || role.getRoleName().isBlank())
+            throw new IllegalArgumentException("Tên vai trò không được để trống");
     }
 }

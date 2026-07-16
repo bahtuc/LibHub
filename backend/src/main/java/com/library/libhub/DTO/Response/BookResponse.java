@@ -5,6 +5,7 @@ public class BookResponse {
     private Long bookId;
     private String title;
     private String isbn;
+    private String description;
     private Long publishYear;
     private String coverImage;
     private String language;
@@ -12,6 +13,8 @@ public class BookResponse {
     private Long authorId;
     private Long categoryId;
     private Long publisherId;
+    private Boolean hidden;
+    private Boolean featured;
 
     public Long getBookId() {
         return bookId;
@@ -36,6 +39,10 @@ public class BookResponse {
     public void setIsbn(String isbn) {
         this.isbn = isbn;
     }
+
+    public String getDescription() { return description; }
+
+    public void setDescription(String description) { this.description = description; }
 
     public Long getPublishYear() {
         return publishYear;
@@ -92,5 +99,13 @@ public class BookResponse {
     public void setPublisherId(Long publisherId) {
         this.publisherId = publisherId;
     }
+
+    public Boolean getHidden() { return hidden; }
+
+    public void setHidden(Boolean hidden) { this.hidden = hidden; }
+
+    public Boolean getFeatured() { return featured; }
+
+    public void setFeatured(Boolean featured) { this.featured = featured; }
 
 }

@@ -22,6 +22,10 @@ public class BorrowDetailServiceImpl implements IBorrowDetailService {
 
     @Override
     public BorrowDetails createBorrowDetail(BorrowDetails borrowDetail) {
+        if (borrowDetail == null || borrowDetail.getTicketId() == null || borrowDetail.getCopyId() == null)
+            throw new IllegalArgumentException("Thiếu thông tin chi tiết mượn");
+        if (borrowDetail.getBorrowStatus() == null || borrowDetail.getBorrowStatus().isBlank())
+            borrowDetail.setBorrowStatus("Borrowed");
         return borrowDetailDAO.save(borrowDetail);
     }
 
@@ -37,11 +41,12 @@ public class BorrowDetailServiceImpl implements IBorrowDetailService {
 
     @Override
     public BorrowDetails updateBorrowDetail(long detailId, BorrowDetails borrowDetail) {
-        if (borrowDetailDAO.existsById(detailId)) {
-            borrowDetail.setDetailId(detailId);
-            return borrowDetailDAO.save(borrowDetail);
-        }
-        throw new ResourceNotFoundException("Borrow detail not found with id: " + detailId);
+        BorrowDetails existing = borrowDetailDAO.findById(detailId)
+                .orElseThrow(() -> new ResourceNotFoundException("Borrow detail not found with id: " + detailId));
+        if (borrowDetail.getTicketId() != null) existing.setTicketId(borrowDetail.getTicketId());
+        if (borrowDetail.getCopyId() != null) existing.setCopyId(borrowDetail.getCopyId());
+        if (borrowDetail.getBorrowStatus() != null) existing.setBorrowStatus(borrowDetail.getBorrowStatus());
+        return borrowDetailDAO.save(existing);
     }
 
     @Override

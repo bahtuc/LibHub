@@ -42,6 +42,12 @@ public class Books {
   @Column(name = "publisher_id")
   private Long publisherId;
 
+  @Column(name = "is_hidden")
+  private Boolean hidden = false;
+
+  @Column(name = "is_featured")
+  private Boolean featured = false;
+
   @Column(name = "created_at")
   private Timestamp createdAt;
 
@@ -143,6 +149,14 @@ public class Books {
   public void setPublisherId(Long publisherId) {
     this.publisherId = publisherId;
   }
+
+  public Boolean getHidden() { return hidden; }
+
+  public void setHidden(Boolean hidden) { this.hidden = hidden; }
+
+  public Boolean getFeatured() { return featured; }
+
+  public void setFeatured(Boolean featured) { this.featured = featured; }
 
 
   public Timestamp getCreatedAt() {

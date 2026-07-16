@@ -22,6 +22,10 @@ public class BookCopyServiceImpl implements IBookCopyService {
 
     @Override
     public BookCopies createBookCopy(BookCopies bookCopy) {
+        validate(bookCopy);
+        if (bookCopyDAO.findByBarcode(bookCopy.getBarcode()).isPresent())
+            throw new IllegalArgumentException("Mã vạch đã tồn tại");
+        if (bookCopy.getStatus() == null || bookCopy.getStatus().isBlank()) bookCopy.setStatus("Available");
         return bookCopyDAO.save(bookCopy);
     }
 
@@ -47,6 +51,10 @@ public class BookCopyServiceImpl implements IBookCopyService {
         if (bookCopy.getStatus() != null) existing.setStatus(bookCopy.getStatus());
         if (bookCopy.getAcquiredDate() != null) existing.setAcquiredDate(bookCopy.getAcquiredDate());
 
+        validate(existing);
+        bookCopyDAO.findByBarcode(existing.getBarcode())
+                .filter(other -> !other.getCopyId().equals(copyId))
+                .ifPresent(other -> { throw new IllegalArgumentException("Mã vạch đã tồn tại"); });
         return bookCopyDAO.save(existing);
     }
 
@@ -77,6 +85,14 @@ public class BookCopyServiceImpl implements IBookCopyService {
     @Override
     @Transactional
     public void updateStatus(long copyId, String status) {
-        bookCopyDAO.updateStatus(copyId, status);
+        if (status == null || status.isBlank()) throw new IllegalArgumentException("Trạng thái không được để trống");
+        if (bookCopyDAO.updateStatus(copyId, status) == 0)
+            throw new ResourceNotFoundException("Book copy not found with id: " + copyId);
+    }
+
+    private void validate(BookCopies copy) {
+        if (copy == null || copy.getBookId() == null) throw new IllegalArgumentException("Thiếu bookId");
+        if (copy.getBarcode() == null || copy.getBarcode().isBlank())
+            throw new IllegalArgumentException("Mã vạch không được để trống");
     }
 }

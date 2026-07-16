@@ -13,6 +13,8 @@ import Genres from "../pages/Genres.jsx";
 import GenreDetail from "../pages/GenreDetail.jsx";
 import BookDetail from "../pages/BookDetail.jsx";
 import Account from "../pages/Account.jsx";
+import Fines from "../pages/fines.jsx";
+import PaymentResult from "../pages/paymentResult.jsx";
 import RequireAuth from "../auth/RequireAuth.jsx";
 
 import RequireAdmin from "../admin/RequireAdmin.jsx";
@@ -43,14 +45,9 @@ export default function AppRouter() {
       <Route path="/genres" element={<Genres />} />
       <Route path="/genres/:categoryId" element={<GenreDetail />} />
       <Route path="/books/:bookId" element={<BookDetail />} />
-      <Route
-        path="/account"
-        element={
-          <RequireAuth>
-            <Account />
-          </RequireAuth>
-        }
-      />
+      <Route path="/account" element={<Account />} />
+      <Route path="/fines" element={<RequireAuth><Fines /></RequireAuth>} />
+      <Route path="/payment/result" element={<PaymentResult />} />
 
       <Route
         path="/admin"

@@ -18,10 +18,14 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.sql.Timestamp;
+import java.util.Set;
 
 @Service
 @Transactional
 public class BookServiceImpl implements IBookService {
+
+    private static final Set<String> SORT_FIELDS = Set.of("bookId", "title", "isbn", "publishYear", "createdAt");
 
     private final BookDAO bookDAO;
 
@@ -31,6 +35,8 @@ public class BookServiceImpl implements IBookService {
 
     @Override
     public Books createBook(Books book) {
+        validateBook(book);
+        if (book.getCreatedAt() == null) book.setCreatedAt(new Timestamp(System.currentTimeMillis()));
         return bookDAO.save(book);
     }
 
@@ -60,6 +66,10 @@ public class BookServiceImpl implements IBookService {
         if (book.getCategoryId() != null) existing.setCategoryId(book.getCategoryId());
         if (book.getAuthorId() != null) existing.setAuthorId(book.getAuthorId());
         if (book.getPublisherId() != null) existing.setPublisherId(book.getPublisherId());
+        if (book.getHidden() != null) existing.setHidden(book.getHidden());
+        if (book.getFeatured() != null) existing.setFeatured(book.getFeatured());
+
+        validateBook(existing);
 
         return bookDAO.save(existing);
     }
@@ -101,6 +111,10 @@ public class BookServiceImpl implements IBookService {
             String sortDir,
             String keyword) {
 
+        if (page < 0) throw new IllegalArgumentException("Số trang không hợp lệ");
+        if (size < 1 || size > 1000) throw new IllegalArgumentException("Kích thước trang phải từ 1 đến 1000");
+        if (!SORT_FIELDS.contains(sortBy)) throw new IllegalArgumentException("Trường sắp xếp không hợp lệ");
+
         Sort sort = sortDir.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
@@ -132,6 +146,15 @@ public class BookServiceImpl implements IBookService {
         return response;
     }
 
+    private void validateBook(Books book) {
+        if (book == null || book.getTitle() == null || book.getTitle().isBlank())
+            throw new IllegalArgumentException("Tên sách không được để trống");
+        if (book.getPages() != null && book.getPages() <= 0)
+            throw new IllegalArgumentException("Số trang phải lớn hơn 0");
+        if (book.getPublishYear() != null && (book.getPublishYear() < 0 || book.getPublishYear() > 9999))
+            throw new IllegalArgumentException("Năm xuất bản không hợp lệ");
+    }
+
     private BookResponse convertToResponse(Books book) {
 
         BookResponse response = new BookResponse();
@@ -140,6 +163,16 @@ public class BookServiceImpl implements IBookService {
         response.setBookId(book.getBookId());
         response.setTitle(book.getTitle());
         response.setIsbn(book.getIsbn());
+        response.setDescription(book.getDescription());
+        response.setPublishYear(book.getPublishYear());
+        response.setCoverImage(book.getCoverImage());
+        response.setLanguage(book.getLanguage());
+        response.setPages(book.getPages());
+        response.setAuthorId(book.getAuthorId());
+        response.setCategoryId(book.getCategoryId());
+        response.setPublisherId(book.getPublisherId());
+        response.setHidden(book.getHidden());
+        response.setFeatured(book.getFeatured());
 
         return response;
     }

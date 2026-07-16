@@ -22,6 +22,8 @@ public class ReturnServiceImpl implements IReturnService {
 
     @Override
     public Returns createReturn(Returns returns) {
+        if (returns == null || returns.getTicketId() == null || returns.getReturnDate() == null)
+            throw new IllegalArgumentException("Thiếu thông tin trả sách");
         return returnDAO.save(returns);
     }
 
@@ -37,11 +39,13 @@ public class ReturnServiceImpl implements IReturnService {
 
     @Override
     public Returns updateReturn(long returnId, Returns returns) {
-        if (returnDAO.existsById(returnId)) {
-            returns.setReturnId(returnId);
-            return returnDAO.save(returns);
-        }
-        throw new ResourceNotFoundException("Return not found with id: " + returnId);
+        Returns existing = returnDAO.findById(returnId)
+                .orElseThrow(() -> new ResourceNotFoundException("Return not found with id: " + returnId));
+        if (returns.getTicketId() != null) existing.setTicketId(returns.getTicketId());
+        if (returns.getReturnDate() != null) existing.setReturnDate(returns.getReturnDate());
+        if (returns.getReceivedBy() != null) existing.setReceivedBy(returns.getReceivedBy());
+        if (returns.getNote() != null) existing.setNote(returns.getNote());
+        return returnDAO.save(existing);
     }
 
     @Override

@@ -23,6 +23,16 @@ public class LoginInterceptor implements HandlerInterceptor {
             return true;
         }
 
+        // The public React catalogue must be browseable before a visitor logs in.
+        if ("GET".equalsIgnoreCase(request.getMethod()) &&
+                (request.getRequestURI().startsWith("/api/books") ||
+                 request.getRequestURI().startsWith("/api/categories") ||
+                 request.getRequestURI().startsWith("/api/authors") ||
+                 request.getRequestURI().startsWith("/api/book-copies"))) {
+            return true;
+        }
+
+        if (request.getRequestURI().equals("/api/payments/vnpay/return")) return true;
         HttpSession session = request.getSession(false);
 
         if (session == null || session.getAttribute("USER_LOGIN") == null) {
@@ -32,6 +42,18 @@ public class LoginInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        return true;
+        String role = String.valueOf(session.getAttribute("ROLE"));
+        String path = request.getRequestURI();
+        if (path.equals("/api/auth/me") || path.equals("/api/auth/logout") ||
+                path.equals("/api/auth/change-password") || path.equals("/api/borrow-tickets/history") ||
+                path.startsWith("/api/payments/")) return true;
+        if ("Admin".equalsIgnoreCase(role)) return true;
+        boolean librarianEndpoint = path.startsWith("/api/books") || path.startsWith("/api/book-copies") ||
+                path.startsWith("/api/borrow-tickets") || path.startsWith("/api/borrow-details") ||
+                path.startsWith("/api/returns") || path.startsWith("/api/return-details") || path.startsWith("/api/fines");
+        if ("Librarian".equalsIgnoreCase(role) && librarianEndpoint) return true;
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.getWriter().write("Forbidden");
+        return false;
     }
 }

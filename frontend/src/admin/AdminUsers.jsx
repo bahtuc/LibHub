@@ -1,13 +1,15 @@
 // src/admin/AdminUsers.jsx
 import AdminCrudPage from "./AdminCrudPage";
 import Badge from "./Badge";
-import { usersStore, ROLE_OPTIONS, getRoleLabel } from "../data/adminStore";
+import { usersStore, rolesStore } from "../data/adminStore";
 import { useAuth } from "../auth/useAuth";
 
-const ROLE_TONE = { Admin: "warning", User: "success", Librarian: "info" };
+const ROLE_TONE = { Admin: "warning", Member: "success", Librarian: "info" };
 
 export default function AdminUsers() {
   const { user: currentUser } = useAuth();
+  const roles = rolesStore.useCollection();
+  const roleOptions = roles.map((role) => ({ value: role.role_id, label: role.role_name }));
 
   return (
     <AdminCrudPage
@@ -15,7 +17,7 @@ export default function AdminUsers() {
       subtitle="Quản lý tài khoản và phân quyền (Admin / User / Librarian)."
       store={usersStore}
       idField="user_id"
-      emptyItem={{ username: "", full_name: "", email: "", role_id: 2, status: "active" }}
+      emptyItem={{ username: "", password_hash: "", full_name: "", email: "", role_id: roleOptions[0]?.value ?? "", status: "active" }}
       canDelete={(item) => item.user_id !== currentUser?.user_id}
       columns={[
         {
@@ -34,7 +36,7 @@ export default function AdminUsers() {
           key: "role_id",
           label: "Vai trò",
           render: (i) => {
-            const label = getRoleLabel(i.role_id);
+            const label = i.role_name || roles.find((role) => role.role_id === i.role_id)?.role_name || "—";
             return <Badge tone={ROLE_TONE[label] ?? "neutral"}>{label}</Badge>;
           },
         },
@@ -51,9 +53,10 @@ export default function AdminUsers() {
       ]}
       fields={[
         { name: "username", label: "Tên đăng nhập", required: true },
+        { name: "password_hash", label: "Mật khẩu (chỉ khi tạo mới)", type: "password" },
         { name: "full_name", label: "Họ và tên", required: true },
         { name: "email", label: "Email", type: "email" },
-        { name: "role_id", label: "Vai trò", type: "select", options: ROLE_OPTIONS, numeric: true, required: true },
+        { name: "role_id", label: "Vai trò", type: "select", options: roleOptions, numeric: true, required: true },
         {
           name: "status",
           label: "Trạng thái",

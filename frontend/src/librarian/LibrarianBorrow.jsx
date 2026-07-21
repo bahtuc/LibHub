@@ -2,7 +2,7 @@
 // Tạo phiếu mượn mới: chọn bạn đọc, chọn (các) bản sao còn sẵn, đặt hạn trả.
 import { useMemo, useState } from "react";
 import Icon from "../components/Icon";
-import { usersStore, booksStore, copiesStore, getRoleLabel } from "../data/adminStore";
+import { usersStore, booksStore, copiesStore } from "../data/adminStore";
 import { createTicket } from "../data/librarianStore";
 
 function defaultDueDate() {
@@ -81,7 +81,7 @@ export default function LibrarianBorrow() {
             <select value={userId} onChange={(e) => setUserId(e.target.value)} required>
               {users.map((u) => (
                 <option key={u.user_id} value={u.user_id}>
-                  {u.full_name} ({u.username}) — {getRoleLabel(u.role_id)}
+                  {u.full_name} ({u.username}) — {u.role_name || "—"}
                 </option>
               ))}
             </select>

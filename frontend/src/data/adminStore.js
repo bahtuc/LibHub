@@ -1,121 +1,222 @@
-// src/data/adminStore.js
-//
-// Kho dữ liệu CRUD cho trang Admin — chưa có backend nên toàn bộ thao tác
-// thêm/sửa/xóa được lưu vào localStorage, seed lần đầu từ dữ liệu mock trong
-// libraryData.js. Khi nhóm có API thật: thay các hàm getAll/add/update/remove
-// bên trong makeStore() bằng fetch tương ứng (GET/POST/PUT/DELETE), phần gọi
-// từ các trang Admin (store.useCollection(), store.add(), ...) giữ nguyên.
+// Shared API-backed stores for the Admin and Librarian screens.
+// The in-memory cache only keeps React views in sync; SQL Server remains the
+// single source of truth and every mutation is sent to the Spring API.
 
 import { useEffect, useState } from "react";
-import { books, categories, authors } from "./libraryData";
+import * as bookApi from "../services/BookService";
+import * as categoryApi from "../services/CategoryService";
+import * as authorApi from "../services/AuthorService";
+import * as copyApi from "../services/BookCopyService";
+import * as userApi from "../services/UserService";
+import * as roleApi from "../services/RoleService";
 
-function makeStore(storageKey, seedData, idField) {
-  function load() {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (raw) return JSON.parse(raw);
-    } catch {
-      /* rơi xuống seed nếu localStorage lỗi/hỏng dữ liệu */
+function makeApiStore({ idField, loadAll, create, update, remove, fromApi, toApi }) {
+  let cache = [];
+  let pendingLoad = null;
+  const listeners = new Set();
+
+  function notify() {
+    listeners.forEach((listener) => listener(cache));
+  }
+
+  async function refresh() {
+    if (!pendingLoad) {
+      pendingLoad = Promise.resolve(loadAll())
+        .then((items) => {
+          cache = items.map(fromApi);
+          notify();
+          return cache;
+        })
+        .finally(() => {
+          pendingLoad = null;
+        });
     }
-    localStorage.setItem(storageKey, JSON.stringify(seedData));
-    return seedData;
-  }
-
-  function save(list) {
-    localStorage.setItem(storageKey, JSON.stringify(list));
-    window.dispatchEvent(new Event(`libhub-admin-${storageKey}`));
-  }
-
-  function getAll() {
-    return load();
-  }
-
-  function getById(id) {
-    return load().find((item) => item[idField] === id);
-  }
-
-  function add(item) {
-    const list = load();
-    const nextId = list.length ? Math.max(...list.map((i) => i[idField])) + 1 : 1;
-    const newItem = { ...item, [idField]: nextId };
-    save([...list, newItem]);
-    return newItem;
-  }
-
-  function update(id, patch) {
-    save(load().map((item) => (item[idField] === id ? { ...item, ...patch } : item)));
-  }
-
-  function remove(id) {
-    save(load().filter((item) => item[idField] !== id));
-  }
-
-  function resetToSeed() {
-    save(seedData);
+    return pendingLoad;
   }
 
   function useCollection() {
-    const [items, setItems] = useState(load);
+    const [items, setItems] = useState(cache);
     useEffect(() => {
-      const eventName = `libhub-admin-${storageKey}`;
-      const refresh = () => setItems(load());
-      window.addEventListener(eventName, refresh);
-      window.addEventListener("storage", refresh);
-      return () => {
-        window.removeEventListener(eventName, refresh);
-        window.removeEventListener("storage", refresh);
-      };
+      const listener = (next) => setItems([...next]);
+      listeners.add(listener);
+      refresh().catch((error) => console.error(`Không tải được ${idField}`, error));
+      return () => listeners.delete(listener);
     }, []);
     return items;
   }
 
-  return { getAll, getById, add, update, remove, resetToSeed, useCollection };
+  function getAll() {
+    return cache;
+  }
+
+  function getById(id) {
+    return cache.find((item) => Number(item[idField]) === Number(id));
+  }
+
+  async function add(item) {
+    const saved = fromApi(await create(toApi(item, true)));
+    cache = [...cache, saved];
+    notify();
+    return saved;
+  }
+
+  async function updateItem(id, patch) {
+    const current = getById(id) ?? {};
+    const saved = fromApi(await update(id, toApi({ ...current, ...patch }, false)));
+    cache = cache.map((item) => Number(item[idField]) === Number(id) ? saved : item);
+    notify();
+    return saved;
+  }
+
+  async function removeItem(id) {
+    await remove(id);
+    cache = cache.filter((item) => Number(item[idField]) !== Number(id));
+    notify();
+  }
+
+  return { useCollection, getAll, getById, refresh, add, update: updateItem, remove: removeItem };
 }
 
-// --- Bản sao sách (BookCopies) — chưa có mock sẵn nên sinh seed ở đây,
-// mỗi sách có 2 bản sao, bản đầu theo đúng status của sách, bản 2 luôn còn.
-function buildCopiesSeed() {
-  const copies = [];
-  let copyId = 1;
-  books.forEach((book) => {
-    for (let i = 0; i < 2; i += 1) {
-      copies.push({
-        copy_id: copyId,
-        book_id: book.book_id,
-        barcode: `LH-${book.book_id}-${String(i + 1).padStart(2, "0")}`,
-        shelf_location: `Kệ ${String.fromCharCode(65 + (book.category_id - 1))}-${book.book_id % 10}`,
-        status: i === 0 ? book.status : "available",
-        acquired_date: "2024-01-01",
-      });
-      copyId += 1;
-    }
-  });
-  return copies;
-}
+const fromBook = (book) => ({
+  ...book,
+  book_id: book.bookId,
+  publish_year: book.publishYear,
+  cover_image: book.coverImage,
+  category_id: book.categoryId,
+  author_id: book.authorId,
+  publisher_id: book.publisherId,
+  is_hidden: book.hidden ?? false,
+  is_featured: book.featured ?? false,
+});
 
-// --- Người dùng — gộp danh sách mock trong auth/mockUsers.js làm seed ban đầu.
-// Bảng này TÁCH RIÊNG khỏi cơ chế đăng nhập thật (useAuth) vì mock hiện chưa
-// có 1 nguồn Users trung tâm; khi có backend, cả 2 nơi sẽ cùng gọi chung 1 API.
-function buildUsersSeed() {
-  return [
-    { user_id: 1, username: "admin", full_name: "Quản trị viên", email: "admin@libhub.vn", role_id: 1, status: "active" },
-    { user_id: 2, username: "user", full_name: "Bạn đọc demo", email: "user@libhub.vn", role_id: 2, status: "active" },
-    { user_id: 3, username: "librian", full_name: "Thủ thư demo", email: "librarian@libhub.vn", role_id: 3, status: "active" },
-  ];
-}
+const toBook = (book) => ({
+  title: book.title,
+  isbn: book.isbn || null,
+  publishYear: book.publish_year || null,
+  description: book.description || null,
+  coverImage: book.cover_image || null,
+  language: book.language || null,
+  pages: book.pages || null,
+  categoryId: book.category_id || null,
+  authorId: book.author_id || null,
+  publisherId: book.publisher_id || null,
+  hidden: book.is_hidden ?? false,
+  featured: book.is_featured ?? false,
+});
 
-export const booksStore = makeStore("libhub_admin_books", books, "book_id");
-export const categoriesStore = makeStore("libhub_admin_categories", categories, "category_id");
-export const authorsStore = makeStore("libhub_admin_authors", authors, "author_id");
-export const copiesStore = makeStore("libhub_admin_copies", buildCopiesSeed(), "copy_id");
-export const usersStore = makeStore("libhub_admin_users", buildUsersSeed(), "user_id");
+const fromCategory = (category) => ({
+  ...category,
+  category_id: category.categoryId,
+  category_name: category.categoryName,
+});
 
-export const ROLE_OPTIONS = [
-  { value: 1, label: "Admin" },
-  { value: 2, label: "User" },
-  { value: 3, label: "Librarian" },
-];
+const toCategory = (category) => ({
+  categoryName: category.category_name,
+  description: category.description || null,
+});
 
-export function getRoleLabel(role_id) {
-  return ROLE_OPTIONS.find((r) => r.value === role_id)?.label ?? "—";
-}
+const fromAuthor = (author) => ({
+  ...author,
+  author_id: author.authorId,
+  author_name: author.authorName,
+});
+
+const toAuthor = (author) => ({
+  authorName: author.author_name,
+  biography: author.biography || null,
+});
+
+const fromCopy = (copy) => ({
+  ...copy,
+  copy_id: copy.copyId,
+  book_id: copy.bookId,
+  shelf_location: copy.shelfLocation,
+  acquired_date: copy.acquiredDate,
+  status: String(copy.status || "available").toLowerCase(),
+});
+
+const toCopy = (copy) => ({
+  bookId: copy.book_id,
+  barcode: copy.barcode,
+  shelfLocation: copy.shelf_location || null,
+  status: copy.status,
+  acquiredDate: copy.acquired_date || null,
+});
+
+const fromUser = (user) => ({
+  ...user,
+  user_id: user.userId,
+  full_name: user.fullName,
+  role_id: user.role?.roleId,
+  role_name: user.role?.roleName,
+  status: String(user.status || "active").toLowerCase(),
+});
+
+const toUser = (user, creating) => ({
+  username: user.username,
+  passwordHash: creating ? user.password_hash : undefined,
+  fullName: user.full_name,
+  email: user.email || null,
+  status: String(user.status || "active").toUpperCase(),
+  role: user.role_id ? { roleId: user.role_id } : null,
+});
+
+export const booksStore = makeApiStore({
+  idField: "book_id",
+  loadAll: async () => (await bookApi.getBooks({ size: 1000 })).content ?? [],
+  create: bookApi.createBook,
+  update: bookApi.updateBook,
+  remove: bookApi.deleteBook,
+  fromApi: fromBook,
+  toApi: toBook,
+});
+
+export const categoriesStore = makeApiStore({
+  idField: "category_id",
+  loadAll: categoryApi.getCategories,
+  create: categoryApi.createCategory,
+  update: categoryApi.updateCategory,
+  remove: categoryApi.deleteCategory,
+  fromApi: fromCategory,
+  toApi: toCategory,
+});
+
+export const authorsStore = makeApiStore({
+  idField: "author_id",
+  loadAll: authorApi.getAuthors,
+  create: authorApi.createAuthor,
+  update: authorApi.updateAuthor,
+  remove: authorApi.deleteAuthor,
+  fromApi: fromAuthor,
+  toApi: toAuthor,
+});
+
+export const copiesStore = makeApiStore({
+  idField: "copy_id",
+  loadAll: copyApi.getBookCopies,
+  create: copyApi.createBookCopy,
+  update: copyApi.updateBookCopy,
+  remove: copyApi.deleteBookCopy,
+  fromApi: fromCopy,
+  toApi: toCopy,
+});
+
+export const usersStore = makeApiStore({
+  idField: "user_id",
+  loadAll: userApi.getUsers,
+  create: userApi.createUser,
+  update: userApi.updateUser,
+  remove: userApi.deleteUser,
+  fromApi: fromUser,
+  toApi: toUser,
+});
+
+export const rolesStore = makeApiStore({
+  idField: "role_id",
+  loadAll: roleApi.getRoles,
+  create: roleApi.createRole,
+  update: roleApi.updateRole,
+  remove: roleApi.deleteRole,
+  fromApi: (role) => ({ ...role, role_id: role.roleId, role_name: role.roleName }),
+  toApi: (role) => ({ roleName: role.role_name, description: role.description || null }),
+});

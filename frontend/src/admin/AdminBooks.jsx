@@ -1,11 +1,12 @@
 // src/admin/AdminBooks.jsx
 import AdminCrudPage from "./AdminCrudPage";
 import Badge from "./Badge";
-import { booksStore, categoriesStore, authorsStore } from "../data/adminStore";
+import { booksStore, categoriesStore, authorsStore, copiesStore } from "../data/adminStore";
 
 export default function AdminBooks() {
   const categories = categoriesStore.useCollection();
   const authors = authorsStore.useCollection();
+  const copies = copiesStore.useCollection();
 
   const categoryOptions = categories.map((c) => ({ value: c.category_id, label: c.category_name }));
   const authorOptions = authors.map((a) => ({ value: a.author_id, label: a.author_name }));
@@ -23,7 +24,6 @@ export default function AdminBooks() {
         publish_year: new Date().getFullYear(),
         pages: 200,
         description: "",
-        status: "available",
         is_featured: false,
         cover_image: null,
       }}
@@ -44,7 +44,7 @@ export default function AdminBooks() {
           key: "status",
           label: "Trạng thái",
           render: (i) =>
-            i.status === "available" ? (
+            copies.some((copy) => copy.book_id === i.book_id && copy.status === "available") ? (
               <Badge tone="success">Còn sách</Badge>
             ) : (
               <Badge tone="danger">Đã mượn hết</Badge>
@@ -62,15 +62,6 @@ export default function AdminBooks() {
         { name: "category_id", label: "Thể loại", type: "select", options: categoryOptions, numeric: true, required: true },
         { name: "publish_year", label: "Năm xuất bản", type: "number" },
         { name: "pages", label: "Số trang", type: "number" },
-        {
-          name: "status",
-          label: "Trạng thái",
-          type: "select",
-          options: [
-            { value: "available", label: "Còn sách" },
-            { value: "borrowed", label: "Đã mượn hết" },
-          ],
-        },
         { name: "is_featured", label: "Hiện ở mục nổi bật (trang chủ)", type: "checkbox" },
         { name: "description", label: "Mô tả", type: "textarea" },
       ]}

@@ -23,15 +23,19 @@ export default function AdminCrudPage({
   const items = store.useCollection();
   const [editing, setEditing] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const isNew = editing && !items.some((i) => i[idField] === editing[idField]);
 
   function openAdd() {
     setEditing({ ...emptyItem });
     setConfirmId(null);
+    setError("");
   }
   function openEdit(item) {
     setEditing({ ...item });
     setConfirmId(null);
+    setError("");
   }
   function closeForm() {
     setEditing(null);
@@ -39,18 +43,34 @@ export default function AdminCrudPage({
   function handleChange(name, value) {
     setEditing((e) => ({ ...e, [name]: value }));
   }
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    if (isNew) {
-      store.add(editing);
-    } else {
-      store.update(editing[idField], editing);
+    setSaving(true);
+    setError("");
+    try {
+      if (isNew) {
+        await store.add(editing);
+      } else {
+        await store.update(editing[idField], editing);
+      }
+      setEditing(null);
+    } catch (err) {
+      setError(err.message || "Không thể lưu dữ liệu.");
+    } finally {
+      setSaving(false);
     }
-    setEditing(null);
   }
-  function handleDelete(id) {
-    store.remove(id);
-    setConfirmId(null);
+  async function handleDelete(id) {
+    setSaving(true);
+    setError("");
+    try {
+      await store.remove(id);
+      setConfirmId(null);
+    } catch (err) {
+      setError(err.message || "Không thể xóa dữ liệu.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -123,8 +143,8 @@ export default function AdminCrudPage({
           </div>
 
           <div className="lh-admin-form__actions">
-            <button type="submit" className="lh-btn lh-btn--primary">
-              {isNew ? "Thêm" : "Lưu thay đổi"}
+            <button type="submit" className="lh-btn lh-btn--primary" disabled={saving}>
+              {saving ? "Đang lưu…" : isNew ? "Thêm" : "Lưu thay đổi"}
             </button>
             <button type="button" className="lh-btn lh-btn--ghost" onClick={closeForm}>
               Hủy
@@ -132,6 +152,8 @@ export default function AdminCrudPage({
           </div>
         </form>
       )}
+
+      {error && <p className="lh-auth-form__error">{error}</p>}
 
       <div className="lh-admin-table-wrap">
         <div className="lh-admin-table-scroll">

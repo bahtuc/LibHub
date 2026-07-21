@@ -1,16 +1,14 @@
 import { Link } from "react-router-dom";
 import Icon from "./Icon";
-import { useBookCovers } from "../data/useBookCovers";
 import { useCatalog } from "../context/CatalogContext";
 import "../styles/BookCard.css";
 
 export default function BookCard({ book }) {
-  const covers = useBookCovers();
   const { categories, authors } = useCatalog();
   const category = categories.find((item) => item.category_id === book.category_id);
   const authorName = authors.find((item) => item.author_id === book.author_id)?.author_name ?? "Unknown author";
   const available = book.status === "available";
-  const coverUrl = covers[book.book_id] || book.cover_image;
+  const coverUrl = book.cover_image;
   return <article className="lh-book-card">
     <div className="lh-book-card__cover" style={{ "--spine": category?.color ?? "#3d6652" }}>
       {coverUrl ? <img src={coverUrl} alt={book.title} className="lh-book-card__img" /> : <span className="lh-book-card__initial">{book.title.charAt(0)}</span>}

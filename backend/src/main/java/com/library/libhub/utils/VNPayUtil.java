@@ -10,14 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- * VNPay request signing / verification helpers.
- *
- * Follows VNPay's reference algorithm: sort fields alphabetically, build the
- * hash data from URL-encoded key=value pairs joined by '&', then HMAC-SHA512
- * with the merchant hash secret. The same encoding is used to build the final
- * query string so the signature the browser sends back matches ours.
- */
 public final class VNPayUtil {
 
     private VNPayUtil() {
@@ -43,10 +35,6 @@ public final class VNPayUtil {
         return URLEncoder.encode(value, StandardCharsets.US_ASCII);
     }
 
-    /**
-     * Build the "hashData" string (URL-encoded, sorted, '&'-joined) that the
-     * checksum is computed over. Params must NOT already contain the hash field.
-     */
     public static String buildHashData(Map<String, String> params) {
         TreeMap<String, String> sorted = new TreeMap<>(params);
         List<String> parts = new ArrayList<>();
@@ -59,15 +47,10 @@ public final class VNPayUtil {
         return String.join("&", parts);
     }
 
-    /** Same ordering/encoding as {@link #buildHashData} — used for the real URL query. */
     public static String buildQuery(Map<String, String> params) {
         return buildHashData(params);
     }
 
-    /**
-     * Recompute the checksum over the returned params (excluding vnp_SecureHash
-     * and vnp_SecureHashType) and compare it to the one VNPay sent.
-     */
     public static boolean verifySignature(Map<String, String> allParams, String hashSecret) {
         Map<String, String> params = new TreeMap<>(allParams);
         String received = params.remove("vnp_SecureHash");

@@ -28,17 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * VNPay fine-payment endpoints.
- *
- * Flow:
- *  1. POST /api/payments/vnpay/create  { fineId }  -> returns a payUrl.
- *  2. Browser is sent to VNPay, user pays.
- *  3. VNPay redirects the browser to GET /api/payments/vnpay/return with a
- *     signed result. We verify the signature, mark the fine paid on success,
- *     then 302-redirect to the SPA result page.
- */
-@RestController
 @RequestMapping("/api/payments")
 public class PaymentController {
 
@@ -57,7 +46,6 @@ public class PaymentController {
         this.borrowTicketService = borrowTicketService;
     }
 
-    /** Returns only the fines owned by the signed-in member. */
     @GetMapping("/fines")
     public ResponseEntity<?> getMyFines(HttpSession session) {
         Users user = (Users) session.getAttribute("USER_LOGIN");
@@ -115,7 +103,6 @@ public class PaymentController {
         params.put("vnp_Version", vnp.getApiVersion());
         params.put("vnp_Command", "pay");
         params.put("vnp_TmnCode", vnp.getTmnCode());
-        // VNPay expects the amount in the smallest unit (VND x 100).
         params.put("vnp_Amount", String.valueOf(Math.round(amount * 100)));
         params.put("vnp_CurrCode", "VND");
         params.put("vnp_TxnRef", txnRef);

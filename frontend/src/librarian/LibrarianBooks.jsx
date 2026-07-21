@@ -4,11 +4,12 @@
 import AdminCrudPage from "../admin/AdminCrudPage";
 import Icon from "../components/Icon";
 import Badge from "../admin/Badge";
-import { booksStore, categoriesStore, authorsStore } from "../data/adminStore";
+import { booksStore, categoriesStore, authorsStore, copiesStore } from "../data/adminStore";
 
 export default function LibrarianBooks() {
   const categories = categoriesStore.useCollection();
   const authors = authorsStore.useCollection();
+  const copies = copiesStore.useCollection();
 
   const categoryOptions = categories.map((c) => ({ value: c.category_id, label: c.category_name }));
   const authorOptions = authors.map((a) => ({ value: a.author_id, label: a.author_name }));
@@ -27,7 +28,6 @@ export default function LibrarianBooks() {
         publish_year: new Date().getFullYear(),
         pages: 200,
         description: "",
-        status: "available",
         is_featured: false,
         is_hidden: false,
         cover_image: null,
@@ -57,7 +57,7 @@ export default function LibrarianBooks() {
         {
           key: "status",
           label: "Trạng thái",
-          render: (i) => (i.status === "available" ? <Badge tone="success">Còn sách</Badge> : <Badge tone="danger">Đã mượn hết</Badge>),
+          render: (i) => (copies.some((copy) => copy.book_id === i.book_id && copy.status === "available") ? <Badge tone="success">Còn sách</Badge> : <Badge tone="danger">Đã mượn hết</Badge>),
         },
         {
           key: "is_hidden",
@@ -71,15 +71,6 @@ export default function LibrarianBooks() {
         { name: "category_id", label: "Thể loại", type: "select", options: categoryOptions, numeric: true, required: true },
         { name: "publish_year", label: "Năm xuất bản", type: "number" },
         { name: "pages", label: "Số trang", type: "number" },
-        {
-          name: "status",
-          label: "Trạng thái",
-          type: "select",
-          options: [
-            { value: "available", label: "Còn sách" },
-            { value: "borrowed", label: "Đã mượn hết" },
-          ],
-        },
         { name: "description", label: "Mô tả", type: "textarea" },
       ]}
     />

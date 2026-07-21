@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Icon from "./Icon";
 import { useAuth } from "../auth/useAuth";
 import "../styles/Header.css";
@@ -12,7 +12,7 @@ const NAV_LINKS = [
 
 export default function Header() {
   const [open, setOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   return (
     <header className="lh-header">
@@ -40,24 +40,7 @@ export default function Header() {
           </Link>
 
           {user ? (
-            <div className="lh-header__user">
-              <Link to="/account" className="lh-header__user-name">
-                Xin chào, {user.full_name}
-              </Link>
-              {user.role_name === "Admin" && (
-                <Link to="/admin" className="lh-btn lh-btn--ghost lh-header__cta">
-                  Quản trị
-                </Link>
-              )}
-              {(user.role_name === "Librarian" || user.role_name === "Admin") && (
-                <Link to="/librarian" className="lh-btn lh-btn--ghost lh-header__cta">
-                  Thủ thư
-                </Link>
-              )}
-              <button className="lh-btn lh-btn--ghost lh-header__cta" onClick={logout}>
-                Đăng xuất
-              </button>
-            </div>
+            <UserMenu />
           ) : (
             <Link to="/login" className="lh-btn lh-btn--primary lh-header__cta">
               Đăng nhập
@@ -70,7 +53,7 @@ export default function Header() {
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
           >
-            <Icon name={open ? "arrow" : "layers"} size={18} />
+            <Icon name={open ? "x" : "layers"} size={18} />
           </button>
         </div>
       </div>
@@ -83,31 +66,7 @@ export default function Header() {
             </Link>
           ))}
           {user ? (
-            <>
-              {user.role_name === "Admin" && (
-                <Link to="/admin" onClick={() => setOpen(false)}>
-                  Quản trị
-                </Link>
-              )}
-              {(user.role_name === "Librarian" || user.role_name === "Admin") && (
-                <Link to="/librarian" onClick={() => setOpen(false)}>
-                  Thủ thư
-                </Link>
-              )}
-              <Link to="/account" onClick={() => setOpen(false)}>
-                Tài khoản của tôi
-              </Link>
-              <button
-                className="lh-btn lh-btn--ghost"
-                style={{ marginTop: 8 }}
-                onClick={() => {
-                  logout();
-                  setOpen(false);
-                }}
-              >
-                Đăng xuất ({user.full_name})
-              </button>
-            </>
+            <MobileUserLinks onNavigate={() => setOpen(false)} />
           ) : (
             <Link to="/login" onClick={() => setOpen(false)}>
               Đăng nhập
@@ -116,5 +75,143 @@ export default function Header() {
         </nav>
       )}
     </header>
+  );
+}
+
+function UserMenu() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (rootRef.current && !rootRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    }
+    function handleEscape(e) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
+  const isAdmin = user.role_name === "Admin";
+  const isLibrarian = user.role_name === "Librarian" || isAdmin;
+
+  function go(path) {
+    setOpen(false);
+    navigate(path);
+  }
+
+  function handleLogout() {
+    setOpen(false);
+    logout();
+  }
+
+  return (
+    <div className="lh-user-menu" ref={rootRef}>
+      <button
+        className="lh-user-menu__trigger"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="true"
+        aria-expanded={open}
+      >
+        <span className="lh-user-menu__avatar">{user.full_name?.charAt(0)}</span>
+        <span className="lh-user-menu__name">{user.full_name}</span>
+        <Icon
+          name="chevron-down"
+          size={15}
+          className={`lh-user-menu__chevron ${open ? "is-open" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div className="lh-user-menu__panel" role="menu">
+          <div className="lh-user-menu__header">
+            <span className="lh-user-menu__header-name">{user.full_name}</span>
+            <span className="lh-user-menu__header-role">{user.role_name}</span>
+          </div>
+
+          <button className="lh-user-menu__item" role="menuitem" onClick={() => go("/account")}>
+            <Icon name="user" size={16} />
+            Tài khoản của tôi
+          </button>
+
+          {(isAdmin || isLibrarian) && (
+            <>
+              <div className="lh-user-menu__divider" />
+              <p className="lh-user-menu__label">Công cụ</p>
+
+              {isAdmin && (
+                <button className="lh-user-menu__item" role="menuitem" onClick={() => go("/admin")}>
+                  <Icon name="dashboard" size={16} />
+                  Quản trị
+                </button>
+              )}
+              {isLibrarian && (
+                <button
+                  className="lh-user-menu__item"
+                  role="menuitem"
+                  onClick={() => go("/librarian")}
+                >
+                  <Icon name="layers" size={16} />
+                  Thủ thư
+                </button>
+              )}
+            </>
+          )}
+
+          <div className="lh-user-menu__divider" />
+          <button
+            className="lh-user-menu__item lh-user-menu__item--danger"
+            role="menuitem"
+            onClick={handleLogout}
+          >
+            <Icon name="lock" size={16} />
+            Đăng xuất
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MobileUserLinks({ onNavigate }) {
+  const { user, logout } = useAuth();
+  const isAdmin = user.role_name === "Admin";
+  const isLibrarian = user.role_name === "Librarian" || isAdmin;
+
+  return (
+    <>
+      <Link to="/account" onClick={onNavigate}>
+        Tài khoản của tôi
+      </Link>
+      {isAdmin && (
+        <Link to="/admin" onClick={onNavigate}>
+          Quản trị
+        </Link>
+      )}
+      {isLibrarian && (
+        <Link to="/librarian" onClick={onNavigate}>
+          Thủ thư
+        </Link>
+      )}
+      <button
+        className="lh-btn lh-btn--ghost"
+        style={{ marginTop: 8 }}
+        onClick={() => {
+          logout();
+          onNavigate();
+        }}
+      >
+        Đăng xuất ({user.full_name})
+      </button>
+    </>
   );
 }

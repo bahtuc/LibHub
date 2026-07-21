@@ -8,6 +8,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import java.nio.charset.StandardCharsets;
+
 @Component
 public class LoginInterceptor implements HandlerInterceptor {
 
@@ -36,9 +38,7 @@ public class LoginInterceptor implements HandlerInterceptor {
         HttpSession session = request.getSession(false);
 
         if (session == null || session.getAttribute("USER_LOGIN") == null) {
-
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Chưa đăng nhập");
+            writeTextResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Chưa đăng nhập");
             return false;
         }
 
@@ -52,8 +52,14 @@ public class LoginInterceptor implements HandlerInterceptor {
                 path.startsWith("/api/borrow-tickets") || path.startsWith("/api/borrow-details") ||
                 path.startsWith("/api/returns") || path.startsWith("/api/return-details") || path.startsWith("/api/fines");
         if ("Librarian".equalsIgnoreCase(role) && librarianEndpoint) return true;
-        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        response.getWriter().write("Forbidden");
+        writeTextResponse(response, HttpServletResponse.SC_FORBIDDEN, "Không có quyền truy cập");
         return false;
+    }
+
+    private void writeTextResponse(HttpServletResponse response, int status, String message) throws Exception {
+        response.setStatus(status);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setContentType("text/plain;charset=UTF-8");
+        response.getWriter().write(message);
     }
 }

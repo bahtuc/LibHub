@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RequestMapping("/api/payments")
+@RestController
 public class PaymentController {
 
     private final VNPayConfig vnp;

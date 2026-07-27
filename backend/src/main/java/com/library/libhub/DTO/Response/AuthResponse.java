@@ -1,11 +1,19 @@
 package com.library.libhub.DTO.Response;
 
+import java.sql.Timestamp;
+
 public class AuthResponse {
     private Long userId;
     private String username;
     private String fullName;
     private String role;
-    
+    private String email;
+    private String phone;
+    private String address;
+    private String avatar;
+    private String status;
+    private Timestamp memberSince;
+    private Timestamp lastLogin;
 
     public Long getUserId() {
         return userId;
@@ -38,4 +46,19 @@ public class AuthResponse {
     public void setRole(String role) {
         this.role = role;
     }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+    public String getAvatar() { return avatar; }
+    public void setAvatar(String avatar) { this.avatar = avatar; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public Timestamp getMemberSince() { return memberSince; }
+    public void setMemberSince(Timestamp memberSince) { this.memberSince = memberSince; }
+    public Timestamp getLastLogin() { return lastLogin; }
+    public void setLastLogin(Timestamp lastLogin) { this.lastLogin = lastLogin; }
 }

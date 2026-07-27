@@ -45,7 +45,8 @@ public class LoginInterceptor implements HandlerInterceptor {
         String role = String.valueOf(session.getAttribute("ROLE"));
         String path = request.getRequestURI();
         if (path.equals("/api/auth/me") || path.equals("/api/auth/logout") ||
-                path.equals("/api/auth/change-password") || path.equals("/api/borrow-tickets/history") ||
+                path.equals("/api/auth/profile") || path.equals("/api/auth/change-password") ||
+                path.equals("/api/borrow-tickets/history") ||
                 path.startsWith("/api/payments/")) return true;
         if ("Admin".equalsIgnoreCase(role)) return true;
         boolean librarianEndpoint = path.startsWith("/api/books") || path.startsWith("/api/book-copies") ||

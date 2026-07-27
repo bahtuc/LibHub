@@ -16,6 +16,10 @@ export function getCurrentUser() {
     return apiRequest("/auth/me", { method: "GET" });
 }
 
+export function updateProfile(payload) {
+    return apiRequest("/auth/profile", { method: "PUT", body: payload });
+}
+
 export function changePassword(payload) {
     return apiRequest("/auth/change-password", { method: "POST", body: payload });
 }

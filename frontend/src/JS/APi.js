@@ -1,7 +1,7 @@
 // Base URL is read from Vite env (VITE_API_BASE_URL). Falls back to the local
 // backend so `npm run dev` works out of the box without an .env file.
 export const API_BASE_URL =
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:9090/api";
+    import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
 
 export async function apiRequest(endpoint, options = {}) {
     const { method = "GET", body, headers = {} } = options;

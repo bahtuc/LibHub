@@ -3,6 +3,7 @@ package com.library.libhub.config;
 import org.springframework.stereotype.Component;
 import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.jspecify.annotations.NullMarked;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 public class LoginInterceptor implements HandlerInterceptor {
 
     @Override
+    @NullMarked
     public boolean preHandle(
             HttpServletRequest request,
             HttpServletResponse response,
@@ -47,6 +49,7 @@ public class LoginInterceptor implements HandlerInterceptor {
         if (path.equals("/api/auth/me") || path.equals("/api/auth/logout") ||
                 path.equals("/api/auth/profile") || path.equals("/api/auth/change-password") ||
                 path.equals("/api/borrow-tickets/history") ||
+                path.equals("/api/borrow-tickets/borrow") ||
                 path.startsWith("/api/payments/")) return true;
         if ("Admin".equalsIgnoreCase(role)) return true;
         boolean librarianEndpoint = path.startsWith("/api/books") || path.startsWith("/api/book-copies") ||

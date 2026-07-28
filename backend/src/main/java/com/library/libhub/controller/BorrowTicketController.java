@@ -1,5 +1,6 @@
 package com.library.libhub.controller;
 
+import com.library.libhub.DTO.Request.BorrowBookRequest;
 import com.library.libhub.entity.BorrowTickets;
 import com.library.libhub.entity.Users;
 import com.library.libhub.service.IBorrowTicketService;
@@ -36,6 +37,24 @@ public class BorrowTicketController {
     public ResponseEntity<BorrowTickets> createBorrowTicket(@RequestBody BorrowTickets borrowTicket) {
         BorrowTickets createdBorrowTicket = borrowTicketService.createBorrowTicket(borrowTicket);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdBorrowTicket);
+    }
+
+    @PostMapping("/borrow")
+    public ResponseEntity<?> borrowBook(
+            @RequestBody BorrowBookRequest request,
+            HttpSession session) {
+        Users user = (Users) session.getAttribute("USER_LOGIN");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Chưa đăng nhập");
+        }
+        if (request == null || request.getBookId() == null) {
+            throw new IllegalArgumentException("Thiếu bookId");
+        }
+
+        BorrowTickets ticket =
+                borrowTicketService.borrowBook(user.getUserId(), request.getBookId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(ticket);
     }
 
     @PutMapping("/{id}")

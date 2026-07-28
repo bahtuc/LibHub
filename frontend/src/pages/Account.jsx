@@ -1,8 +1,7 @@
 // src/pages/Account.jsx
 // Trang tài khoản cá nhân — có "thẻ thành viên" bên trái (ăn theo motif thẻ
 // mượn sách ở trang Đăng nhập/Đăng ký) + nội dung tab bên phải.
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
@@ -11,6 +10,8 @@ import { useAuth } from "../auth/useAuth";
 import { booksStore } from "../data/adminStore";
 import { categories } from "../data/libraryData";
 import { useTickets, getTicketStatus } from "../data/librarianStore";
+import { getMyFines } from "../services/FineService";
+import { createVnpayPayment } from "../services/PaymentService";
 import "../styles/theme.css";
 import "../styles/Library.css";
 import "../styles/AuthForm.css";
@@ -40,16 +41,47 @@ function formatDate(iso) {
 export default function Account() {
   const { user } = useAuth();
   const [tab, setTab] = useState("profile");
+  const [fines, setFines] = useState([]);
+  const [finesLoading, setFinesLoading] = useState(true);
+  const [finesError, setFinesError] = useState("");
 
   const allTickets = useTickets();
+  useEffect(() => {
+    if (!user) {
+      setFines([]);
+      setFinesLoading(false);
+      return;
+    }
+
+    let active = true;
+    setFinesLoading(true);
+    getMyFines()
+      .then((data) => {
+        if (active) {
+          setFines(Array.isArray(data) ? data : []);
+          setFinesError("");
+        }
+      })
+      .catch((error) => {
+        if (active) setFinesError(error.message || "Không tải được khoản phạt.");
+      })
+      .finally(() => {
+        if (active) setFinesLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [user?.user_id]);
+
   if (!user) {
     return <div className="lh-root"><Header /><section className="lh-section"><div className="lh-container lh-library-empty"><Icon name="user" size={28} /><h1 className="lh-h2">Guest account</h1><p>Browse books as a guest. Sign in to save loan history and manage your account.</p></div></section><Footer /></div>;
   }
   const myTickets = allTickets.filter((t) => t.user_id === user.user_id);
   const activeCount = myTickets.filter((t) => getTicketStatus(t) !== "returned").length;
-  const unpaidFines = myTickets
-    .flatMap((t) => t.items)
-    .filter((it) => it.fine_amount > 0 && !it.fine_paid).length;
+  const unpaidFines = fines.filter(
+    (fine) => String(fine.paidStatus).toLowerCase() !== "paid",
+  ).length;
 
   return (
     <div className="lh-root">
@@ -122,7 +154,13 @@ export default function Account() {
               {tab === "profile" && <ProfileTab />}
               {tab === "password" && <PasswordTab />}
               {tab === "tickets" && <TicketsTab tickets={myTickets} />}
-              {tab === "fines" && <FinesTab tickets={myTickets} />}
+              {tab === "fines" && (
+                <FinesTab
+                  fines={fines}
+                  loading={finesLoading}
+                  loadError={finesError}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -348,74 +386,104 @@ function TicketsTab({ tickets }) {
   );
 }
 
-function FinesTab({ tickets }) {
-  const books = booksStore.useCollection();
+function FinesTab({ fines, loading, loadError }) {
+  const [payingId, setPayingId] = useState(null);
+  const [paymentError, setPaymentError] = useState("");
+  const sorted = [...fines].sort((a, b) => (b.fineId || 0) - (a.fineId || 0));
 
-  const myFines = tickets
-    .flatMap((t) =>
-      t.items
-        .filter((it) => it.fine_amount > 0)
-        .map((it) => ({ ...it, ticket_id: t.ticket_id }))
-    )
-    .sort((a, b) => b.ticket_id - a.ticket_id);
-
-  function bookTitle(book_id) {
-    return books.find((b) => b.book_id === book_id)?.title ?? "—";
-  }
-  function reasonLabel(condition_book) {
-    if (condition_book === "mat") return "Làm mất sách";
-    if (condition_book === "hu_hong") return "Trả sách hư hỏng";
-    return "Trả trễ hạn";
+  function paid(fine) {
+    return String(fine.paidStatus).toLowerCase() === "paid";
   }
 
-  if (myFines.length === 0) {
+  async function pay(fine) {
+    setPayingId(fine.fineId);
+    setPaymentError("");
+    try {
+      const result = await createVnpayPayment(fine.fineId);
+      if (!result?.payUrl) throw new Error("Không tạo được liên kết thanh toán.");
+      window.location.assign(result.payUrl);
+    } catch (error) {
+      setPaymentError(error.message || "Không thể khởi tạo thanh toán VNPay.");
+      setPayingId(null);
+    }
+  }
+
+  if (loading) {
     return (
       <div className="lh-account__empty">
-        <Icon name="check-circle" size={26} />
-        <p>Bạn không có khoản phạt nào.</p>
-        <Link to="/fines" className="lh-btn lh-btn--primary">Kiểm tra khoản phạt trên hệ thống</Link>
+        <span className="lh-spinner" />
+        <p>Đang tải khoản phạt...</p>
       </div>
     );
   }
 
-  const totalUnpaid = myFines.filter((f) => !f.fine_paid).reduce((s, f) => s + f.fine_amount, 0);
+  if (loadError) {
+    return <p className="lh-auth-form__error">{loadError}</p>;
+  }
+
+  if (sorted.length === 0) {
+    return (
+      <div className="lh-account__empty">
+        <Icon name="check-circle" size={26} />
+        <p>Bạn không có khoản phạt nào.</p>
+      </div>
+    );
+  }
+
+  const totalUnpaid = sorted
+    .filter((fine) => !paid(fine))
+    .reduce((total, fine) => total + Number(fine.amount || 0), 0);
 
   return (
     <>
       {totalUnpaid > 0 && (
         <p className="lh-auth-form__error" style={{ marginBottom: 16 }}>
           Tổng còn nợ: <strong>{totalUnpaid.toLocaleString("vi-VN")}đ</strong>
-          {" — "}<Link to="/fines" style={{ textDecoration: "underline", fontWeight: 700 }}>Thanh toán khoản phạt</Link>
         </p>
       )}
+      {paymentError && <p className="lh-auth-form__error">{paymentError}</p>}
       <div className="lh-admin-table-wrap">
         <div className="lh-admin-table-scroll">
           <table className="lh-admin-table">
             <thead>
               <tr>
-                <th>Phiếu</th>
-                <th>Sách</th>
+                <th>Mã phạt</th>
                 <th>Lý do</th>
+                <th>Ngày tạo</th>
                 <th>Số tiền</th>
                 <th>Trạng thái</th>
+                <th />
               </tr>
             </thead>
             <tbody>
-              {myFines.map((f) => (
-                <tr key={`${f.ticket_id}-${f.copy_id}`}>
-                  <td>#{f.ticket_id}</td>
-                  <td>{bookTitle(f.book_id)}</td>
-                  <td>{reasonLabel(f.condition_book)}</td>
-                  <td>{f.fine_amount.toLocaleString("vi-VN")}đ</td>
-                  <td>
-                    {f.fine_paid ? (
-                      <Badge tone="success">Đã thu</Badge>
-                    ) : (
-                      <Badge tone="danger">Chưa thu</Badge>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {sorted.map((fine) => {
+                const isPaid = paid(fine);
+                return (
+                  <tr key={fine.fineId}>
+                    <td>#{fine.fineId}</td>
+                    <td>{fine.reason || "Phí thư viện"}</td>
+                    <td>{fine.createdAt ? String(fine.createdAt).slice(0, 10) : "—"}</td>
+                    <td>{Number(fine.amount || 0).toLocaleString("vi-VN")}đ</td>
+                    <td>
+                      <Badge tone={isPaid ? "success" : "danger"}>
+                        {isPaid ? "Đã thanh toán" : "Chưa thanh toán"}
+                      </Badge>
+                    </td>
+                    <td>
+                      {!isPaid && (
+                        <button
+                          type="button"
+                          className="lh-btn lh-btn--primary"
+                          disabled={payingId === fine.fineId}
+                          onClick={() => pay(fine)}
+                        >
+                          {payingId === fine.fineId ? "Đang chuyển..." : "Thanh toán"}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

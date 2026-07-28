@@ -1,6 +1,6 @@
 .lh-book-detail {
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: 220px minmax(0, 1fr);
   gap: 40px;
   align-items: start;
 }
@@ -9,6 +9,8 @@
   position: relative;
   aspect-ratio: 2 / 3;
   width: 100%;
+  max-width: 220px;
+  justify-self: start;
   border-radius: var(--lh-radius-md);
   overflow: hidden;
   display: grid;
@@ -24,6 +26,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
 }
 
 .lh-book-detail__initial {
@@ -157,6 +160,7 @@
     grid-template-columns: 1fr;
   }
   .lh-book-detail__cover {
-    max-width: 220px;
+    max-width: 180px;
+    justify-self: center;
   }
 }

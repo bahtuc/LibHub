@@ -1,7 +1,15 @@
 package com.library.libhub.service.impl;
 
+import com.library.libhub.dao.BookCopyDAO;
+import com.library.libhub.dao.BookDAO;
+import com.library.libhub.dao.BorrowDetailDAO;
 import com.library.libhub.dao.BorrowTicketDAO;
+import com.library.libhub.dao.UserDAO;
+import com.library.libhub.entity.BookCopies;
+import com.library.libhub.entity.Books;
+import com.library.libhub.entity.BorrowDetails;
 import com.library.libhub.entity.BorrowTickets;
+import com.library.libhub.entity.Users;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Date;
@@ -15,7 +23,12 @@ import static org.mockito.Mockito.*;
 class BorrowTicketServiceImplTest {
 
     private final BorrowTicketDAO dao = mock(BorrowTicketDAO.class);
-    private final BorrowTicketServiceImpl service = new BorrowTicketServiceImpl(dao);
+    private final BorrowDetailDAO detailDAO = mock(BorrowDetailDAO.class);
+    private final BookCopyDAO copyDAO = mock(BookCopyDAO.class);
+    private final BookDAO bookDAO = mock(BookDAO.class);
+    private final UserDAO userDAO = mock(UserDAO.class);
+    private final BorrowTicketServiceImpl service = new BorrowTicketServiceImpl(
+            dao, detailDAO, copyDAO, bookDAO, userDAO);
 
     @Test
     void createRejectsDueDateBeforeBorrowDate() {
@@ -51,6 +64,83 @@ class BorrowTicketServiceImplTest {
         assertEquals("Returned", result.getStatus());
         assertEquals("keep", result.getNote());
         assertEquals(1L, result.getCreatedAt().getTime());
+    }
+
+    @Test
+    void borrowBookCreatesTicketDetailAndMarksCopyBorrowed() {
+        Users user = new Users();
+        user.setUserId(3L);
+        user.setStatus("ACTIVE");
+        Books book = new Books();
+        book.setBookId(9L);
+        book.setTitle("Dế Mèn phiêu lưu ký");
+        BookCopies copy = new BookCopies();
+        copy.setCopyId(12L);
+        copy.setBookId(9L);
+        copy.setStatus("Available");
+
+        when(userDAO.findByIdForUpdate(3L)).thenReturn(Optional.of(user));
+        when(bookDAO.findById(9L)).thenReturn(Optional.of(book));
+        when(detailDAO.existsActiveBorrow(3L, 9L)).thenReturn(false);
+        when(copyDAO.findFirstByBookIdAndStatusIgnoreCaseOrderByCopyIdAsc(
+                9L, "Available")).thenReturn(Optional.of(copy));
+        when(dao.save(any(BorrowTickets.class))).thenAnswer(invocation -> {
+            BorrowTickets ticket = invocation.getArgument(0);
+            ticket.setTicketId(20L);
+            return ticket;
+        });
+
+        BorrowTickets ticket = service.borrowBook(3L, 9L);
+
+        assertEquals(3L, ticket.getUserId());
+        assertEquals("Borrowed", ticket.getStatus());
+        assertEquals(Date.valueOf(LocalDate.now().plusDays(14)), ticket.getDueDate());
+        assertTrue(ticket.getNote().contains("Dế Mèn phiêu lưu ký"));
+        assertEquals("Borrowed", copy.getStatus());
+        verify(detailDAO).save(argThat(detail ->
+                detail.getTicketId().equals(20L)
+                        && detail.getCopyId().equals(12L)
+                        && detail.getBorrowStatus().equals("Borrowed")));
+        verify(copyDAO).save(copy);
+    }
+
+    @Test
+    void borrowBookRejectsDuplicateActiveLoanBeforeLockingCopy() {
+        Users user = new Users();
+        user.setStatus("ACTIVE");
+        Books book = new Books();
+        book.setBookId(9L);
+        book.setTitle("Book");
+
+        when(userDAO.findByIdForUpdate(3L)).thenReturn(Optional.of(user));
+        when(bookDAO.findById(9L)).thenReturn(Optional.of(book));
+        when(detailDAO.existsActiveBorrow(3L, 9L)).thenReturn(true);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.borrowBook(3L, 9L));
+        verify(copyDAO, never())
+                .findFirstByBookIdAndStatusIgnoreCaseOrderByCopyIdAsc(
+                        anyLong(), anyString());
+        verify(dao, never()).save(any());
+    }
+
+    @Test
+    void borrowBookRejectsWhenNoCopyIsAvailable() {
+        Users user = new Users();
+        user.setStatus("ACTIVE");
+        Books book = new Books();
+        book.setBookId(9L);
+        book.setTitle("Book");
+
+        when(userDAO.findByIdForUpdate(3L)).thenReturn(Optional.of(user));
+        when(bookDAO.findById(9L)).thenReturn(Optional.of(book));
+        when(copyDAO.findFirstByBookIdAndStatusIgnoreCaseOrderByCopyIdAsc(
+                9L, "Available")).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.borrowBook(3L, 9L));
+        verify(dao, never()).save(any());
+        verify(detailDAO, never()).save(any(BorrowDetails.class));
     }
 
     private BorrowTickets ticket() {

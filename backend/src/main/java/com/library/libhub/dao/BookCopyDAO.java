@@ -3,12 +3,14 @@ package com.library.libhub.dao;
 import com.library.libhub.entity.BookCopies;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import jakarta.persistence.LockModeType;
 
 @Repository
 public interface BookCopyDAO extends JpaRepository<BookCopies, Long> {
@@ -18,6 +20,11 @@ public interface BookCopyDAO extends JpaRepository<BookCopies, Long> {
     List<BookCopies> findByBookId(long bookId);
 
     List<BookCopies> findByBookIdAndStatus(long bookId, String status);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<BookCopies> findFirstByBookIdAndStatusIgnoreCaseOrderByCopyIdAsc(
+            long bookId,
+            String status);
 
     @Modifying
     @Query("UPDATE BookCopies c SET c.status = :status WHERE c.copyId = :copyId")

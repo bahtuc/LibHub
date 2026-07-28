@@ -12,6 +12,13 @@ export function createBorrowTicket(payload) {
     return apiRequest("/borrow-tickets", { method: "POST", body: payload });
 }
 
+export function borrowBook(bookId) {
+    return apiRequest("/borrow-tickets/borrow", {
+        method: "POST",
+        body: { bookId },
+    });
+}
+
 export function updateBorrowTicket(id, payload) {
     return apiRequest(`/borrow-tickets/${id}`, { method: "PUT", body: payload });
 }

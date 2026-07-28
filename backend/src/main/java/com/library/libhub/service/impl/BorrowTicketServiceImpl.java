@@ -3,22 +3,45 @@ package com.library.libhub.service.impl;
 import com.library.libhub.exception.ResourceNotFoundException;
 
 import com.library.libhub.dao.BorrowTicketDAO;
+import com.library.libhub.dao.BorrowDetailDAO;
+import com.library.libhub.dao.BookCopyDAO;
+import com.library.libhub.dao.BookDAO;
+import com.library.libhub.dao.UserDAO;
+import com.library.libhub.entity.BookCopies;
+import com.library.libhub.entity.Books;
+import com.library.libhub.entity.BorrowDetails;
 import com.library.libhub.entity.BorrowTickets;
+import com.library.libhub.entity.Users;
 import com.library.libhub.service.IBorrowTicketService;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import java.sql.Timestamp;
+import java.sql.Date;
+import java.time.LocalDate;
 
 @Service
 @Transactional
 public class BorrowTicketServiceImpl implements IBorrowTicketService {
 
     private final BorrowTicketDAO borrowTicketDAO;
+    private final BorrowDetailDAO borrowDetailDAO;
+    private final BookCopyDAO bookCopyDAO;
+    private final BookDAO bookDAO;
+    private final UserDAO userDAO;
 
-    public BorrowTicketServiceImpl(BorrowTicketDAO borrowTicketDAO) {
+    public BorrowTicketServiceImpl(
+            BorrowTicketDAO borrowTicketDAO,
+            BorrowDetailDAO borrowDetailDAO,
+            BookCopyDAO bookCopyDAO,
+            BookDAO bookDAO,
+            UserDAO userDAO) {
         this.borrowTicketDAO = borrowTicketDAO;
+        this.borrowDetailDAO = borrowDetailDAO;
+        this.bookCopyDAO = bookCopyDAO;
+        this.bookDAO = bookDAO;
+        this.userDAO = userDAO;
     }
 
     @Override
@@ -30,6 +53,82 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
         if (borrowTicket.getStatus() == null || borrowTicket.getStatus().isBlank()) borrowTicket.setStatus("Borrowed");
         if (borrowTicket.getCreatedAt() == null) borrowTicket.setCreatedAt(new Timestamp(System.currentTimeMillis()));
         return borrowTicketDAO.save(borrowTicket);
+    }
+
+    @Override
+    public BorrowTickets borrowBook(long userId, long bookId) {
+        Users user = userDAO.findByIdForUpdate(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Không tìm thấy tài khoản"));
+        if (!"ACTIVE".equalsIgnoreCase(user.getStatus())) {
+            throw new IllegalArgumentException("Tài khoản không thể mượn sách");
+        }
+
+        Books book = bookDAO.findById(bookId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Không tìm thấy sách"));
+        if (Boolean.TRUE.equals(book.getHidden())) {
+            throw new IllegalArgumentException("Sách hiện không thể mượn");
+        }
+        if (borrowDetailDAO.existsActiveBorrow(userId, bookId)) {
+            throw new IllegalArgumentException("Bạn đang mượn sách này");
+        }
+
+        BookCopies copy = bookCopyDAO
+                .findFirstByBookIdAndStatusIgnoreCaseOrderByCopyIdAsc(
+                        bookId, "Available")
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Hiện không còn bản sao sẵn sàng để mượn"));
+
+        LocalDate today = LocalDate.now();
+        BorrowTickets ticket = new BorrowTickets();
+        ticket.setUserId(userId);
+        ticket.setBorrowDate(Date.valueOf(today));
+        ticket.setDueDate(Date.valueOf(today.plusDays(14)));
+        ticket.setStatus("Borrowed");
+        ticket.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+        ticket.setNote(buildLoanNote(book, copy));
+        ticket = borrowTicketDAO.save(ticket);
+
+        BorrowDetails detail = new BorrowDetails();
+        detail.setTicketId(ticket.getTicketId());
+        detail.setCopyId(copy.getCopyId());
+        detail.setBorrowStatus("Borrowed");
+        borrowDetailDAO.save(detail);
+
+        copy.setStatus("Borrowed");
+        bookCopyDAO.save(copy);
+        return ticket;
+    }
+
+    private String buildLoanNote(Books book, BookCopies copy) {
+        return "{\"b\":" + book.getBookId()
+                + ",\"c\":" + copy.getCopyId()
+                + ",\"t\":\"" + escapeJson(book.getTitle()) + "\"}";
+    }
+
+    private String escapeJson(String value) {
+        StringBuilder escaped = new StringBuilder();
+        for (int index = 0; index < value.length(); index++) {
+            char character = value.charAt(index);
+            switch (character) {
+                case '"' -> escaped.append("\\\"");
+                case '\\' -> escaped.append("\\\\");
+                case '\b' -> escaped.append("\\b");
+                case '\f' -> escaped.append("\\f");
+                case '\n' -> escaped.append("\\n");
+                case '\r' -> escaped.append("\\r");
+                case '\t' -> escaped.append("\\t");
+                default -> {
+                    if (character < 0x20) {
+                        escaped.append(String.format("\\u%04x", (int) character));
+                    } else {
+                        escaped.append(character);
+                    }
+                }
+            }
+        }
+        return escaped.toString();
     }
 
     @Override

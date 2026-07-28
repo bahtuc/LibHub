@@ -6,6 +6,7 @@ import java.util.Optional;
 
 public interface IBorrowTicketService {
     BorrowTickets createBorrowTicket(BorrowTickets borrowTicket);
+    BorrowTickets borrowBook(long userId, long bookId);
     Optional<BorrowTickets> getBorrowTicketById(long ticketId);
     List<BorrowTickets> getAllBorrowTickets();
     BorrowTickets updateBorrowTicket(long ticketId, BorrowTickets borrowTicket);

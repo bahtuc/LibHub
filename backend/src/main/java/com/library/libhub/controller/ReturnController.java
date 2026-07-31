@@ -1,17 +1,19 @@
 package com.library.libhub.controller;
 
+import com.library.libhub.DTO.Request.ReturnBookRequest;
 import com.library.libhub.entity.Returns;
+import com.library.libhub.entity.Users;
 import com.library.libhub.service.IReturnService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/returns")
 public class ReturnController {
-
     private final IReturnService returnService;
 
     public ReturnController(IReturnService returnService) {
@@ -24,20 +26,22 @@ public class ReturnController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<Returns>> getReturnById(@PathVariable long id) {
-        return ResponseEntity.ok(returnService.getReturnById(id));
+    public ResponseEntity<Returns> getReturnById(@PathVariable long id) {
+        return ResponseEntity.of(returnService.getReturnById(id));
     }
 
     @PostMapping
-    public ResponseEntity<Returns> createReturn(@RequestBody Returns returns) {
-        Returns createdReturn = returnService.createReturn(returns);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdReturn);
+    public ResponseEntity<Returns> returnBooks(
+            @RequestBody ReturnBookRequest request, HttpSession session) {
+        Users staff = (Users) session.getAttribute("USER_LOGIN");
+        if (staff == null) throw new IllegalArgumentException("Chưa đăng nhập");
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(returnService.returnBooks(request, staff.getUserId()));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Returns> updateReturn(@PathVariable long id, @RequestBody Returns returns) {
-        Returns updatedReturn = returnService.updateReturn(id, returns);
-        return ResponseEntity.ok(updatedReturn);
+        return ResponseEntity.ok(returnService.updateReturn(id, returns));
     }
 
     @DeleteMapping("/{id}")

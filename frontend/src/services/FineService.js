@@ -33,3 +33,10 @@ export function findFinesByReturnDetail(returnDetailId) {
 export function findFinesByPaidStatus(paidStatus) {
     return apiRequest(`/fines/paid-status/${paidStatus}`, { method: "GET" });
 }
+
+export function updateFinePaidStatus(id, paidStatus) {
+    return apiRequest(`/fines/${id}/paid-status`, {
+        method: "PATCH",
+        body: { paidStatus },
+    });
+}

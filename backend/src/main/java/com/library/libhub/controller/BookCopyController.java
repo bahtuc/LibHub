@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/book-copies")
@@ -65,5 +66,12 @@ public class BookCopyController {
     public ResponseEntity<Void> updateStatus(@PathVariable long id, @PathVariable String status) {
         bookCopyService.updateStatus(id, status);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/shelf-location")
+    public ResponseEntity<BookCopies> updateShelfLocation(
+            @PathVariable long id, @RequestBody Map<String, String> body) {
+        String shelfLocation = body == null ? null : body.get("shelfLocation");
+        return ResponseEntity.ok(bookCopyService.updateShelfLocation(id, shelfLocation));
     }
 }

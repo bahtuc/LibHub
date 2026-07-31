@@ -1,26 +1,31 @@
 package com.library.libhub.controller;
 
 import com.library.libhub.DTO.Request.BorrowBookRequest;
+import com.library.libhub.DTO.Request.BorrowTicketRequest;
+import com.library.libhub.DTO.Request.UpdateBorrowStatusRequest;
 import com.library.libhub.entity.BorrowTickets;
 import com.library.libhub.entity.Users;
 import com.library.libhub.service.IBorrowTicketService;
-
+import com.library.libhub.service.LoanViewService;
+import com.library.libhub.DTO.Response.BorrowTicketResponse;
 import jakarta.servlet.http.HttpSession;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/borrow-tickets")
 public class BorrowTicketController {
-
     private final IBorrowTicketService borrowTicketService;
+    private final LoanViewService loanViewService;
 
-    public BorrowTicketController(IBorrowTicketService borrowTicketService) {
+    public BorrowTicketController(
+            IBorrowTicketService borrowTicketService,
+            LoanViewService loanViewService) {
         this.borrowTicketService = borrowTicketService;
+        this.loanViewService = loanViewService;
     }
 
     @GetMapping
@@ -28,39 +33,46 @@ public class BorrowTicketController {
         return ResponseEntity.ok(borrowTicketService.getAllBorrowTickets());
     }
 
+    @GetMapping("/views")
+    public ResponseEntity<List<BorrowTicketResponse>> getBorrowTicketViews() {
+        return ResponseEntity.ok(loanViewService.getAllViews());
+    }
+
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<BorrowTickets>> getBorrowTicketById(@PathVariable long id) {
-        return ResponseEntity.ok(borrowTicketService.getBorrowTicketById(id));
+    public ResponseEntity<BorrowTickets> getBorrowTicketById(@PathVariable long id) {
+        return ResponseEntity.of(borrowTicketService.getBorrowTicketById(id));
     }
 
     @PostMapping
-    public ResponseEntity<BorrowTickets> createBorrowTicket(@RequestBody BorrowTickets borrowTicket) {
-        BorrowTickets createdBorrowTicket = borrowTicketService.createBorrowTicket(borrowTicket);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdBorrowTicket);
+    public ResponseEntity<BorrowTickets> createBorrowTicket(@RequestBody BorrowTicketRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(borrowTicketService.createBorrowTicketWithCopies(request));
     }
 
     @PostMapping("/borrow")
-    public ResponseEntity<?> borrowBook(
-            @RequestBody BorrowBookRequest request,
-            HttpSession session) {
-        Users user = (Users) session.getAttribute("USER_LOGIN");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Chưa đăng nhập");
+    public ResponseEntity<BorrowTickets> borrowBooks(@RequestBody BorrowBookRequest request, HttpSession session) {
+        Users user = requireUser(session);
+        if (request == null) throw new IllegalArgumentException("Thiếu danh sách sách");
+        List<Long> bookIds = request.getBookIds();
+        if (bookIds == null || bookIds.isEmpty()) {
+            if (request.getBookId() == null) throw new IllegalArgumentException("Thiếu bookId");
+            bookIds = List.of(request.getBookId());
         }
-        if (request == null || request.getBookId() == null) {
-            throw new IllegalArgumentException("Thiếu bookId");
-        }
-
-        BorrowTickets ticket =
-                borrowTicketService.borrowBook(user.getUserId(), request.getBookId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(ticket);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(borrowTicketService.borrowBooks(user.getUserId(), bookIds));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<BorrowTickets> updateBorrowTicket(@PathVariable long id, @RequestBody BorrowTickets borrowTicket) {
-        BorrowTickets updatedBorrowTicket = borrowTicketService.updateBorrowTicket(id, borrowTicket);
-        return ResponseEntity.ok(updatedBorrowTicket);
+    public ResponseEntity<BorrowTickets> updateBorrowTicket(
+            @PathVariable long id, @RequestBody BorrowTickets ticket) {
+        return ResponseEntity.ok(borrowTicketService.updateBorrowTicket(id, ticket));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<BorrowTickets> updateStatus(
+            @PathVariable long id, @RequestBody UpdateBorrowStatusRequest request) {
+        if (request == null) throw new IllegalArgumentException("Thiếu trạng thái");
+        return ResponseEntity.ok(borrowTicketService.updateStatus(id, request.getStatus()));
     }
 
     @DeleteMapping("/{id}")
@@ -80,25 +92,20 @@ public class BorrowTicketController {
     }
 
     @GetMapping("/history")
-    public ResponseEntity<?> getBorrowHistory(
-            HttpSession session) {
-
-        Users user =
-                (Users) session.getAttribute(
-                        "USER_LOGIN");
-
-        if (user == null) {
-
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body("Chưa đăng nhập");
-        }
-
-        List<BorrowTickets> tickets =
-                borrowTicketService.findByUser(
-                        user.getUserId());
-
-        return ResponseEntity.ok(tickets);
+    public ResponseEntity<List<BorrowTickets>> getBorrowHistory(HttpSession session) {
+        Users user = requireUser(session);
+        return ResponseEntity.ok(borrowTicketService.findByUser(user.getUserId()));
     }
 
+    @GetMapping("/history/details")
+    public ResponseEntity<List<BorrowTicketResponse>> getDetailedBorrowHistory(HttpSession session) {
+        Users user = requireUser(session);
+        return ResponseEntity.ok(loanViewService.getViewsForUser(user.getUserId()));
+    }
+
+    private Users requireUser(HttpSession session) {
+        Users user = (Users) session.getAttribute("USER_LOGIN");
+        if (user == null) throw new IllegalArgumentException("Chưa đăng nhập");
+        return user;
+    }
 }

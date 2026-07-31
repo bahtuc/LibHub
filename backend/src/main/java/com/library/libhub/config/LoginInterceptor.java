@@ -1,69 +1,85 @@
 package com.library.libhub.config;
 
-import org.springframework.stereotype.Component;
-import org.springframework.web.cors.CorsUtils;
-import org.springframework.web.servlet.HandlerInterceptor;
-import org.jspecify.annotations.NullMarked;
-
+import com.library.libhub.dao.UserDAO;
+import com.library.libhub.entity.Users;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import org.jspecify.annotations.NullMarked;
+import org.springframework.stereotype.Component;
+import org.springframework.web.cors.CorsUtils;
+import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.nio.charset.StandardCharsets;
 
 @Component
 public class LoginInterceptor implements HandlerInterceptor {
+    private final UserDAO userDAO;
+
+    public LoginInterceptor(UserDAO userDAO) {
+        this.userDAO = userDAO;
+    }
 
     @Override
     @NullMarked
-    public boolean preHandle(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            Object handler) throws Exception {
-
-        // Cho qua CORS preflight (OPTIONS): trình duyệt không gửi cookie kèm
-        // preflight, nên nếu chặn ở đây sẽ trả 401 và fetch() báo lỗi mạng.
-        if (CorsUtils.isPreFlightRequest(request)) {
-            return true;
-        }
-
-        // The public React catalogue must be browseable before a visitor logs in.
-        if ("GET".equalsIgnoreCase(request.getMethod()) &&
-                (request.getRequestURI().startsWith("/api/books") ||
-                 request.getRequestURI().startsWith("/api/categories") ||
-                 request.getRequestURI().startsWith("/api/authors") ||
-                 request.getRequestURI().startsWith("/api/book-copies"))) {
-            return true;
-        }
-
-        if (request.getRequestURI().equals("/api/payments/vnpay/return")) return true;
-        HttpSession session = request.getSession(false);
-
-        if (session == null || session.getAttribute("USER_LOGIN") == null) {
-            writeTextResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Chưa đăng nhập");
-            return false;
-        }
-
-        String role = String.valueOf(session.getAttribute("ROLE"));
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
+            throws Exception {
+        if (CorsUtils.isPreFlightRequest(request)) return true;
         String path = request.getRequestURI();
-        if (path.equals("/api/auth/me") || path.equals("/api/auth/logout") ||
-                path.equals("/api/auth/profile") || path.equals("/api/auth/change-password") ||
-                path.equals("/api/borrow-tickets/history") ||
-                path.equals("/api/borrow-tickets/borrow") ||
-                path.startsWith("/api/payments/")) return true;
+        if ("GET".equalsIgnoreCase(request.getMethod()) && isPublicCataloguePath(path)) return true;
+        if (path.equals("/api/payments/vnpay/return")
+                || path.equals("/api/payments/vnpay/ipn")) return true;
+
+        HttpSession session = request.getSession(false);
+        if (session == null || !(session.getAttribute("USER_LOGIN") instanceof Users sessionUser)
+                || sessionUser.getUserId() == null) {
+            return reject(response, HttpServletResponse.SC_UNAUTHORIZED, "Chưa đăng nhập");
+        }
+        Users user = userDAO.findById(sessionUser.getUserId()).orElse(null);
+        if (user == null || !"ACTIVE".equalsIgnoreCase(user.getStatus())) {
+            session.invalidate();
+            return reject(response, HttpServletResponse.SC_UNAUTHORIZED, "Tài khoản đã bị khóa hoặc không tồn tại");
+        }
+        String role = user.getRole() == null ? "" : user.getRole().getRoleName();
+        session.setAttribute("USER_LOGIN", user);
+        session.setAttribute("ROLE", role);
+
+        if (isSelfServicePath(path)) return true;
         if ("Admin".equalsIgnoreCase(role)) return true;
-        boolean librarianEndpoint = path.startsWith("/api/books") || path.startsWith("/api/book-copies") ||
-                path.startsWith("/api/borrow-tickets") || path.startsWith("/api/borrow-details") ||
-                path.startsWith("/api/returns") || path.startsWith("/api/return-details") || path.startsWith("/api/fines");
-        if ("Librarian".equalsIgnoreCase(role) && librarianEndpoint) return true;
-        writeTextResponse(response, HttpServletResponse.SC_FORBIDDEN, "Không có quyền truy cập");
-        return false;
+        if ("Librarian".equalsIgnoreCase(role) && isLibrarianPath(path)) return true;
+        return reject(response, HttpServletResponse.SC_FORBIDDEN, "Không có quyền truy cập");
     }
 
-    private void writeTextResponse(HttpServletResponse response, int status, String message) throws Exception {
+    private boolean isPublicCataloguePath(String path) {
+        return path.startsWith("/api/books")
+                || path.startsWith("/api/categories")
+                || path.startsWith("/api/authors")
+                || path.startsWith("/api/publishers");
+    }
+
+    private boolean isSelfServicePath(String path) {
+        return path.equals("/api/auth/me") || path.equals("/api/auth/logout")
+                || path.equals("/api/auth/profile") || path.equals("/api/auth/change-password")
+                || path.equals("/api/borrow-tickets/history")
+                || path.equals("/api/borrow-tickets/history/details")
+                || path.equals("/api/borrow-tickets/borrow")
+                || path.startsWith("/api/payments/");
+    }
+
+    private boolean isLibrarianPath(String path) {
+        return path.startsWith("/api/books") || path.startsWith("/api/book-copies")
+                || path.startsWith("/api/borrow-tickets") || path.startsWith("/api/borrow-details")
+                || path.startsWith("/api/returns") || path.startsWith("/api/return-details")
+                || path.startsWith("/api/fines") || path.startsWith("/api/statistics")
+                || path.startsWith("/api/reports")
+                || path.equals("/api/users/borrowers");
+    }
+
+    private boolean reject(HttpServletResponse response, int status, String message) throws Exception {
         response.setStatus(status);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType("text/plain;charset=UTF-8");
         response.getWriter().write(message);
+        return false;
     }
 }

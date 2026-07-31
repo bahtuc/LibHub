@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/fines")
@@ -54,5 +55,13 @@ public class FineController {
     @GetMapping("/paid-status/{paidStatus}")
     public ResponseEntity<List<Fines>> findByPaidStatus(@PathVariable String paidStatus) {
         return ResponseEntity.ok(fineService.findByPaidStatus(paidStatus));
+    }
+
+    @PatchMapping("/{id}/paid-status")
+    public ResponseEntity<Fines> updatePaidStatus(
+            @PathVariable long id, @RequestBody Map<String, String> body) {
+        Fines patch = new Fines();
+        patch.setPaidStatus(body == null ? null : body.get("paidStatus"));
+        return ResponseEntity.ok(fineService.updateFine(id, patch));
     }
 }

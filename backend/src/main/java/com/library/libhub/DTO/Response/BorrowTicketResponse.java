@@ -1,6 +1,7 @@
 package com.library.libhub.DTO.Response;
 
 import java.sql.Date;
+import java.util.List;
 
 public class BorrowTicketResponse {
 
@@ -11,6 +12,7 @@ public class BorrowTicketResponse {
     private Date dueDate;
     private String status;
     private String note;
+    private List<BorrowedItemResponse> items;
 
     public Long getTicketId() {
         return ticketId;
@@ -66,5 +68,13 @@ public class BorrowTicketResponse {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public List<BorrowedItemResponse> getItems() {
+        return items;
+    }
+
+    public void setItems(List<BorrowedItemResponse> items) {
+        this.items = items;
     }
 }

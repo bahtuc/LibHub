@@ -17,16 +17,36 @@ import jakarta.persistence.LockModeType;
 @Repository
 public interface BookCopyRepository extends JpaRepository<BookCopies, Long> {
 
+    interface BookAvailability {
+        Long getBookId();
+        Long getTotalCopies();
+        Long getAvailableCopies();
+    }
+
     Optional<BookCopies> findByBarcode(String barcode);
 
     List<BookCopies> findByBookId(long bookId);
 
     List<BookCopies> findByBookIdAndStatus(long bookId, String status);
 
+    @Query("""
+            SELECT c.bookId AS bookId,
+                   COUNT(c) AS totalCopies,
+                   SUM(CASE WHEN LOWER(c.status) = 'available' THEN 1 ELSE 0 END) AS availableCopies
+            FROM BookCopies c
+            WHERE c.bookId IN :bookIds
+            GROUP BY c.bookId
+            """)
+    List<BookAvailability> summarizeAvailability(@Param("bookIds") List<Long> bookIds);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<BookCopies> findFirstByBookIdAndStatusIgnoreCaseOrderByCopyIdAsc(
             long bookId,
             String status);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM BookCopies c WHERE c.copyId = :copyId")
+    Optional<BookCopies> findByIdForUpdate(@Param("copyId") long copyId);
 
     @Modifying
     @Query("UPDATE BookCopies c SET c.status = :status WHERE c.copyId = :copyId")

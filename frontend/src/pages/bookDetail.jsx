@@ -6,6 +6,7 @@ import BookCard from "../components/BookCard";
 import { useCatalog } from "../context/CatalogContext";
 import { useAuth } from "../auth/useAuth";
 import { borrowBook } from "../services/BorrowTicketService";
+import { formatDate } from "../utils/format";
 import "../styles/BookDetail.css";
 
 export default function BookDetail() {
@@ -36,7 +37,7 @@ export default function BookDetail() {
     setError("");
     try {
       const ticket = await borrowBook(book.book_id);
-      setMessage(`Mượn sách thành công. Hạn trả: ${String(ticket.dueDate).slice(0, 10)}.`);
+      setMessage(`Mượn sách thành công. Hạn trả: ${formatDate(ticket.dueDate)}.`);
       await refresh();
     } catch (requestError) {
       setError(requestError.message || "Không thể mượn sách.");

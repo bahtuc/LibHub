@@ -15,6 +15,8 @@ public class BookResponse {
     private Long publisherId;
     private Boolean hidden;
     private Boolean featured;
+    private Long totalCopies;
+    private Long availableCopies;
 
     public Long getBookId() {
         return bookId;
@@ -107,5 +109,13 @@ public class BookResponse {
     public Boolean getFeatured() { return featured; }
 
     public void setFeatured(Boolean featured) { this.featured = featured; }
+
+    public Long getTotalCopies() { return totalCopies; }
+
+    public void setTotalCopies(Long totalCopies) { this.totalCopies = totalCopies; }
+
+    public Long getAvailableCopies() { return availableCopies; }
+
+    public void setAvailableCopies(Long availableCopies) { this.availableCopies = availableCopies; }
 
 }

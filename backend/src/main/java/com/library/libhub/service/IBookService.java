@@ -11,6 +11,7 @@ public interface IBookService {
     Books createBook(Books book);
 
     Optional<Books> getBookById(long bookId);
+    Optional<Books> getBookById(long bookId, boolean includeHidden);
 
     List<Books> getAllBooks();
 
@@ -32,4 +33,7 @@ public interface IBookService {
         String sortBy,
         String sortDir,
         String keyword);
+
+    PageResponse<BookResponse> getAllBooks(
+        int page, int size, String sortBy, String sortDir, String keyword, boolean includeHidden);
 }

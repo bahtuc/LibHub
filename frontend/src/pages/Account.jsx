@@ -7,9 +7,9 @@ import Footer from "../components/Footer";
 import Icon from "../components/Icon";
 import Badge from "../admin/Badge";
 import { useAuth } from "../auth/useAuth";
-import { booksStore } from "../data/adminStore";
-import { categories } from "../data/libraryData";
-import { useTickets, getTicketStatus } from "../data/librarianStore";
+import { getTicketStatus } from "../utils/loanViews";
+import { formatDate } from "../utils/format";
+import { getMyDetailedBorrowHistory } from "../services/BorrowTicketService";
 import { getMyFines } from "../services/FineService";
 import { createVnpayPayment } from "../services/PaymentService";
 import "../styles/theme.css";
@@ -28,15 +28,10 @@ const TICKET_BADGE = {
   borrowing: { tone: "success", text: "Đang mượn" },
   overdue: { tone: "danger", text: "Quá hạn" },
   returned: { tone: "neutral", text: "Đã trả" },
+  cancelled: { tone: "neutral", text: "Đã hủy" },
 };
 
 const ROLE_TONE = { Admin: "warning", User: "success", Librarian: "info" };
-
-function formatDate(iso) {
-  if (!iso) return "—";
-  const [y, m, d] = iso.split("-");
-  return `${d}/${m}/${y}`;
-}
 
 export default function Account() {
   const { user } = useAuth();
@@ -44,17 +39,22 @@ export default function Account() {
   const [fines, setFines] = useState([]);
   const [finesLoading, setFinesLoading] = useState(true);
   const [finesError, setFinesError] = useState("");
+  const [tickets, setTickets] = useState([]);
+  const [ticketsLoading, setTicketsLoading] = useState(true);
+  const [ticketsError, setTicketsError] = useState("");
 
-  const allTickets = useTickets();
   useEffect(() => {
     if (!user) {
       setFines([]);
       setFinesLoading(false);
+      setTickets([]);
+      setTicketsLoading(false);
       return;
     }
 
     let active = true;
     setFinesLoading(true);
+    setTicketsLoading(true);
     getMyFines()
       .then((data) => {
         if (active) {
@@ -69,6 +69,20 @@ export default function Account() {
         if (active) setFinesLoading(false);
       });
 
+    getMyDetailedBorrowHistory()
+      .then((data) => {
+        if (active) {
+          setTickets(Array.isArray(data) ? data : []);
+          setTicketsError("");
+        }
+      })
+      .catch((error) => {
+        if (active) setTicketsError(error.message || "Không tải được lịch sử mượn sách.");
+      })
+      .finally(() => {
+        if (active) setTicketsLoading(false);
+      });
+
     return () => {
       active = false;
     };
@@ -77,8 +91,9 @@ export default function Account() {
   if (!user) {
     return <div className="lh-root"><Header /><section className="lh-section"><div className="lh-container lh-library-empty"><Icon name="user" size={28} /><h1 className="lh-h2">Guest account</h1><p>Browse books as a guest. Sign in to save loan history and manage your account.</p></div></section><Footer /></div>;
   }
-  const myTickets = allTickets.filter((t) => t.user_id === user.user_id);
-  const activeCount = myTickets.filter((t) => getTicketStatus(t) !== "returned").length;
+  const activeCount = tickets.filter(
+    (ticket) => !["returned", "cancelled"].includes(getTicketStatus(ticket)),
+  ).length;
   const unpaidFines = fines.filter(
     (fine) => String(fine.paidStatus).toLowerCase() !== "paid",
   ).length;
@@ -153,7 +168,13 @@ export default function Account() {
             <div className="lh-account__panel">
               {tab === "profile" && <ProfileTab />}
               {tab === "password" && <PasswordTab />}
-              {tab === "tickets" && <TicketsTab tickets={myTickets} />}
+              {tab === "tickets" && (
+                <TicketsTab
+                  tickets={tickets}
+                  loading={ticketsLoading}
+                  loadError={ticketsError}
+                />
+              )}
               {tab === "fines" && (
                 <FinesTab
                   fines={fines}
@@ -319,13 +340,20 @@ function PasswordTab() {
   );
 }
 
-function TicketsTab({ tickets }) {
-  const books = booksStore.useCollection();
-  const sorted = [...tickets].sort((a, b) => b.ticket_id - a.ticket_id);
+function TicketsTab({ tickets, loading, loadError }) {
+  const sorted = [...tickets].sort((a, b) => Number(b.ticketId) - Number(a.ticketId));
 
-  function bookInfo(book_id) {
-    const b = books.find((x) => x.book_id === book_id);
-    return { title: b?.title ?? "—", category_id: b?.category_id };
+  if (loading) {
+    return (
+      <div className="lh-account__empty">
+        <span className="lh-spinner" />
+        <p>Đang tải lịch sử mượn sách...</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return <p className="lh-auth-form__error">{loadError}</p>;
   }
 
   if (sorted.length === 0) {
@@ -352,27 +380,26 @@ function TicketsTab({ tickets }) {
           </thead>
           <tbody>
             {sorted.map((t) => {
-              const s = TICKET_BADGE[getTicketStatus(t)];
+              const s = TICKET_BADGE[getTicketStatus(t)] ?? TICKET_BADGE.borrowing;
               return (
-                <tr key={t.ticket_id}>
-                  <td>#{t.ticket_id}</td>
+                <tr key={t.ticketId}>
+                  <td>#{t.ticketId}</td>
                   <td>
-                    {t.items.map((it, idx) => {
-                      const info = bookInfo(it.book_id);
-                      const cat = categories.find((c) => c.category_id === info.category_id);
-                      return (
-                        <span className="lh-account__book-cell" key={idx}>
-                          <span
-                            className="lh-account__book-dot"
-                            style={{ background: cat?.color ?? "var(--lh-gold)" }}
-                          />
-                          {info.title}
-                        </span>
-                      );
-                    })}
+                    {(t.items ?? []).map((item) => (
+                      <span
+                        className="lh-account__book-cell"
+                        key={item.detailId ?? item.copyId}
+                      >
+                        <span
+                          className="lh-account__book-dot"
+                          style={{ background: "var(--lh-gold)" }}
+                        />
+                        {item.bookTitle || "—"}
+                      </span>
+                    ))}
                   </td>
-                  <td>{t.borrow_date}</td>
-                  <td>{t.due_date}</td>
+                  <td>{formatDate(t.borrowDate)}</td>
+                  <td>{formatDate(t.dueDate)}</td>
                   <td>
                     <Badge tone={s.tone}>{s.text}</Badge>
                   </td>

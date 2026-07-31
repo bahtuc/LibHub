@@ -4,6 +4,10 @@ export function getUsers() {
     return apiRequest("/users", { method: "GET" });
 }
 
+export function getBorrowers() {
+    return apiRequest("/users/borrowers", { method: "GET" });
+}
+
 export function getUserById(id) {
     return apiRequest(`/users/${id}`, { method: "GET" });
 }

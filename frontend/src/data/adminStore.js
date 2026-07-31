@@ -163,7 +163,7 @@ const toUser = (user, creating) => ({
 
 export const booksStore = makeApiStore({
   idField: "book_id",
-  loadAll: async () => (await bookApi.getBooks({ size: 1000 })).content ?? [],
+  loadAll: async () => (await bookApi.getBooks({ size: 1000, includeHidden: true })).content ?? [],
   create: bookApi.createBook,
   update: bookApi.updateBook,
   remove: bookApi.deleteBook,

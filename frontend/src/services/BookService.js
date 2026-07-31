@@ -1,9 +1,10 @@
 import { apiRequest } from "../JS/APi.js";
 
 // GET /api/books — paginated + searchable list. Returns a PageResponse.
-export function getBooks({ page = 0, size = 10, sortBy = "title", sortDir = "asc", keyword } = {}) {
+export function getBooks({ page = 0, size = 10, sortBy = "title", sortDir = "asc", keyword, includeHidden = false } = {}) {
     const params = new URLSearchParams({ page, size, sortBy, sortDir });
     if (keyword) params.set("keyword", keyword);
+    if (includeHidden) params.set("includeHidden", "true");
     return apiRequest(`/books?${params.toString()}`, { method: "GET" });
 }
 

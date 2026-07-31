@@ -12,4 +12,5 @@ public interface IFineService {
     void deleteFine(long fineId);
     List<Fines> findByReturnDetail(long returnDetailId);
     List<Fines> findByPaidStatus(String paidStatus);
+    List<Fines> findByUser(long userId);
 }

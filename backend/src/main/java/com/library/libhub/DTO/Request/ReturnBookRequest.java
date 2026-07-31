@@ -1,10 +1,13 @@
 package com.library.libhub.DTO.Request;
 
+import java.util.List;
+
 public class ReturnBookRequest {
 
     private Long ticketId;
     private Long receivedBy;
     private String note;
+    private List<ReturnDetailRequest> details;
     
     public Long getTicketId() {
         return ticketId;
@@ -25,4 +28,11 @@ public class ReturnBookRequest {
         this.note = note;
     }
 
+    public List<ReturnDetailRequest> getDetails() {
+        return details;
+    }
+
+    public void setDetails(List<ReturnDetailRequest> details) {
+        this.details = details;
+    }
 }

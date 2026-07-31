@@ -14,4 +14,5 @@ public interface IBookCopyService {
     List<BookCopies> findByBook(long bookId);
     List<BookCopies> findByBookAndStatus(long bookId, String status);
     void updateStatus(long copyId, String status);
+    BookCopies updateShelfLocation(long copyId, String shelfLocation);
 }

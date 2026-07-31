@@ -14,4 +14,6 @@ public interface ReturnDetailRepository extends JpaRepository<ReturnDetails, Lon
     List<ReturnDetails> findByCopyId(long copyId);
 
     List<ReturnDetails> findByConditionBook(String conditionBook);
+
+    boolean existsByCopyId(long copyId);
 }

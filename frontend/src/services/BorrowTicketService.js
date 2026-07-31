@@ -12,6 +12,10 @@ export function createBorrowTicket(payload) {
     return apiRequest("/borrow-tickets", { method: "POST", body: payload });
 }
 
+export function getBorrowTicketViews() {
+    return apiRequest("/borrow-tickets/views", { method: "GET" });
+}
+
 export function borrowBook(bookId) {
     return apiRequest("/borrow-tickets/borrow", {
         method: "POST",
@@ -38,4 +42,8 @@ export function findBorrowTicketsByStatus(status) {
 // Borrow history of the currently logged-in user (derived from the session).
 export function getMyBorrowHistory() {
     return apiRequest("/borrow-tickets/history", { method: "GET" });
+}
+
+export function getMyDetailedBorrowHistory() {
+    return apiRequest("/borrow-tickets/history/details", { method: "GET" });
 }

@@ -1,58 +1,103 @@
-// src/librarian/LibrarianBorrow.jsx
-// Tạo phiếu mượn mới: chọn bạn đọc, chọn (các) bản sao còn sẵn, đặt hạn trả.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Icon from "../components/Icon";
-import { usersStore, booksStore, copiesStore } from "../data/adminStore";
-import { createTicket } from "../data/librarianStore";
+import { booksStore, copiesStore } from "../data/adminStore";
+import { createBorrowTicket } from "../services/BorrowTicketService";
+import { getBorrowers } from "../services/UserService";
 
 function defaultDueDate() {
-  const d = new Date();
-  d.setDate(d.getDate() + 14);
-  return d.toISOString().slice(0, 10);
+  const date = new Date();
+  date.setDate(date.getDate() + 14);
+  return date.toISOString().slice(0, 10);
 }
 
 export default function LibrarianBorrow() {
-  const users = usersStore.useCollection();
   const books = booksStore.useCollection();
   const copies = copiesStore.useCollection();
-
-  const [userId, setUserId] = useState(users[0]?.user_id ?? "");
+  const [borrowers, setBorrowers] = useState([]);
+  const [userId, setUserId] = useState("");
   const [dueDate, setDueDate] = useState(defaultDueDate());
   const [bookId, setBookId] = useState("");
   const [selectedCopyIds, setSelectedCopyIds] = useState([]);
   const [note, setNote] = useState("");
   const [success, setSuccess] = useState(null);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    getBorrowers()
+      .then((data) => {
+        if (!active) return;
+        const next = Array.isArray(data) ? data : [];
+        setBorrowers(next);
+        setUserId((current) => current || String(next[0]?.userId ?? ""));
+        setError("");
+      })
+      .catch((requestError) => {
+        if (active) setError(requestError.message || "Không tải được danh sách bạn đọc.");
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const visibleBooks = useMemo(
+    () => books.filter((book) => !book.is_hidden),
+    [books],
+  );
 
   const availableCopiesForBook = useMemo(() => {
     if (!bookId) return [];
-    return copies.filter((c) => c.book_id === Number(bookId) && c.status === "available");
-  }, [bookId, copies]);
+    return copies.filter(
+      (copy) =>
+        copy.book_id === Number(bookId) &&
+        copy.status === "available" &&
+        !selectedCopyIds.includes(copy.copy_id),
+    );
+  }, [bookId, copies, selectedCopyIds]);
 
   const cart = selectedCopyIds
-    .map((id) => copies.find((c) => c.copy_id === id))
+    .map((id) => copies.find((copy) => copy.copy_id === id))
     .filter(Boolean);
 
   function addCopy(copyId) {
-    if (!copyId || selectedCopyIds.includes(Number(copyId))) return;
-    setSelectedCopyIds((ids) => [...ids, Number(copyId)]);
+    const numericId = Number(copyId);
+    if (!numericId || selectedCopyIds.includes(numericId)) return;
+    setSelectedCopyIds((ids) => [...ids, numericId]);
   }
+
   function removeCopy(copyId) {
     setSelectedCopyIds((ids) => ids.filter((id) => id !== copyId));
   }
 
-  function handleSubmit(e) {
-    e.preventDefault();
+  async function handleSubmit(event) {
+    event.preventDefault();
     if (!userId || selectedCopyIds.length === 0) return;
-    const ticket = createTicket({ user_id: userId, due_date: dueDate, copy_ids: selectedCopyIds, note });
-    setSuccess(ticket.ticket_id);
-    setSelectedCopyIds([]);
-    setBookId("");
-    setNote("");
-    setDueDate(defaultDueDate());
+    setSubmitting(true);
+    setError("");
+    setSuccess(null);
+    try {
+      const ticket = await createBorrowTicket({
+        userId: Number(userId),
+        dueDate,
+        copyIds: selectedCopyIds,
+        note: note.trim() || null,
+      });
+      setSuccess(ticket.ticketId);
+      setSelectedCopyIds([]);
+      setBookId("");
+      setNote("");
+      setDueDate(defaultDueDate());
+      await copiesStore.refresh();
+    } catch (requestError) {
+      setError(requestError.message || "Không thể tạo phiếu mượn.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
-  function bookTitle(book_id) {
-    return books.find((b) => b.book_id === book_id)?.title ?? "—";
+  function bookTitle(id) {
+    return books.find((book) => book.book_id === id)?.title ?? "—";
   }
 
   return (
@@ -60,15 +105,16 @@ export default function LibrarianBorrow() {
       <div className="lh-admin-page__head">
         <div>
           <h1 className="lh-admin-page__title">Mượn sách</h1>
-          <p className="lh-admin-page__subtitle">Tạo phiếu mượn mới cho bạn đọc.</p>
+          <p className="lh-admin-page__subtitle">Tạo phiếu mượn mới và lưu trực tiếp vào hệ thống.</p>
         </div>
       </div>
 
       {success && (
         <p className="lh-auth-form__success" style={{ marginBottom: 18 }}>
-          Đã tạo phiếu mượn #{success} thành công. Xem ở mục "Phiếu mượn".
+          Đã tạo phiếu mượn #{success} thành công.
         </p>
       )}
+      {error && <p className="lh-auth-form__error">{error}</p>}
 
       <form className="lh-admin-form" onSubmit={handleSubmit}>
         <h2 className="lh-admin-form__heading">
@@ -78,10 +124,11 @@ export default function LibrarianBorrow() {
         <div className="lh-admin-form__grid">
           <label className="lh-field lh-admin-form__field">
             Bạn đọc
-            <select value={userId} onChange={(e) => setUserId(e.target.value)} required>
-              {users.map((u) => (
-                <option key={u.user_id} value={u.user_id}>
-                  {u.full_name} ({u.username}) — {u.role_name || "—"}
+            <select value={userId} onChange={(event) => setUserId(event.target.value)} required>
+              {borrowers.length === 0 && <option value="">— Chưa có bạn đọc đang hoạt động —</option>}
+              {borrowers.map((borrower) => (
+                <option key={borrower.userId} value={borrower.userId}>
+                  {borrower.fullName || borrower.username} ({borrower.username})
                 </option>
               ))}
             </select>
@@ -89,28 +136,29 @@ export default function LibrarianBorrow() {
 
           <label className="lh-field lh-admin-form__field">
             Hạn trả
-            <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required />
+            <input
+              type="date"
+              min={new Date().toISOString().slice(0, 10)}
+              value={dueDate}
+              onChange={(event) => setDueDate(event.target.value)}
+              required
+            />
           </label>
 
           <label className="lh-field lh-admin-form__field">
             Ghi chú (tùy chọn)
-            <input type="text" value={note} onChange={(e) => setNote(e.target.value)} placeholder="—" />
+            <input type="text" value={note} onChange={(event) => setNote(event.target.value)} placeholder="—" />
           </label>
         </div>
 
         <div className="lh-admin-form__grid" style={{ marginTop: -4 }}>
           <label className="lh-field lh-admin-form__field">
             Chọn sách
-            <select
-              value={bookId}
-              onChange={(e) => {
-                setBookId(e.target.value);
-              }}
-            >
-              <option value="">— Chọn 1 đầu sách —</option>
-              {books.map((b) => (
-                <option key={b.book_id} value={b.book_id}>
-                  {b.title}
+            <select value={bookId} onChange={(event) => setBookId(event.target.value)}>
+              <option value="">— Chọn một đầu sách —</option>
+              {visibleBooks.map((book) => (
+                <option key={book.book_id} value={book.book_id}>
+                  {book.title}
                 </option>
               ))}
             </select>
@@ -118,17 +166,17 @@ export default function LibrarianBorrow() {
 
           <label className="lh-field lh-admin-form__field">
             Bản sao còn sẵn
-            <select value="" onChange={(e) => addCopy(e.target.value)} disabled={!bookId}>
+            <select value="" onChange={(event) => addCopy(event.target.value)} disabled={!bookId}>
               <option value="">
                 {bookId
                   ? availableCopiesForBook.length
                     ? "— Chọn bản để thêm vào phiếu —"
-                    : "Sách này hết bản còn sẵn"
+                    : "Sách này không còn bản sẵn"
                   : "Chọn sách trước"}
               </option>
-              {availableCopiesForBook.map((c) => (
-                <option key={c.copy_id} value={c.copy_id}>
-                  {c.barcode} · {c.shelf_location}
+              {availableCopiesForBook.map((copy) => (
+                <option key={copy.copy_id} value={copy.copy_id}>
+                  {copy.barcode} · {copy.shelf_location || "Chưa xếp kệ"}
                 </option>
               ))}
             </select>
@@ -143,21 +191,21 @@ export default function LibrarianBorrow() {
                   <th>Sách</th>
                   <th>Mã vạch</th>
                   <th>Vị trí kệ</th>
-                  <th></th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
-                {cart.map((c) => (
-                  <tr key={c.copy_id}>
-                    <td>{bookTitle(c.book_id)}</td>
-                    <td>{c.barcode}</td>
-                    <td>{c.shelf_location}</td>
+                {cart.map((copy) => (
+                  <tr key={copy.copy_id}>
+                    <td>{bookTitle(copy.book_id)}</td>
+                    <td>{copy.barcode}</td>
+                    <td>{copy.shelf_location || "—"}</td>
                     <td className="lh-admin-table__actions">
                       <button
                         type="button"
                         className="lh-admin-icon-btn lh-admin-icon-btn--danger"
                         aria-label="Bỏ khỏi phiếu"
-                        onClick={() => removeCopy(c.copy_id)}
+                        onClick={() => removeCopy(copy.copy_id)}
                       >
                         <Icon name="x" size={14} />
                       </button>
@@ -170,8 +218,12 @@ export default function LibrarianBorrow() {
         )}
 
         <div className="lh-admin-form__actions">
-          <button type="submit" className="lh-btn lh-btn--primary" disabled={cart.length === 0}>
-            Tạo phiếu mượn ({cart.length} cuốn)
+          <button
+            type="submit"
+            className="lh-btn lh-btn--primary"
+            disabled={submitting || !userId || cart.length === 0}
+          >
+            {submitting ? "Đang tạo..." : `Tạo phiếu mượn (${cart.length} cuốn)`}
           </button>
         </div>
       </form>

@@ -1,60 +1,84 @@
-// src/librarian/LibrarianTickets.jsx
-// Danh sách phiếu mượn + xử lý trả sách ngay tại chỗ (mở rộng theo từng dòng).
 import { Fragment, useState } from "react";
 import Icon from "../components/Icon";
 import Badge from "../admin/Badge";
-import { usersStore, booksStore } from "../data/adminStore";
-import { useTickets, getTicketStatus, returnItems, CONDITION_OPTIONS } from "../data/librarianStore";
+import { copiesStore } from "../data/adminStore";
+import { getBorrowTicketViews } from "../services/BorrowTicketService";
+import { createReturn } from "../services/ReturnService";
+import useLoanViews from "../hooks/useLoanViews";
+import { getTicketStatus } from "../utils/loanViews";
+import { formatDate } from "../utils/format";
 
 const STATUS_BADGE = {
   borrowing: { tone: "success", text: "Đang mượn" },
   overdue: { tone: "danger", text: "Quá hạn" },
   returned: { tone: "neutral", text: "Đã trả" },
+  cancelled: { tone: "neutral", text: "Đã hủy" },
 };
 
+const CONDITION_OPTIONS = [
+  { value: "Good", label: "Tốt" },
+  { value: "Damaged", label: "Hư hỏng" },
+  { value: "Lost", label: "Mất" },
+];
+
+function pendingItems(ticket) {
+  if (["returned", "cancelled"].includes(getTicketStatus(ticket))) return [];
+  return (ticket.items ?? []).filter((item) => {
+    const status = String(item.borrowStatus || "").toLowerCase();
+    return !item.returnedDate && !["returned", "lost", "cancelled"].includes(status);
+  });
+}
+
 export default function LibrarianTickets() {
-  const tickets = useTickets();
-  const users = usersStore.useCollection();
-  const books = booksStore.useCollection();
+  const { tickets, loading, error, refresh } = useLoanViews(getBorrowTicketViews);
   const [openTicketId, setOpenTicketId] = useState(null);
   const [conditions, setConditions] = useState({});
-
-  function userName(user_id) {
-    return users.find((u) => u.user_id === user_id)?.full_name ?? "—";
-  }
-  function bookTitle(book_id) {
-    return books.find((b) => b.book_id === book_id)?.title ?? "—";
-  }
+  const [actionError, setActionError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   function openReturn(ticket) {
-    setOpenTicketId(ticket.ticket_id === openTicketId ? null : ticket.ticket_id);
+    if (ticket.ticketId === openTicketId) {
+      setOpenTicketId(null);
+      return;
+    }
     const initial = {};
-    ticket.items
-      .filter((it) => !it.returned_at)
-      .forEach((it) => (initial[it.copy_id] = "tot"));
+    pendingItems(ticket).forEach((item) => {
+      initial[item.copyId] = "Good";
+    });
     setConditions(initial);
+    setActionError("");
+    setOpenTicketId(ticket.ticketId);
   }
 
-  function submitReturn(ticket) {
-    const pending = ticket.items.filter((it) => !it.returned_at);
-    const payload = pending.map((it) => ({
-      copy_id: it.copy_id,
-      condition_book: conditions[it.copy_id] || "tot",
+  async function submitReturn(ticket) {
+    const details = pendingItems(ticket).map((item) => ({
+      copyId: item.copyId,
+      conditionBook: conditions[item.copyId] || "Good",
     }));
-    returnItems(ticket.ticket_id, payload);
-    setOpenTicketId(null);
+    if (details.length === 0) return;
+    setSubmitting(true);
+    setActionError("");
+    try {
+      await createReturn({ ticketId: ticket.ticketId, details });
+      setOpenTicketId(null);
+      await Promise.all([refresh(), copiesStore.refresh()]);
+    } catch (requestError) {
+      setActionError(requestError.message || "Không thể xử lý trả sách.");
+    } finally {
+      setSubmitting(false);
+    }
   }
-
-  const sorted = [...tickets].sort((a, b) => b.ticket_id - a.ticket_id);
 
   return (
     <div className="lh-admin-page">
       <div className="lh-admin-page__head">
         <div>
           <h1 className="lh-admin-page__title">Phiếu mượn</h1>
-          <p className="lh-admin-page__subtitle">Theo dõi và xử lý trả sách cho từng phiếu.</p>
+          <p className="lh-admin-page__subtitle">Theo dõi và xử lý trả sách từ dữ liệu hệ thống.</p>
         </div>
       </div>
+
+      {(error || actionError) && <p className="lh-auth-form__error">{actionError || error}</p>}
 
       <div className="lh-admin-table-wrap">
         <div className="lh-admin-table-scroll">
@@ -71,34 +95,31 @@ export default function LibrarianTickets() {
               </tr>
             </thead>
             <tbody>
-              {sorted.map((t) => {
-                const s = STATUS_BADGE[getTicketStatus(t)];
-                const pendingCount = t.items.filter((it) => !it.returned_at).length;
+              {tickets.map((ticket) => {
+                const status = getTicketStatus(ticket);
+                const badge = STATUS_BADGE[status] ?? STATUS_BADGE.borrowing;
+                const pending = pendingItems(ticket);
                 return (
-                  <Fragment key={t.ticket_id}>
+                  <Fragment key={ticket.ticketId}>
                     <tr>
-                      <td>#{t.ticket_id}</td>
-                      <td>{userName(t.user_id)}</td>
-                      <td>{t.borrow_date}</td>
-                      <td>{t.due_date}</td>
-                      <td>{t.items.length}</td>
-                      <td>
-                        <Badge tone={s.tone}>{s.text}</Badge>
-                      </td>
+                      <td>#{ticket.ticketId}</td>
+                      <td>{ticket.userName || `#${ticket.userId}`}</td>
+                      <td className="lh-mono">{formatDate(ticket.borrowDate)}</td>
+                      <td className="lh-mono">{formatDate(ticket.dueDate)}</td>
+                      <td>{ticket.items?.length ?? 0}</td>
+                      <td><Badge tone={badge.tone}>{badge.text}</Badge></td>
                       <td className="lh-admin-table__actions">
-                        {pendingCount > 0 ? (
-                          <button className="lh-btn lh-btn--ghost" onClick={() => openReturn(t)}>
-                            {openTicketId === t.ticket_id ? "Đóng" : "Trả sách"}
+                        {pending.length > 0 ? (
+                          <button className="lh-btn lh-btn--ghost" onClick={() => openReturn(ticket)}>
+                            {openTicketId === ticket.ticketId ? "Đóng" : "Trả sách"}
                           </button>
                         ) : (
-                          <span style={{ color: "var(--lh-text-muted)", fontSize: "0.82rem" }}>
-                            Đã trả đủ
-                          </span>
+                          <span style={{ color: "var(--lh-text-muted)", fontSize: "0.82rem" }}>Đã xử lý</span>
                         )}
                       </td>
                     </tr>
 
-                    {openTicketId === t.ticket_id && (
+                    {openTicketId === ticket.ticketId && (
                       <tr>
                         <td colSpan={7} style={{ background: "var(--lh-paper-soft)" }}>
                           <div style={{ padding: "14px 4px" }}>
@@ -106,41 +127,42 @@ export default function LibrarianTickets() {
                               <thead>
                                 <tr>
                                   <th>Sách</th>
-                                  <th>Ngày mượn</th>
+                                  <th>Mã vạch</th>
                                   <th>Tình trạng khi trả</th>
                                 </tr>
                               </thead>
                               <tbody>
-                                {t.items
-                                  .filter((it) => !it.returned_at)
-                                  .map((it) => (
-                                    <tr key={it.copy_id}>
-                                      <td>{bookTitle(it.book_id)}</td>
-                                      <td>{it.borrowed_at}</td>
-                                      <td>
-                                        <select
-                                          value={conditions[it.copy_id] || "tot"}
-                                          onChange={(e) =>
-                                            setConditions((c) => ({ ...c, [it.copy_id]: e.target.value }))
-                                          }
-                                        >
-                                          {CONDITION_OPTIONS.map((o) => (
-                                            <option key={o.value} value={o.value}>
-                                              {o.label}
-                                            </option>
-                                          ))}
-                                        </select>
-                                      </td>
-                                    </tr>
-                                  ))}
+                                {pending.map((item) => (
+                                  <tr key={item.detailId ?? item.copyId}>
+                                    <td>{item.bookTitle || "—"}</td>
+                                    <td>{item.barcode || "—"}</td>
+                                    <td>
+                                      <select
+                                        value={conditions[item.copyId] || "Good"}
+                                        onChange={(event) =>
+                                          setConditions((current) => ({
+                                            ...current,
+                                            [item.copyId]: event.target.value,
+                                          }))
+                                        }
+                                      >
+                                        {CONDITION_OPTIONS.map((option) => (
+                                          <option key={option.value} value={option.value}>{option.label}</option>
+                                        ))}
+                                      </select>
+                                    </td>
+                                  </tr>
+                                ))}
                               </tbody>
                             </table>
                             <button
                               className="lh-btn lh-btn--primary"
                               style={{ marginTop: 14 }}
-                              onClick={() => submitReturn(t)}
+                              disabled={submitting}
+                              onClick={() => submitReturn(ticket)}
                             >
-                              <Icon name="check-circle" size={15} /> Xác nhận trả
+                              <Icon name="check-circle" size={15} />
+                              {submitting ? "Đang xử lý..." : "Xác nhận trả"}
                             </button>
                           </div>
                         </td>
@@ -149,12 +171,11 @@ export default function LibrarianTickets() {
                   </Fragment>
                 );
               })}
-              {sorted.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="lh-admin-table__empty">
-                    Chưa có phiếu mượn nào.
-                  </td>
-                </tr>
+              {!loading && tickets.length === 0 && (
+                <tr><td colSpan={7} className="lh-admin-table__empty">Chưa có phiếu mượn nào.</td></tr>
+              )}
+              {loading && (
+                <tr><td colSpan={7} className="lh-admin-table__empty">Đang tải...</td></tr>
               )}
             </tbody>
           </table>

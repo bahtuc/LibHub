@@ -1,6 +1,9 @@
 package com.library.libhub.controller;
 
+import com.library.libhub.DTO.Request.UpdateAccountStatusRequest;
+import com.library.libhub.DTO.Request.UpdateUserRoleRequest;
 import com.library.libhub.entity.Users;
+import com.library.libhub.DTO.Response.UserSummaryResponse;
 import com.library.libhub.service.IUserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -66,5 +69,26 @@ public class UserController {
     public ResponseEntity<Void> updateLastLogin(@PathVariable long id) {
         userService.updateLastLogin(id, new Timestamp(System.currentTimeMillis()));
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/borrowers")
+    public ResponseEntity<List<UserSummaryResponse>> getActiveBorrowers() {
+        return ResponseEntity.ok(userService.getActiveBorrowers());
+    }
+
+    @PatchMapping("/{id}/role")
+    public ResponseEntity<Users> updateRole(
+            @PathVariable long id, @RequestBody UpdateUserRoleRequest request) {
+        if (request == null || request.getRoleId() == null) {
+            throw new IllegalArgumentException("Thiếu roleId");
+        }
+        return ResponseEntity.ok(userService.updateRole(id, request.getRoleId()));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Users> updateStatus(
+            @PathVariable long id, @RequestBody UpdateAccountStatusRequest request) {
+        if (request == null) throw new IllegalArgumentException("Thiếu trạng thái");
+        return ResponseEntity.ok(userService.updateStatus(id, request.getStatus()));
     }
 }

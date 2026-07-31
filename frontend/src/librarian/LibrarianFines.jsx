@@ -1,33 +1,39 @@
-// src/librarian/LibrarianFines.jsx
+import { useState } from "react";
 import Badge from "../admin/Badge";
-import { usersStore, booksStore } from "../data/adminStore";
-import { useTickets, markFinePaid } from "../data/librarianStore";
+import { getBorrowTicketViews } from "../services/BorrowTicketService";
+import { updateFinePaidStatus } from "../services/FineService";
+import useLoanViews from "../hooks/useLoanViews";
+import { isFinePaid } from "../utils/loanViews";
 
 export default function LibrarianFines() {
-  const users = usersStore.useCollection();
-  const books = booksStore.useCollection();
-  const tickets = useTickets();
+  const { tickets, loading, error, refresh } = useLoanViews(getBorrowTicketViews);
+  const [actionError, setActionError] = useState("");
+  const [updatingId, setUpdatingId] = useState(null);
 
-  // Tính trực tiếp từ tickets (thay vì gọi getAllFines() một lần) để component
-  // tự re-render ngay khi markFinePaid() cập nhật dữ liệu.
   const fines = tickets
-    .flatMap((t) =>
-      t.items
-        .filter((it) => it.fine_amount > 0)
-        .map((it) => ({ ...it, ticket_id: t.ticket_id, user_id: t.user_id }))
+    .flatMap((ticket) =>
+      (ticket.items ?? [])
+        .filter((item) => item.fineId != null)
+        .map((item) => ({
+          ...item,
+          ticketId: ticket.ticketId,
+          userId: ticket.userId,
+          userName: ticket.userName,
+        })),
     )
-    .sort((a, b) => b.ticket_id - a.ticket_id);
+    .sort((left, right) => Number(right.fineId) - Number(left.fineId));
 
-  function userName(id) {
-    return users.find((u) => u.user_id === id)?.full_name ?? "—";
-  }
-  function bookTitle(id) {
-    return books.find((b) => b.book_id === id)?.title ?? "—";
-  }
-  function reasonLabel(condition_book) {
-    if (condition_book === "mat") return "Làm mất sách";
-    if (condition_book === "hu_hong") return "Trả sách hư hỏng";
-    return "Trả trễ hạn";
+  async function togglePaid(fine) {
+    setUpdatingId(fine.fineId);
+    setActionError("");
+    try {
+      await updateFinePaidStatus(fine.fineId, isFinePaid(fine) ? "Unpaid" : "Paid");
+      await refresh();
+    } catch (requestError) {
+      setActionError(requestError.message || "Không thể cập nhật trạng thái khoản phạt.");
+    } finally {
+      setUpdatingId(null);
+    }
   }
 
   return (
@@ -35,17 +41,18 @@ export default function LibrarianFines() {
       <div className="lh-admin-page__head">
         <div>
           <h1 className="lh-admin-page__title">Phạt</h1>
-          <p className="lh-admin-page__subtitle">
-            Danh sách khoản phạt phát sinh từ trả trễ / hư hỏng / mất sách.
-          </p>
+          <p className="lh-admin-page__subtitle">Các khoản phạt phát sinh từ dữ liệu trả sách.</p>
         </div>
       </div>
+
+      {(error || actionError) && <p className="lh-auth-form__error">{actionError || error}</p>}
 
       <div className="lh-admin-table-wrap">
         <div className="lh-admin-table-scroll">
           <table className="lh-admin-table">
             <thead>
               <tr>
+                <th>Mã phạt</th>
                 <th>Phiếu</th>
                 <th>Bạn đọc</th>
                 <th>Sách</th>
@@ -56,36 +63,38 @@ export default function LibrarianFines() {
               </tr>
             </thead>
             <tbody>
-              {fines.map((f) => (
-                <tr key={`${f.ticket_id}-${f.copy_id}`}>
-                  <td>#{f.ticket_id}</td>
-                  <td>{userName(f.user_id)}</td>
-                  <td>{bookTitle(f.book_id)}</td>
-                  <td>{reasonLabel(f.condition_book)}</td>
-                  <td>{f.fine_amount.toLocaleString("vi-VN")}đ</td>
-                  <td>
-                    {f.fine_paid ? (
-                      <Badge tone="success">Đã thu</Badge>
-                    ) : (
-                      <Badge tone="danger">Chưa thu</Badge>
-                    )}
-                  </td>
-                  <td className="lh-admin-table__actions">
-                    <button
-                      className="lh-btn lh-btn--ghost"
-                      onClick={() => markFinePaid(f.ticket_id, f.copy_id, !f.fine_paid)}
-                    >
-                      {f.fine_paid ? "Đánh dấu chưa thu" : "Đánh dấu đã thu"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {fines.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="lh-admin-table__empty">
-                    Chưa có khoản phạt nào.
-                  </td>
-                </tr>
+              {fines.map((fine) => {
+                const paid = isFinePaid(fine);
+                return (
+                  <tr key={fine.fineId}>
+                    <td>#{fine.fineId}</td>
+                    <td>#{fine.ticketId}</td>
+                    <td>{fine.userName || `#${fine.userId}`}</td>
+                    <td>{fine.bookTitle || "—"}</td>
+                    <td>{fine.fineReason || "Phí thư viện"}</td>
+                    <td>{Number(fine.fineAmount || 0).toLocaleString("vi-VN")}đ</td>
+                    <td>
+                      <Badge tone={paid ? "success" : "danger"}>
+                        {paid ? "Đã thu" : "Chưa thu"}
+                      </Badge>
+                    </td>
+                    <td className="lh-admin-table__actions">
+                      <button
+                        className="lh-btn lh-btn--ghost"
+                        disabled={updatingId === fine.fineId}
+                        onClick={() => togglePaid(fine)}
+                      >
+                        {paid ? "Đánh dấu chưa thu" : "Đánh dấu đã thu"}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {!loading && fines.length === 0 && (
+                <tr><td colSpan={8} className="lh-admin-table__empty">Chưa có khoản phạt nào.</td></tr>
+              )}
+              {loading && (
+                <tr><td colSpan={8} className="lh-admin-table__empty">Đang tải...</td></tr>
               )}
             </tbody>
           </table>

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.library.libhub.entity.Books;
 import com.library.libhub.service.IBookService;
+import jakarta.servlet.http.HttpSession;
 
 @RestController
 @RequestMapping("/api/books")
@@ -34,20 +35,29 @@ public class BookController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "title") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir,
-            @RequestParam(required = false) String keyword) {
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "false") boolean includeHidden,
+            HttpSession session) {
 
+        String role = String.valueOf(session.getAttribute("ROLE"));
+        boolean staffMaySeeHidden = includeHidden
+                && ("Admin".equalsIgnoreCase(role) || "Librarian".equalsIgnoreCase(role));
         return ResponseEntity.ok(
                 bookService.getAllBooks(
                         page,
                         size,
                         sortBy,
                         sortDir,
-                        keyword));
+                        keyword,
+                        staffMaySeeHidden));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<Books>> getBookById(@PathVariable long id) {
-        return ResponseEntity.ok(bookService.getBookById(id));
+    public ResponseEntity<Books> getBookById(@PathVariable long id, HttpSession session) {
+        String role = String.valueOf(session.getAttribute("ROLE"));
+        boolean includeHidden = "Admin".equalsIgnoreCase(role)
+                || "Librarian".equalsIgnoreCase(role);
+        return ResponseEntity.of(bookService.getBookById(id, includeHidden));
     }
 
     @PostMapping

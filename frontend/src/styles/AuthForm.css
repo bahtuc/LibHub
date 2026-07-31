@@ -6,7 +6,7 @@
   gap: 16px;
 }
 
-.lh-field {
+/* .lh-field {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -15,20 +15,62 @@
   color: var(--lh-ink-soft);
   opacity: 0;
   animation: lh-field-in 0.45s ease both;
+} */
+
+/* .lh-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--lh-ink-soft);
+
+  animation: lh-field-in 0.45s ease forwards;
+} */
+.lh-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  color: var(--lh-ink-soft);
+
+  animation-name: lh-field-in;
+  animation-duration: 0.45s;
+  animation-timing-function: ease;
+  animation-fill-mode: both;
 }
 
 /* Stagger nhẹ từng dòng khi thẻ vừa hiện ra, không lặp lại sau đó */
-.lh-field:nth-child(1) { animation-delay: 0.05s; }
-.lh-field:nth-child(2) { animation-delay: 0.1s; }
-.lh-field:nth-child(3) { animation-delay: 0.15s; }
-.lh-field:nth-child(4) { animation-delay: 0.2s; }
+.lh-field:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.lh-field:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.lh-field:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+.lh-field:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
+.lh-field:nth-child(5) {
+  animation-delay: 0.25s;
+}
 
 @keyframes lh-field-in {
-  from {
+  0% {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(12px);
   }
-  to {
+
+  100% {
     opacity: 1;
     transform: translateY(0);
   }
@@ -83,8 +125,8 @@
   box-shadow: 0 0 0 3px rgba(185, 131, 42, 0.16);
 }
 
-.lh-field__control input:focus + .lh-field__icon,
-.lh-field__control input:focus ~ .lh-field__icon {
+.lh-field__control input:focus+.lh-field__icon,
+.lh-field__control input:focus~.lh-field__icon {
   color: var(--lh-gold);
 }
 

@@ -1,47 +1,49 @@
 package com.library.libhub.service.impl;
 
-import com.library.libhub.exception.ResourceNotFoundException;
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
-import com.library.libhub.dao.BorrowTicketDAO;
-import com.library.libhub.dao.BorrowDetailDAO;
-import com.library.libhub.dao.BookCopyDAO;
-import com.library.libhub.dao.BookDAO;
-import com.library.libhub.dao.UserDAO;
+import org.springframework.stereotype.Service;
+
 import com.library.libhub.entity.BookCopies;
 import com.library.libhub.entity.Books;
 import com.library.libhub.entity.BorrowDetails;
 import com.library.libhub.entity.BorrowTickets;
 import com.library.libhub.entity.Users;
+import com.library.libhub.exception.ResourceNotFoundException;
+import com.library.libhub.repository.BookCopyRepository;
+import com.library.libhub.repository.BookRepository;
+import com.library.libhub.repository.BorrowDetailRepository;
+import com.library.libhub.repository.BorrowTicketRepository;
+import com.library.libhub.repository.UserRepository;
 import com.library.libhub.service.IBorrowTicketService;
+
 import jakarta.transaction.Transactional;
-import org.springframework.stereotype.Service;
-import java.util.List;
-import java.util.Optional;
-import java.sql.Timestamp;
-import java.sql.Date;
-import java.time.LocalDate;
 
 @Service
 @Transactional
 public class BorrowTicketServiceImpl implements IBorrowTicketService {
 
-    private final BorrowTicketDAO borrowTicketDAO;
-    private final BorrowDetailDAO borrowDetailDAO;
-    private final BookCopyDAO bookCopyDAO;
-    private final BookDAO bookDAO;
-    private final UserDAO userDAO;
+    private final BorrowTicketRepository borrowTicketRepo;
+    private final BorrowDetailRepository borrowDetailRepo;
+    private final BookCopyRepository bookCopyRepo;
+    private final BookRepository bookRepo;
+    private final UserRepository userRepo;
 
     public BorrowTicketServiceImpl(
-            BorrowTicketDAO borrowTicketDAO,
-            BorrowDetailDAO borrowDetailDAO,
-            BookCopyDAO bookCopyDAO,
-            BookDAO bookDAO,
-            UserDAO userDAO) {
-        this.borrowTicketDAO = borrowTicketDAO;
-        this.borrowDetailDAO = borrowDetailDAO;
-        this.bookCopyDAO = bookCopyDAO;
-        this.bookDAO = bookDAO;
-        this.userDAO = userDAO;
+            BorrowTicketRepository borrowTicketRepo,
+            BorrowDetailRepository borrowDetailRepo,
+            BookCopyRepository bookCopyRepo,
+            BookRepository bookRepo,
+            UserRepository userRepo) {
+        this.borrowTicketRepo = borrowTicketRepo;
+        this.borrowDetailRepo = borrowDetailRepo;
+        this.bookCopyRepo = bookCopyRepo;
+        this.bookRepo = bookRepo;
+        this.userRepo = userRepo;
     }
 
     @Override
@@ -52,29 +54,29 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
             throw new IllegalArgumentException("Hạn trả không thể trước ngày mượn");
         if (borrowTicket.getStatus() == null || borrowTicket.getStatus().isBlank()) borrowTicket.setStatus("Borrowed");
         if (borrowTicket.getCreatedAt() == null) borrowTicket.setCreatedAt(new Timestamp(System.currentTimeMillis()));
-        return borrowTicketDAO.save(borrowTicket);
+        return borrowTicketRepo.save(borrowTicket);
     }
 
     @Override
     public BorrowTickets borrowBook(long userId, long bookId) {
-        Users user = userDAO.findByIdForUpdate(userId)
+        Users user = userRepo.findByIdForUpdate(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Không tìm thấy tài khoản"));
         if (!"ACTIVE".equalsIgnoreCase(user.getStatus())) {
             throw new IllegalArgumentException("Tài khoản không thể mượn sách");
         }
 
-        Books book = bookDAO.findById(bookId)
+        Books book = bookRepo.findById(bookId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Không tìm thấy sách"));
         if (Boolean.TRUE.equals(book.getHidden())) {
             throw new IllegalArgumentException("Sách hiện không thể mượn");
         }
-        if (borrowDetailDAO.existsActiveBorrow(userId, bookId)) {
+        if (borrowDetailRepo.existsActiveBorrow(userId, bookId)) {
             throw new IllegalArgumentException("Bạn đang mượn sách này");
         }
 
-        BookCopies copy = bookCopyDAO
+        BookCopies copy = bookCopyRepo
                 .findFirstByBookIdAndStatusIgnoreCaseOrderByCopyIdAsc(
                         bookId, "Available")
                 .orElseThrow(() -> new IllegalArgumentException(
@@ -88,16 +90,16 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
         ticket.setStatus("Borrowed");
         ticket.setCreatedAt(new Timestamp(System.currentTimeMillis()));
         ticket.setNote(buildLoanNote(book, copy));
-        ticket = borrowTicketDAO.save(ticket);
+        ticket = borrowTicketRepo.save(ticket);
 
         BorrowDetails detail = new BorrowDetails();
         detail.setTicketId(ticket.getTicketId());
         detail.setCopyId(copy.getCopyId());
         detail.setBorrowStatus("Borrowed");
-        borrowDetailDAO.save(detail);
+        borrowDetailRepo.save(detail);
 
         copy.setStatus("Borrowed");
-        bookCopyDAO.save(copy);
+        bookCopyRepo.save(copy);
         return ticket;
     }
 
@@ -133,17 +135,17 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
 
     @Override
     public Optional<BorrowTickets> getBorrowTicketById(long ticketId) {
-        return borrowTicketDAO.findById(ticketId);
+        return borrowTicketRepo.findById(ticketId);
     }
 
     @Override
     public List<BorrowTickets> getAllBorrowTickets() {
-        return borrowTicketDAO.findAll();
+        return borrowTicketRepo.findAll();
     }
 
     @Override
     public BorrowTickets updateBorrowTicket(long ticketId, BorrowTickets borrowTicket) {
-        BorrowTickets existing = borrowTicketDAO.findById(ticketId)
+        BorrowTickets existing = borrowTicketRepo.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Borrow ticket not found with id: " + ticketId));
         if (borrowTicket.getUserId() != null) existing.setUserId(borrowTicket.getUserId());
         if (borrowTicket.getBorrowDate() != null) existing.setBorrowDate(borrowTicket.getBorrowDate());
@@ -153,13 +155,13 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
         if (existing.getBorrowDate() != null && existing.getDueDate() != null
                 && existing.getDueDate().before(existing.getBorrowDate()))
             throw new IllegalArgumentException("Hạn trả không thể trước ngày mượn");
-        return borrowTicketDAO.save(existing);
+        return borrowTicketRepo.save(existing);
     }
 
     @Override
     public void deleteBorrowTicket(long ticketId) {
-        if (borrowTicketDAO.existsById(ticketId)) {
-            borrowTicketDAO.deleteById(ticketId);
+        if (borrowTicketRepo.existsById(ticketId)) {
+            borrowTicketRepo.deleteById(ticketId);
         } else {
             throw new ResourceNotFoundException("Borrow ticket not found with id: " + ticketId);
         }
@@ -167,11 +169,11 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
 
     @Override
     public List<BorrowTickets> findByUser(long userId) {
-        return borrowTicketDAO.findByUserId(userId);
+        return borrowTicketRepo.findByUserId(userId);
     }
 
     @Override
     public List<BorrowTickets> findByStatus(String status) {
-        return borrowTicketDAO.findByStatus(status);
+        return borrowTicketRepo.findByStatus(status);
     }
 }

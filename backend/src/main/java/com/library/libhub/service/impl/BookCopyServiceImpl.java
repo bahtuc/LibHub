@@ -1,47 +1,49 @@
 package com.library.libhub.service.impl;
 
-import com.library.libhub.exception.ResourceNotFoundException;
-
-import com.library.libhub.dao.BookCopyDAO;
-import com.library.libhub.entity.BookCopies;
-import com.library.libhub.service.IBookCopyService;
-import jakarta.transaction.Transactional;
-import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+
+import com.library.libhub.entity.BookCopies;
+import com.library.libhub.exception.ResourceNotFoundException;
+import com.library.libhub.repository.BookCopyRepository;
+import com.library.libhub.service.IBookCopyService;
+
+import jakarta.transaction.Transactional;
 
 @Service
 @Transactional
 public class BookCopyServiceImpl implements IBookCopyService {
 
-    private final BookCopyDAO bookCopyDAO;
+    private final BookCopyRepository bookCopyRepo;
 
-    public BookCopyServiceImpl(BookCopyDAO bookCopyDAO) {
-        this.bookCopyDAO = bookCopyDAO;
+    public BookCopyServiceImpl(BookCopyRepository bookCopyRepo) {
+        this.bookCopyRepo = bookCopyRepo;
     }
 
     @Override
     public BookCopies createBookCopy(BookCopies bookCopy) {
         validate(bookCopy);
-        if (bookCopyDAO.findByBarcode(bookCopy.getBarcode()).isPresent())
+        if (bookCopyRepo.findByBarcode(bookCopy.getBarcode()).isPresent())
             throw new IllegalArgumentException("Mã vạch đã tồn tại");
         if (bookCopy.getStatus() == null || bookCopy.getStatus().isBlank()) bookCopy.setStatus("Available");
-        return bookCopyDAO.save(bookCopy);
+        return bookCopyRepo.save(bookCopy);
     }
 
     @Override
     public Optional<BookCopies> getBookCopyById(long copyId) {
-        return bookCopyDAO.findById(copyId);
+        return bookCopyRepo.findById(copyId);
     }
 
     @Override
     public List<BookCopies> getAllBookCopies() {
-        return bookCopyDAO.findAll();
+        return bookCopyRepo.findAll();
     }
 
     @Override
     public BookCopies updateBookCopy(long copyId, BookCopies bookCopy) {
-        BookCopies existing = bookCopyDAO.findById(copyId)
+        BookCopies existing = bookCopyRepo.findById(copyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Book copy not found with id: " + copyId));
 
         // Chỉ cập nhật field được gửi lên
@@ -52,16 +54,16 @@ public class BookCopyServiceImpl implements IBookCopyService {
         if (bookCopy.getAcquiredDate() != null) existing.setAcquiredDate(bookCopy.getAcquiredDate());
 
         validate(existing);
-        bookCopyDAO.findByBarcode(existing.getBarcode())
+        bookCopyRepo.findByBarcode(existing.getBarcode())
                 .filter(other -> !other.getCopyId().equals(copyId))
                 .ifPresent(other -> { throw new IllegalArgumentException("Mã vạch đã tồn tại"); });
-        return bookCopyDAO.save(existing);
+        return bookCopyRepo.save(existing);
     }
 
     @Override
     public void deleteBookCopy(long copyId) {
-        if (bookCopyDAO.existsById(copyId)) {
-            bookCopyDAO.deleteById(copyId);
+        if (bookCopyRepo.existsById(copyId)) {
+            bookCopyRepo.deleteById(copyId);
         } else {
             throw new ResourceNotFoundException("Book copy not found with id: " + copyId);
         }
@@ -69,24 +71,24 @@ public class BookCopyServiceImpl implements IBookCopyService {
 
     @Override
     public Optional<BookCopies> findByBarcode(String barcode) {
-        return bookCopyDAO.findByBarcode(barcode);
+        return bookCopyRepo.findByBarcode(barcode);
     }
 
     @Override
     public List<BookCopies> findByBook(long bookId) {
-        return bookCopyDAO.findByBookId(bookId);
+        return bookCopyRepo.findByBookId(bookId);
     }
 
     @Override
     public List<BookCopies> findByBookAndStatus(long bookId, String status) {
-        return bookCopyDAO.findByBookIdAndStatus(bookId, status);
+        return bookCopyRepo.findByBookIdAndStatus(bookId, status);
     }
 
     @Override
     @Transactional
     public void updateStatus(long copyId, String status) {
         if (status == null || status.isBlank()) throw new IllegalArgumentException("Trạng thái không được để trống");
-        if (bookCopyDAO.updateStatus(copyId, status) == 0)
+        if (bookCopyRepo.updateStatus(copyId, status) == 0)
             throw new ResourceNotFoundException("Book copy not found with id: " + copyId);
     }
 

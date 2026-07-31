@@ -1,19 +1,21 @@
-package com.library.libhub.dao;
+package com.library.libhub.repository;
 
-import com.library.libhub.entity.BookCopies;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
+import com.library.libhub.entity.BookCopies;
+
 import jakarta.persistence.LockModeType;
 
 @Repository
-public interface BookCopyDAO extends JpaRepository<BookCopies, Long> {
+public interface BookCopyRepository extends JpaRepository<BookCopies, Long> {
 
     Optional<BookCopies> findByBarcode(String barcode);
 

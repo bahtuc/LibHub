@@ -1,7 +1,13 @@
 package com.library.libhub.entity;
 
-import jakarta.persistence.*;
 import java.sql.Timestamp;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "Books")
@@ -19,7 +25,7 @@ public class Books {
   private String isbn;
 
   @Column(name = "publish_year")
-  private Long publishYear;
+  private Integer publishYear;
 
   @Column(name = "description")
   private String description;
@@ -31,7 +37,7 @@ public class Books {
   private String language;
 
   @Column(name = "pages")
-  private Long pages;
+  private Integer pages;
 
   @Column(name = "category_id")
   private Long categoryId;
@@ -79,11 +85,11 @@ public class Books {
   }
 
 
-  public Long getPublishYear() {
+  public Integer getPublishYear() {
     return publishYear;
   }
 
-  public void setPublishYear(Long publishYear) {
+  public void setPublishYear(Integer publishYear) {
     this.publishYear = publishYear;
   }
 
@@ -115,11 +121,11 @@ public class Books {
   }
 
 
-  public Long getPages() {
+  public Integer getPages() {
     return pages;
   }
 
-  public void setPages(Long pages) {
+  public void setPages(Integer pages) {
     this.pages = pages;
   }
 

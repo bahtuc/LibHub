@@ -1,4 +1,4 @@
-package com.library.libhub.dao;
+package com.library.libhub.repository;
 
 import com.library.libhub.entity.ReturnDetails;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface ReturnDetailDAO extends JpaRepository<ReturnDetails, Long> {
+public interface ReturnDetailRepository extends JpaRepository<ReturnDetails, Long> {
 
     List<ReturnDetails> findByReturnId(long returnId);
 

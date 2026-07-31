@@ -1,15 +1,16 @@
-package com.library.libhub.dao;
-
-import com.library.libhub.entity.BorrowDetails;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+package com.library.libhub.repository;
 
 import java.util.List;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import com.library.libhub.entity.BorrowDetails;
+
 @Repository
-public interface BorrowDetailDAO extends JpaRepository<BorrowDetails, Long> {
+public interface BorrowDetailRepository extends JpaRepository<BorrowDetails, Long> {
 
     List<BorrowDetails> findByTicketId(long ticketId);
 

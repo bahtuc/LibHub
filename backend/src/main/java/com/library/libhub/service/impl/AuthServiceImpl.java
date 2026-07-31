@@ -11,11 +11,11 @@ import com.library.libhub.DTO.Request.LoginRequest;
 import com.library.libhub.DTO.Request.RegisterRequest;
 import com.library.libhub.DTO.Request.UpdateProfileRequest;
 import com.library.libhub.DTO.Response.AuthResponse;
-import com.library.libhub.dao.RoleDAO;
-import com.library.libhub.dao.UserDAO;
 import com.library.libhub.entity.Roles;
 import com.library.libhub.entity.Users;
 import com.library.libhub.exception.ResourceNotFoundException;
+import com.library.libhub.repository.RoleRepository;
+import com.library.libhub.repository.UserRepository;
 import com.library.libhub.service.IAuthService;
 import com.library.libhub.utils.ValidationUtil;
 
@@ -27,10 +27,10 @@ import jakarta.transaction.Transactional;
 public class AuthServiceImpl implements IAuthService {
 
     @Autowired
-    private UserDAO userDAO;
+    private UserRepository userRepo;
 
     @Autowired
-    private RoleDAO roleDAO;
+    private RoleRepository roleRepo;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -42,14 +42,14 @@ public class AuthServiceImpl implements IAuthService {
     public AuthResponse register(RegisterRequest request) {
         validateRegister(request);
 
-        if (userDAO.existsByUsername(request.getUsername())) {
+        if (userRepo.existsByUsername(request.getUsername())) {
             throw new IllegalArgumentException("Username đã tồn tại");
         }
-        if (userDAO.existsByEmail(request.getEmail())) {
+        if (userRepo.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("Email đã tồn tại");
         }
 
-        Roles role = roleDAO.findByRoleName("Member")
+        Roles role = roleRepo.findByRoleName("Member")
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Không tìm thấy role Member"));
 
@@ -62,14 +62,14 @@ public class AuthServiceImpl implements IAuthService {
         user.setStatus("ACTIVE");
         user.setCreatedAt(new Timestamp(System.currentTimeMillis()));
 
-        return mapToResponse(userDAO.save(user));
+        return mapToResponse(userRepo.save(user));
     }
 
     @Override
     public AuthResponse login(LoginRequest request) {
         validateLogin(request);
 
-        Users user = userDAO.findByUsernameOrEmail(
+        Users user = userRepo.findByUsernameOrEmail(
                         request.getUsernameOrEmail(), request.getUsernameOrEmail())
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Tên đăng nhập hoặc mật khẩu không đúng"));
@@ -82,7 +82,7 @@ public class AuthServiceImpl implements IAuthService {
         }
 
         user.setLastLogin(new Timestamp(System.currentTimeMillis()));
-        userDAO.save(user);
+        userRepo.save(user);
         session.setAttribute("USER_LOGIN", user);
         session.setAttribute("ROLE",
                 user.getRole() != null ? user.getRole().getRoleName() : null);
@@ -116,7 +116,7 @@ public class AuthServiceImpl implements IAuthService {
         Users user = findUser(userId);
         if (email != null
                 && (user.getEmail() == null || !email.equalsIgnoreCase(user.getEmail()))
-                && userDAO.existsByEmail(email)) {
+                && userRepo.existsByEmail(email)) {
             throw new IllegalArgumentException("Email đã tồn tại");
         }
 
@@ -124,7 +124,7 @@ public class AuthServiceImpl implements IAuthService {
         user.setEmail(email);
         user.setPhone(phone);
         user.setAddress(trimToNull(request.getAddress()));
-        return mapToResponse(userDAO.save(user));
+        return mapToResponse(userRepo.save(user));
     }
 
     @Override
@@ -155,7 +155,7 @@ public class AuthServiceImpl implements IAuthService {
         }
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
-        return mapToResponse(userDAO.save(user));
+        return mapToResponse(userRepo.save(user));
     }
 
     private void validateRegister(RegisterRequest request) {
@@ -205,7 +205,7 @@ public class AuthServiceImpl implements IAuthService {
     }
 
     private Users findUser(long userId) {
-        return userDAO.findById(userId)
+        return userRepo.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "User not found with id: " + userId));
     }

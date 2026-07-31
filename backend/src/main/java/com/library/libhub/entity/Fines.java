@@ -1,7 +1,14 @@
 package com.library.libhub.entity;
 
-import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "Fines")
@@ -16,7 +23,7 @@ public class Fines {
   private Long returnDetailId;
 
   @Column(name = "amount")
-  private Double amount;
+  private BigDecimal amount;
 
   @Column(name = "reason")
   private String reason;
@@ -46,11 +53,11 @@ public class Fines {
   }
 
 
-  public Double getAmount() {
+  public BigDecimal getAmount() {
     return amount;
   }
 
-  public void setAmount(Double amount) {
+  public void setAmount(BigDecimal amount) {
     this.amount = amount;
   }
 

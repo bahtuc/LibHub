@@ -1,7 +1,8 @@
 package com.library.libhub.service.impl;
 
-import com.library.libhub.dao.FineDAO;
 import com.library.libhub.entity.Fines;
+import com.library.libhub.repository.FineRepository;
+
 import org.junit.jupiter.api.Test;
 
 import java.sql.Timestamp;
@@ -11,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class FineServiceImplTest {
-    private final FineDAO dao = mock(FineDAO.class);
-    private final FineServiceImpl service = new FineServiceImpl(dao);
+    private final FineRepository Repo = mock(FineRepository.class);
+    private final FineServiceImpl service = new FineServiceImpl(Repo);
 
     @Test
     void createRejectsNonPositiveAmount() {
@@ -33,8 +34,8 @@ class FineServiceImplTest {
         existing.setCreatedAt(new Timestamp(1));
         Fines patch = new Fines();
         patch.setPaidStatus("Paid");
-        when(dao.findById(3L)).thenReturn(Optional.of(existing));
-        when(dao.save(existing)).thenReturn(existing);
+        when(Repo.findById(3L)).thenReturn(Optional.of(existing));
+        when(Repo.save(existing)).thenReturn(existing);
 
         Fines result = service.updateFine(3L, patch);
 

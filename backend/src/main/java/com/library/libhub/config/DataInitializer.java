@@ -3,8 +3,8 @@ package com.library.libhub.config;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import com.library.libhub.dao.RoleDAO;
 import com.library.libhub.entity.Roles;
+import com.library.libhub.repository.RoleRepository;
 
 /**
  * Seed dữ liệu tối thiểu khi khởi động để app dùng được ngay
@@ -14,9 +14,9 @@ import com.library.libhub.entity.Roles;
 @Component
 public class DataInitializer implements CommandLineRunner {
 
-    private final RoleDAO roleDAO;
+    private final RoleRepository roleDAO;
 
-    public DataInitializer(RoleDAO roleDAO) {
+    public DataInitializer(RoleRepository roleDAO) {
         this.roleDAO = roleDAO;
     }
 

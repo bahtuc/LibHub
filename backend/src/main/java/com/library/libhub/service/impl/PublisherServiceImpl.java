@@ -1,58 +1,60 @@
 package com.library.libhub.service.impl;
 
-import com.library.libhub.exception.ResourceNotFoundException;
-
-import com.library.libhub.dao.PublisherDAO;
-import com.library.libhub.entity.Publishers;
-import com.library.libhub.service.IPublisherService;
-import com.library.libhub.utils.ValidationUtil;
-import jakarta.transaction.Transactional;
-import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+
+import com.library.libhub.entity.Publishers;
+import com.library.libhub.exception.ResourceNotFoundException;
+import com.library.libhub.repository.PublisherRepository;
+import com.library.libhub.service.IPublisherService;
+import com.library.libhub.utils.ValidationUtil;
+
+import jakarta.transaction.Transactional;
 
 @Service
 @Transactional
 public class PublisherServiceImpl implements IPublisherService {
 
-    private final PublisherDAO publisherDAO;
+    private final PublisherRepository publisherRepo;
 
-    public PublisherServiceImpl(PublisherDAO publisherDAO) {
-        this.publisherDAO = publisherDAO;
+    public PublisherServiceImpl(PublisherRepository publisherRepo) {
+        this.publisherRepo = publisherRepo;
     }
 
     @Override
     public Publishers createPublisher(Publishers publisher) {
         validatePublisher(publisher);
 
-        publisherDAO.findByPublisherName(publisher.getPublisherName().trim())
+        publisherRepo.findByPublisherName(publisher.getPublisherName().trim())
                 .ifPresent(p -> {
                     throw new RuntimeException("Tên nhà xuất bản đã tồn tại");
                 });
 
         publisher.setPublisherName(publisher.getPublisherName().trim());
-        return publisherDAO.save(publisher);
+        return publisherRepo.save(publisher);
     }
 
     @Override
     public Optional<Publishers> getPublisherById(long publisherId) {
-        return publisherDAO.findById(publisherId);
+        return publisherRepo.findById(publisherId);
     }
 
     @Override
     public List<Publishers> getAllPublishers() {
-        return publisherDAO.findAll();
+        return publisherRepo.findAll();
     }
 
     @Override
     public Publishers updatePublisher(long publisherId, Publishers publisher) {
-        if (!publisherDAO.existsById(publisherId)) {
+        if (!publisherRepo.existsById(publisherId)) {
             throw new ResourceNotFoundException("Publisher not found with id: " + publisherId);
         }
 
         validatePublisher(publisher);
 
-        publisherDAO.findByPublisherName(publisher.getPublisherName().trim())
+        publisherRepo.findByPublisherName(publisher.getPublisherName().trim())
                 .filter(p -> !p.getPublisherId().equals(publisherId))
                 .ifPresent(p -> {
                     throw new RuntimeException("Tên nhà xuất bản đã tồn tại");
@@ -60,13 +62,13 @@ public class PublisherServiceImpl implements IPublisherService {
 
         publisher.setPublisherId(publisherId);
         publisher.setPublisherName(publisher.getPublisherName().trim());
-        return publisherDAO.save(publisher);
+        return publisherRepo.save(publisher);
     }
 
     @Override
     public void deletePublisher(long publisherId) {
-        if (publisherDAO.existsById(publisherId)) {
-            publisherDAO.deleteById(publisherId);
+        if (publisherRepo.existsById(publisherId)) {
+            publisherRepo.deleteById(publisherId);
         } else {
             throw new ResourceNotFoundException("Publisher not found with id: " + publisherId);
         }
@@ -74,7 +76,7 @@ public class PublisherServiceImpl implements IPublisherService {
 
     @Override
     public Optional<Publishers> findByName(String publisherName) {
-        return publisherDAO.findByPublisherName(publisherName);
+        return publisherRepo.findByPublisherName(publisherName);
     }
 
     private void validatePublisher(Publishers publisher) {

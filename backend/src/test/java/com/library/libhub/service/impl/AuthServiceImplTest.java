@@ -21,10 +21,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.library.libhub.DTO.Request.ChangePasswordRequest;
 import com.library.libhub.DTO.Request.UpdateProfileRequest;
 import com.library.libhub.DTO.Response.AuthResponse;
-import com.library.libhub.dao.RoleDAO;
-import com.library.libhub.dao.UserDAO;
 import com.library.libhub.entity.Roles;
 import com.library.libhub.entity.Users;
+import com.library.libhub.repository.*;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -32,10 +31,10 @@ import jakarta.servlet.http.HttpSession;
 class AuthServiceImplTest {
 
     @Mock
-    private UserDAO userDAO;
+    private UserRepository userRepository;
 
     @Mock
-    private RoleDAO roleDAO;
+    private RoleRepository roleRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -68,7 +67,7 @@ class AuthServiceImplTest {
     void getProfileReturnsAllAccountFields() {
         user.setPhone("0912345678");
         user.setAddress("Ho Chi Minh City");
-        when(userDAO.findById(7L)).thenReturn(Optional.of(user));
+        when(userRepository.findById(7L)).thenReturn(Optional.of(user));
 
         AuthResponse response = authService.getProfile(7L);
 
@@ -88,9 +87,9 @@ class AuthServiceImplTest {
         request.setPhone("0912345678");
         request.setAddress(" District 1 ");
 
-        when(userDAO.findById(7L)).thenReturn(Optional.of(user));
-        when(userDAO.existsByEmail("new@example.com")).thenReturn(false);
-        when(userDAO.save(user)).thenReturn(user);
+        when(userRepository.findById(7L)).thenReturn(Optional.of(user));
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(userRepository.save(user)).thenReturn(user);
 
         AuthResponse response = authService.updateProfile(7L, request);
 
@@ -108,17 +107,17 @@ class AuthServiceImplTest {
         request.setNewPassword("new-password");
         request.setConfirmPassword("new-password");
 
-        when(userDAO.findById(7L)).thenReturn(Optional.of(user));
+        when(userRepository.findById(7L)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("old-password", "old-hash")).thenReturn(true);
         when(passwordEncoder.matches("new-password", "old-hash")).thenReturn(false);
         when(passwordEncoder.encode("new-password")).thenReturn("new-hash");
-        when(userDAO.save(user)).thenReturn(user);
+        when(userRepository.save(user)).thenReturn(user);
 
         authService.changePassword(7L, request);
 
         assertEquals("new-hash", user.getPasswordHash());
-        verify(userDAO, never()).findByUsername(any());
-        verify(userDAO).findById(7L);
+        verify(userRepository, never()).findByUsername(any());
+        verify(userRepository).findById(7L);
     }
 
     @Test
@@ -130,6 +129,6 @@ class AuthServiceImplTest {
 
         assertThrows(IllegalArgumentException.class,
                 () -> authService.changePassword(7L, request));
-        verify(userDAO, never()).save(any());
+        verify(userRepository, never()).save(any());
     }
 }

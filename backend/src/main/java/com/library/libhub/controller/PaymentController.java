@@ -1,23 +1,7 @@
 package com.library.libhub.controller;
 
-import com.library.libhub.config.VNPayConfig;
-import com.library.libhub.entity.Fines;
-import com.library.libhub.entity.Users;
-import com.library.libhub.service.IFineService;
-import com.library.libhub.service.IBorrowTicketService;
-import com.library.libhub.service.IReturnDetailService;
-import com.library.libhub.service.IReturnService;
-import com.library.libhub.utils.VNPayUtil;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
@@ -27,6 +11,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.library.libhub.config.VNPayConfig;
+import com.library.libhub.entity.Fines;
+import com.library.libhub.entity.Users;
+import com.library.libhub.service.IBorrowTicketService;
+import com.library.libhub.service.IFineService;
+import com.library.libhub.service.IReturnDetailService;
+import com.library.libhub.service.IReturnService;
+import com.library.libhub.utils.VNPayUtil;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 @RequestMapping("/api/payments")
 @RestController
@@ -39,7 +44,7 @@ public class PaymentController {
     private final IBorrowTicketService borrowTicketService;
 
     public PaymentController(VNPayConfig vnp, IFineService fineService, IReturnDetailService returnDetailService,
-                             IReturnService returnService, IBorrowTicketService borrowTicketService) {
+            IReturnService returnService, IBorrowTicketService borrowTicketService) {
         this.vnp = vnp;
         this.fineService = fineService;
         this.returnDetailService = returnDetailService;
@@ -86,8 +91,9 @@ public class PaymentController {
         if ("Paid".equalsIgnoreCase(fine.getPaidStatus())) {
             return ResponseEntity.badRequest().body(err("Khoản phạt đã được thanh toán"));
         }
-        double amount = fine.getAmount() == null ? 0 : fine.getAmount();
-        if (amount <= 0) {
+        BigDecimal amount = fine.getAmount() == null ? BigDecimal.ZERO : fine.getAmount();
+
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             return ResponseEntity.badRequest().body(err("Số tiền không hợp lệ"));
         }
         if (isBlank(vnp.getTmnCode()) || isBlank(vnp.getHashSecret()) || isBlank(vnp.getPayUrl())
@@ -104,7 +110,9 @@ public class PaymentController {
         params.put("vnp_Version", vnp.getApiVersion());
         params.put("vnp_Command", "pay");
         params.put("vnp_TmnCode", vnp.getTmnCode());
-        params.put("vnp_Amount", String.valueOf(Math.round(amount * 100)));
+        params.put(
+                "vnp_Amount",
+                String.valueOf(amount.multiply(BigDecimal.valueOf(100)).longValue()));
         params.put("vnp_CurrCode", "VND");
         params.put("vnp_TxnRef", txnRef);
         params.put("vnp_OrderInfo", "Thanh toan phat thu vien #" + fineId);
@@ -184,16 +192,22 @@ public class PaymentController {
         try {
             long fineId = Long.parseLong(txnRef.split("_")[0]);
             long amount = Long.parseLong(returnedAmount);
+
             return fineService.getFineById(fineId)
-                    .map(fine -> fine.getAmount() != null && Math.round(fine.getAmount() * 100) == amount)
+                    .map(fine -> fine.getAmount() != null
+                            && fine.getAmount()
+                                    .multiply(BigDecimal.valueOf(100))
+                                    .longValue() == amount)
                     .orElse(false);
+
         } catch (RuntimeException ex) {
             return false;
         }
     }
 
     private boolean belongsToUser(Fines fine, Long userId) {
-        if (fine.getReturnDetailId() == null || userId == null) return false;
+        if (fine.getReturnDetailId() == null || userId == null)
+            return false;
         return returnDetailService.getReturnDetailById(fine.getReturnDetailId())
                 .flatMap(detail -> returnService.getReturnById(detail.getReturnId()))
                 .flatMap(returnRecord -> borrowTicketService.getBorrowTicketById(returnRecord.getTicketId()))

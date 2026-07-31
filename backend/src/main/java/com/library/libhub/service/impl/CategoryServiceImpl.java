@@ -1,59 +1,61 @@
 package com.library.libhub.service.impl;
 
-import com.library.libhub.exception.ResourceNotFoundException;
-
-import com.library.libhub.dao.CategoryDAO;
-import com.library.libhub.entity.Categories;
-import com.library.libhub.service.ICategoryService;
-import com.library.libhub.utils.ValidationUtil;
-import jakarta.transaction.Transactional;
-import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+
+import com.library.libhub.entity.Categories;
+import com.library.libhub.exception.ResourceNotFoundException;
+import com.library.libhub.repository.CategoryRepository;
+import com.library.libhub.service.ICategoryService;
+import com.library.libhub.utils.ValidationUtil;
+
+import jakarta.transaction.Transactional;
 
 @Service
 @Transactional
 public class CategoryServiceImpl implements ICategoryService {
 
-    private final CategoryDAO categoryDAO;
+    private final CategoryRepository categoryRepo;
 
-    public CategoryServiceImpl(CategoryDAO categoryDAO) {
-        this.categoryDAO = categoryDAO;
+    public CategoryServiceImpl(CategoryRepository categoryRepo) {
+        this.categoryRepo = categoryRepo;
     }
 
     @Override
     public Categories createCategory(Categories category) {
         validateCategory(category);
 
-        categoryDAO.findByCategoryName(category.getCategoryName().trim())
+        categoryRepo.findByCategoryName(category.getCategoryName().trim())
                 .ifPresent(c -> {
                     throw new RuntimeException("Tên thể loại đã tồn tại");
                 });
 
         category.setCategoryName(category.getCategoryName().trim());
-        return categoryDAO.save(category);
+        return categoryRepo.save(category);
     }
 
     @Override
     public Optional<Categories> getCategoryById(long categoryId) {
-        return categoryDAO.findById(categoryId);
+        return categoryRepo.findById(categoryId);
     }
 
     @Override
     public List<Categories> getAllCategories() {
-        return categoryDAO.findAll();
+        return categoryRepo.findAll();
     }
 
     @Override
     public Categories updateCategory(long categoryId, Categories category) {
-        if (!categoryDAO.existsById(categoryId)) {
+        if (!categoryRepo.existsById(categoryId)) {
             throw new ResourceNotFoundException("Category not found with id: " + categoryId);
         }
 
         validateCategory(category);
 
         // Tên thể loại không được trùng với thể loại khác
-        categoryDAO.findByCategoryName(category.getCategoryName().trim())
+        categoryRepo.findByCategoryName(category.getCategoryName().trim())
                 .filter(c -> !c.getCategoryId().equals(categoryId))
                 .ifPresent(c -> {
                     throw new RuntimeException("Tên thể loại đã tồn tại");
@@ -61,13 +63,13 @@ public class CategoryServiceImpl implements ICategoryService {
 
         category.setCategoryId(categoryId);
         category.setCategoryName(category.getCategoryName().trim());
-        return categoryDAO.save(category);
+        return categoryRepo.save(category);
     }
 
     @Override
     public void deleteCategory(long categoryId) {
-        if (categoryDAO.existsById(categoryId)) {
-            categoryDAO.deleteById(categoryId);
+        if (categoryRepo.existsById(categoryId)) {
+            categoryRepo.deleteById(categoryId);
         } else {
             throw new ResourceNotFoundException("Category not found with id: " + categoryId);
         }
@@ -75,7 +77,7 @@ public class CategoryServiceImpl implements ICategoryService {
 
     @Override
     public Optional<Categories> findByName(String categoryName) {
-        return categoryDAO.findByCategoryName(categoryName);
+        return categoryRepo.findByCategoryName(categoryName);
     }
 
     // ================= VALIDATE =================

@@ -6,10 +6,10 @@ public class BookResponse {
     private String title;
     private String isbn;
     private String description;
-    private Long publishYear;
+    private Integer publishYear;
     private String coverImage;
     private String language;
-    private Long pages;
+    private Integer pages;
     private Long authorId;
     private Long categoryId;
     private Long publisherId;
@@ -44,11 +44,11 @@ public class BookResponse {
 
     public void setDescription(String description) { this.description = description; }
 
-    public Long getPublishYear() {
+    public Integer getPublishYear() {
         return publishYear;
     }
 
-    public void setPublishYear(Long publishYear) {
+    public void setPublishYear(Integer publishYear) {
         this.publishYear = publishYear;
     }
 
@@ -68,11 +68,11 @@ public class BookResponse {
         this.language = language;
     }
 
-    public Long getPages() {
+    public Integer getPages() {
         return pages;
     }
 
-    public void setPages(Long pages) {
+    public void setPages(Integer pages) {
         this.pages = pages;
     }
 

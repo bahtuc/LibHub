@@ -1,14 +1,9 @@
 package com.library.libhub.service.impl;
 
-import com.library.libhub.exception.ResourceNotFoundException;
-
-import com.library.libhub.DTO.Response.BookResponse;
-import com.library.libhub.DTO.Response.PageResponse;
-import com.library.libhub.dao.BookDAO;
-import com.library.libhub.entity.Books;
-import com.library.libhub.service.IBookService;
-
-import jakarta.transaction.Transactional;
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,10 +11,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
-import java.sql.Timestamp;
-import java.util.Set;
+import com.library.libhub.DTO.Response.BookResponse;
+import com.library.libhub.DTO.Response.PageResponse;
+import com.library.libhub.entity.Books;
+import com.library.libhub.exception.ResourceNotFoundException;
+import com.library.libhub.repository.BookRepository;
+import com.library.libhub.service.IBookService;
+
+import jakarta.transaction.Transactional;
 
 @Service
 @Transactional
@@ -27,32 +26,32 @@ public class BookServiceImpl implements IBookService {
 
     private static final Set<String> SORT_FIELDS = Set.of("bookId", "title", "isbn", "publishYear", "createdAt");
 
-    private final BookDAO bookDAO;
+    private final BookRepository bookRepo;
 
-    public BookServiceImpl(BookDAO bookDAO) {
-        this.bookDAO = bookDAO;
+    public BookServiceImpl(BookRepository bookRepo) {
+        this.bookRepo = bookRepo;
     }
 
     @Override
     public Books createBook(Books book) {
         validateBook(book);
         if (book.getCreatedAt() == null) book.setCreatedAt(new Timestamp(System.currentTimeMillis()));
-        return bookDAO.save(book);
+        return bookRepo.save(book);
     }
 
     @Override
     public Optional<Books> getBookById(long bookId) {
-        return bookDAO.findById(bookId);
+        return bookRepo.findById(bookId);
     }
 
     @Override
     public List<Books> getAllBooks() {
-        return bookDAO.findAll();
+        return bookRepo.findAll();
     }
 
     @Override
     public Books updateBook(long bookId, Books book) {
-        Books existing = bookDAO.findById(bookId)
+        Books existing = bookRepo.findById(bookId)
                 .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + bookId));
 
         // Chỉ cập nhật field được gửi lên; giữ nguyên createdAt
@@ -71,13 +70,13 @@ public class BookServiceImpl implements IBookService {
 
         validateBook(existing);
 
-        return bookDAO.save(existing);
+        return bookRepo.save(existing);
     }
 
     @Override
     public void deleteBook(long bookId) {
-        if (bookDAO.existsById(bookId)) {
-            bookDAO.deleteById(bookId);
+        if (bookRepo.existsById(bookId)) {
+            bookRepo.deleteById(bookId);
         } else {
             throw new ResourceNotFoundException("Book not found with id: " + bookId);
         }
@@ -85,22 +84,22 @@ public class BookServiceImpl implements IBookService {
 
     @Override
     public Optional<Books> findByIsbn(String isbn) {
-        return bookDAO.findByIsbn(isbn);
+        return bookRepo.findByIsbn(isbn);
     }
 
     @Override
     public List<Books> findByCategory(long categoryId) {
-        return bookDAO.findByCategoryId(categoryId);
+        return bookRepo.findByCategoryId(categoryId);
     }
 
     @Override
     public List<Books> findByAuthor(long authorId) {
-        return bookDAO.findByAuthorId(authorId);
+        return bookRepo.findByAuthorId(authorId);
     }
 
     @Override
     public List<Books> searchByTitle(String keyword) {
-        return bookDAO.findByTitleContainingIgnoreCase(keyword);
+        return bookRepo.findByTitleContainingIgnoreCase(keyword);
     }
 
     @Override
@@ -124,10 +123,10 @@ public class BookServiceImpl implements IBookService {
         Page<Books> booksPage;
 
         if (keyword != null && !keyword.isBlank()) {
-            booksPage = bookDAO
+            booksPage = bookRepo
                     .findByTitleContainingIgnoreCase(keyword, pageable);
         } else {
-            booksPage = bookDAO.findAll(pageable);
+            booksPage = bookRepo.findAll(pageable);
         }
 
         List<BookResponse> content = booksPage.getContent()

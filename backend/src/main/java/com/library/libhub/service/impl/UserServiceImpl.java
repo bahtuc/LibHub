@@ -1,26 +1,28 @@
 package com.library.libhub.service.impl;
 
-import com.library.libhub.exception.ResourceNotFoundException;
-
-import com.library.libhub.dao.UserDAO;
-import com.library.libhub.entity.Users;
-import com.library.libhub.service.IUserService;
-import jakarta.transaction.Transactional;
-import org.springframework.stereotype.Service;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import com.library.libhub.entity.Users;
+import com.library.libhub.exception.ResourceNotFoundException;
+import com.library.libhub.repository.UserRepository;
+import com.library.libhub.service.IUserService;
+
+import jakarta.transaction.Transactional;
 
 @Service
 @Transactional
 public class UserServiceImpl implements IUserService {
 
-    private final UserDAO userDAO;
+    private final UserRepository userRepo;
     private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserDAO userDAO, PasswordEncoder passwordEncoder) {
-        this.userDAO = userDAO;
+    public UserServiceImpl(UserRepository userRepo, PasswordEncoder passwordEncoder) {
+        this.userRepo = userRepo;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -30,39 +32,39 @@ public class UserServiceImpl implements IUserService {
             throw new IllegalArgumentException("Username không được để trống");
         if (user.getPasswordHash() == null || user.getPasswordHash().length() < 6)
             throw new IllegalArgumentException("Mật khẩu phải từ 6 ký tự");
-        if (userDAO.existsByUsername(user.getUsername()))
+        if (userRepo.existsByUsername(user.getUsername()))
             throw new IllegalArgumentException("Username đã tồn tại");
-        if (user.getEmail() != null && userDAO.existsByEmail(user.getEmail()))
+        if (user.getEmail() != null && userRepo.existsByEmail(user.getEmail()))
             throw new IllegalArgumentException("Email đã tồn tại");
         user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
         if (user.getStatus() == null || user.getStatus().isBlank()) user.setStatus("ACTIVE");
         if (user.getCreatedAt() == null) user.setCreatedAt(new Timestamp(System.currentTimeMillis()));
-        return userDAO.save(user);
+        return userRepo.save(user);
     }
 
     @Override
     public Optional<Users> getUserById(long userId) {
-        return userDAO.findById(userId);
+        return userRepo.findById(userId);
     }
 
     @Override
     public List<Users> getAllUsers() {
-        return userDAO.findAll();
+        return userRepo.findAll();
     }
 
     @Override
     public Users updateUser(long userId, Users user) {
-        Users existing = userDAO.findById(userId)
+        Users existing = userRepo.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
         // Chỉ cập nhật field được gửi lên; giữ nguyên passwordHash, createdAt, lastLogin
         if (user.getUsername() != null && !user.getUsername().equals(existing.getUsername())) {
-            if (userDAO.existsByUsername(user.getUsername())) throw new IllegalArgumentException("Username đã tồn tại");
+            if (userRepo.existsByUsername(user.getUsername())) throw new IllegalArgumentException("Username đã tồn tại");
             existing.setUsername(user.getUsername());
         }
         if (user.getFullName() != null) existing.setFullName(user.getFullName());
         if (user.getEmail() != null && !user.getEmail().equals(existing.getEmail())) {
-            if (userDAO.existsByEmail(user.getEmail())) throw new IllegalArgumentException("Email đã tồn tại");
+            if (userRepo.existsByEmail(user.getEmail())) throw new IllegalArgumentException("Email đã tồn tại");
             existing.setEmail(user.getEmail());
         }
         if (user.getPhone() != null) existing.setPhone(user.getPhone());
@@ -71,13 +73,13 @@ public class UserServiceImpl implements IUserService {
         if (user.getStatus() != null) existing.setStatus(user.getStatus());
         if (user.getRole() != null) existing.setRole(user.getRole());
 
-        return userDAO.save(existing);
+        return userRepo.save(existing);
     }
 
     @Override
     public void deleteUser(long userId) {
-        if (userDAO.existsById(userId)) {
-            userDAO.deleteById(userId);
+        if (userRepo.existsById(userId)) {
+            userRepo.deleteById(userId);
         } else {
             throw new ResourceNotFoundException("User not found with id: " + userId);
         }
@@ -85,22 +87,22 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public Optional<Users> findByUsername(String username) {
-        return userDAO.findByUsername(username);
+        return userRepo.findByUsername(username);
     }
 
     @Override
     public Optional<Users> findByEmail(String email) {
-        return userDAO.findByEmail(email);
+        return userRepo.findByEmail(email);
     }
 
     @Override
     public boolean existsByUsername(String username) {
-        return userDAO.existsByUsername(username);
+        return userRepo.existsByUsername(username);
     }
 
     @Override
     @Transactional
     public void updateLastLogin(long userId, Timestamp lastLogin) {
-        userDAO.updateLastLogin(userId, lastLogin);
+        userRepo.updateLastLogin(userId, lastLogin);
     }
 }

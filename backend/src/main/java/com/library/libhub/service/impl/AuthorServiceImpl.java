@@ -1,13 +1,13 @@
 package com.library.libhub.service.impl;
 
 import com.library.libhub.exception.ResourceNotFoundException;
+import com.library.libhub.repository.AuthorRepository;
 
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
-import com.library.libhub.dao.AuthorDAO;
 import com.library.libhub.entity.Authors;
 import com.library.libhub.service.IAuthorService;
 import com.library.libhub.utils.ValidationUtil;
@@ -18,44 +18,44 @@ import jakarta.transaction.Transactional;
 @Transactional
 public class AuthorServiceImpl implements IAuthorService {
 
-    private final AuthorDAO authorDAO;
+    private final AuthorRepository authorRepo;
 
-    public AuthorServiceImpl(AuthorDAO authorDAO) {
-        this.authorDAO = authorDAO;
+    public AuthorServiceImpl(AuthorRepository authorRepo) {
+        this.authorRepo = authorRepo;
     }
 
     @Override
     public Authors createAuthor(Authors author) {
         validateAuthor(author);
 
-        authorDAO.findByAuthorName(author.getAuthorName().trim())
+        authorRepo.findByAuthorName(author.getAuthorName().trim())
                 .ifPresent(a -> {
                     throw new RuntimeException("Tên tác giả đã tồn tại");
                 });
 
         author.setAuthorName(author.getAuthorName().trim());
-        return authorDAO.save(author);
+        return authorRepo.save(author);
     }
 
     @Override
-    public Optional<Authors> getAuthorById(long authorId) {
-        return authorDAO.findById(authorId);
+    public Optional<Authors> getAuthorById(Long authorId) {
+        return authorRepo.findById(authorId);
     }
 
     @Override
     public List<Authors> getAllAuthors() {
-        return authorDAO.findAll();
+        return authorRepo.findAll();
     }
 
     @Override
-    public Authors updateAuthor(long authorId, Authors author) {
-        if (!authorDAO.existsById(authorId)) {
+    public Authors updateAuthor(Long authorId, Authors author) {
+        if (!authorRepo.existsById(authorId)) {
             throw new ResourceNotFoundException("Author not found with id: " + authorId);
         }
 
         validateAuthor(author);
 
-        authorDAO.findByAuthorName(author.getAuthorName().trim())
+        authorRepo.findByAuthorName(author.getAuthorName().trim())
                 .filter(a -> !a.getAuthorId().equals(authorId))
                 .ifPresent(a -> {
                     throw new RuntimeException("Tên tác giả đã tồn tại");
@@ -63,13 +63,13 @@ public class AuthorServiceImpl implements IAuthorService {
 
         author.setAuthorId(authorId);
         author.setAuthorName(author.getAuthorName().trim());
-        return authorDAO.save(author);
+        return authorRepo.save(author);
     }
 
     @Override
-    public void deleteAuthor(long authorId) {
-        if (authorDAO.existsById(authorId)) {
-            authorDAO.deleteById(authorId);
+    public void deleteAuthor(Long authorId) {
+        if (authorRepo.existsById(authorId)) {
+            authorRepo.deleteById(authorId);
         } else {
             throw new ResourceNotFoundException("Author not found with id: " + authorId);
         }
@@ -77,7 +77,7 @@ public class AuthorServiceImpl implements IAuthorService {
 
     @Override
     public Optional<Authors> searchByName(String name) {
-        return authorDAO.findAll().stream()
+        return authorRepo.findAll().stream()
                 .filter(a -> a.getAuthorName().toLowerCase().contains(name.toLowerCase()))
                 .findFirst();
     }

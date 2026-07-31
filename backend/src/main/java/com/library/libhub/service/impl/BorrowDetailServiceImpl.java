@@ -1,23 +1,25 @@
 package com.library.libhub.service.impl;
 
-import com.library.libhub.exception.ResourceNotFoundException;
-
-import com.library.libhub.dao.BorrowDetailDAO;
-import com.library.libhub.entity.BorrowDetails;
-import com.library.libhub.service.IBorrowDetailService;
-import jakarta.transaction.Transactional;
-import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+
+import com.library.libhub.entity.BorrowDetails;
+import com.library.libhub.exception.ResourceNotFoundException;
+import com.library.libhub.repository.BorrowDetailRepository;
+import com.library.libhub.service.IBorrowDetailService;
+
+import jakarta.transaction.Transactional;
 
 @Service
 @Transactional
 public class BorrowDetailServiceImpl implements IBorrowDetailService {
 
-    private final BorrowDetailDAO borrowDetailDAO;
+    private final BorrowDetailRepository borrowDetailRepo;
 
-    public BorrowDetailServiceImpl(BorrowDetailDAO borrowDetailDAO) {
-        this.borrowDetailDAO = borrowDetailDAO;
+    public BorrowDetailServiceImpl(BorrowDetailRepository borrowDetailRepo) {
+        this.borrowDetailRepo = borrowDetailRepo;
     }
 
     @Override
@@ -26,33 +28,33 @@ public class BorrowDetailServiceImpl implements IBorrowDetailService {
             throw new IllegalArgumentException("Thiếu thông tin chi tiết mượn");
         if (borrowDetail.getBorrowStatus() == null || borrowDetail.getBorrowStatus().isBlank())
             borrowDetail.setBorrowStatus("Borrowed");
-        return borrowDetailDAO.save(borrowDetail);
+        return borrowDetailRepo.save(borrowDetail);
     }
 
     @Override
     public Optional<BorrowDetails> getBorrowDetailById(long detailId) {
-        return borrowDetailDAO.findById(detailId);
+        return borrowDetailRepo.findById(detailId);
     }
 
     @Override
     public List<BorrowDetails> getAllBorrowDetails() {
-        return borrowDetailDAO.findAll();
+        return borrowDetailRepo.findAll();
     }
 
     @Override
     public BorrowDetails updateBorrowDetail(long detailId, BorrowDetails borrowDetail) {
-        BorrowDetails existing = borrowDetailDAO.findById(detailId)
+        BorrowDetails existing = borrowDetailRepo.findById(detailId)
                 .orElseThrow(() -> new ResourceNotFoundException("Borrow detail not found with id: " + detailId));
         if (borrowDetail.getTicketId() != null) existing.setTicketId(borrowDetail.getTicketId());
         if (borrowDetail.getCopyId() != null) existing.setCopyId(borrowDetail.getCopyId());
         if (borrowDetail.getBorrowStatus() != null) existing.setBorrowStatus(borrowDetail.getBorrowStatus());
-        return borrowDetailDAO.save(existing);
+        return borrowDetailRepo.save(existing);
     }
 
     @Override
     public void deleteBorrowDetail(long detailId) {
-        if (borrowDetailDAO.existsById(detailId)) {
-            borrowDetailDAO.deleteById(detailId);
+        if (borrowDetailRepo.existsById(detailId)) {
+            borrowDetailRepo.deleteById(detailId);
         } else {
             throw new ResourceNotFoundException("Borrow detail not found with id: " + detailId);
         }
@@ -60,16 +62,16 @@ public class BorrowDetailServiceImpl implements IBorrowDetailService {
 
     @Override
     public List<BorrowDetails> findByTicket(long ticketId) {
-        return borrowDetailDAO.findByTicketId(ticketId);
+        return borrowDetailRepo.findByTicketId(ticketId);
     }
 
     @Override
     public List<BorrowDetails> findByCopy(long copyId) {
-        return borrowDetailDAO.findByCopyId(copyId);
+        return borrowDetailRepo.findByCopyId(copyId);
     }
 
     @Override
     public List<BorrowDetails> findByStatus(String borrowStatus) {
-        return borrowDetailDAO.findByBorrowStatus(borrowStatus);
+        return borrowDetailRepo.findByBorrowStatus(borrowStatus);
     }
 }

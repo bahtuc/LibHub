@@ -33,11 +33,12 @@ export function AuthProvider({ children }) {
     return authenticatedUser;
   }
 
-  function register({ full_name, username, email, password }) {
+  function register({ full_name, username, email, phone, password }) {
     return authService.register({
       fullName: full_name,
       username,
       email,
+      phone,
       password,
     });
   }

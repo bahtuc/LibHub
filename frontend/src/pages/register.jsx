@@ -49,7 +49,7 @@ export default function Register() {
       <div className="lh-auth-form">
         <form onSubmit={submit}>
           {field("Họ và tên", "full_name", "user")}
-          {field("Tên đăng nhập", "username", "at-sign")}
+          {field("Tên đăng nhập", "username", "user")}
           {field("Email", "email", "mail", "email")}
           {field("Số điện thoại", "phone", "phone", "tel")}
           {field("Mật khẩu", "password", "lock", "password")}

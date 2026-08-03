@@ -33,15 +33,10 @@ export default function AdminBooks() {
       idField="book_id"
       emptyItem={{
         title: "",
-        author_id: authorOptions[0]?.value ?? "",
-        category_id: categoryOptions[0]?.value ?? "",
-        name: "publisher_id",
-        label: "Nhà xuất bản",
-        type: "select",
-        options: publisherOptions,
-        numeric: true,
-        required: true,
-        publisher_id: publisherOptions[0]?.value ?? "",
+        isbn: "",
+        author_id: authorOptions[0]?.value ?? null,
+        publisher_id: publisherOptions[0]?.value ?? null,
+        category_id: categoryOptions[0]?.value ?? null,
         publish_year: new Date().getFullYear(),
         pages: 200,
         description: "",
@@ -79,6 +74,7 @@ export default function AdminBooks() {
       ]}
       fields={[
         { name: "title", label: "Tên sách", required: true },
+        { name: "isbn", label: "ISBN", required: false },
         { name: "author_id", label: "Tác giả", type: "select", options: authorOptions, numeric: true, required: true },
         { name: "publisher_id", label: "Nhà xuất bản", type: "select", options: publisherOptions, numeric: true, required: true },
         { name: "category_id", label: "Thể loại", type: "select", options: categoryOptions, numeric: true, required: true },

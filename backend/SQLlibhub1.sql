@@ -318,6 +318,39 @@ CREATE TABLE Fines
 );
 
 -- ============================================
+-- PAYMENTTRANSACTIONS
+-- ============================================
+
+CREATE TABLE PaymentTransactions (
+    payment_id BIGINT IDENTITY(1,1) PRIMARY KEY,
+
+    fine_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+
+    txn_ref NVARCHAR(100) NOT NULL,
+
+    amount BIGINT NOT NULL,
+
+    status NVARCHAR(30) NOT NULL,
+
+    bank_transaction_no NVARCHAR(100) NULL,
+
+    created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
+
+    updated_at DATETIME2 NULL,
+
+    CONSTRAINT uk_payment_txn_ref UNIQUE (txn_ref),
+
+    CONSTRAINT FK_PaymentTransactions_Fines
+        FOREIGN KEY (fine_id)
+        REFERENCES Fines(fine_id),
+
+    CONSTRAINT FK_PaymentTransactions_Users
+        FOREIGN KEY (user_id)
+        REFERENCES Users(user_id)
+);
+
+-- ============================================
 -- INITIAL DATA ROLES
 -- ============================================
 INSERT INTO Roles

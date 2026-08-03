@@ -35,7 +35,8 @@ public class BookServiceImpl implements IBookService {
     @Override
     public Books createBook(Books book) {
         validateBook(book);
-        if (book.getCreatedAt() == null) book.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+        if (book.getCreatedAt() == null)
+            book.setCreatedAt(new Timestamp(System.currentTimeMillis()));
         return bookRepo.save(book);
     }
 
@@ -55,18 +56,30 @@ public class BookServiceImpl implements IBookService {
                 .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + bookId));
 
         // Chỉ cập nhật field được gửi lên; giữ nguyên createdAt
-        if (book.getTitle() != null) existing.setTitle(book.getTitle());
-        if (book.getIsbn() != null) existing.setIsbn(book.getIsbn());
-        if (book.getPublishYear() != null) existing.setPublishYear(book.getPublishYear());
-        if (book.getDescription() != null) existing.setDescription(book.getDescription());
-        if (book.getCoverImage() != null) existing.setCoverImage(book.getCoverImage());
-        if (book.getLanguage() != null) existing.setLanguage(book.getLanguage());
-        if (book.getPages() != null) existing.setPages(book.getPages());
-        if (book.getCategoryId() != null) existing.setCategoryId(book.getCategoryId());
-        if (book.getAuthorId() != null) existing.setAuthorId(book.getAuthorId());
-        if (book.getPublisherId() != null) existing.setPublisherId(book.getPublisherId());
-        if (book.getHidden() != null) existing.setHidden(book.getHidden());
-        if (book.getFeatured() != null) existing.setFeatured(book.getFeatured());
+        if (book.getTitle() != null)
+            existing.setTitle(book.getTitle());
+        if (book.getIsbn() != null)
+            existing.setIsbn(book.getIsbn());
+        if (book.getPublishYear() != null)
+            existing.setPublishYear(book.getPublishYear());
+        if (book.getDescription() != null)
+            existing.setDescription(book.getDescription());
+        if (book.getCoverImage() != null)
+            existing.setCoverImage(book.getCoverImage());
+        if (book.getLanguage() != null)
+            existing.setLanguage(book.getLanguage());
+        if (book.getPages() != null)
+            existing.setPages(book.getPages());
+        if (book.getCategoryId() != null)
+            existing.setCategoryId(book.getCategoryId());
+        if (book.getAuthorId() != null)
+            existing.setAuthorId(book.getAuthorId());
+        if (book.getPublisherId() != null)
+            existing.setPublisherId(book.getPublisherId());
+        if (book.getHidden() != null)
+            existing.setHidden(book.getHidden());
+        if (book.getFeatured() != null)
+            existing.setFeatured(book.getFeatured());
 
         validateBook(existing);
 
@@ -110,9 +123,12 @@ public class BookServiceImpl implements IBookService {
             String sortDir,
             String keyword) {
 
-        if (page < 0) throw new IllegalArgumentException("Số trang không hợp lệ");
-        if (size < 1 || size > 1000) throw new IllegalArgumentException("Kích thước trang phải từ 1 đến 1000");
-        if (!SORT_FIELDS.contains(sortBy)) throw new IllegalArgumentException("Trường sắp xếp không hợp lệ");
+        if (page < 0)
+            throw new IllegalArgumentException("Số trang không hợp lệ");
+        if (size < 1 || size > 1000)
+            throw new IllegalArgumentException("Kích thước trang phải từ 1 đến 1000");
+        if (!SORT_FIELDS.contains(sortBy))
+            throw new IllegalArgumentException("Trường sắp xếp không hợp lệ");
 
         Sort sort = sortDir.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
@@ -178,12 +194,76 @@ public class BookServiceImpl implements IBookService {
 
     @Override
     public Optional<Books> getBookById(long bookId, boolean includeHidden) {
-        throw new UnsupportedOperationException("Not supported yet.");
+
+        Optional<Books> book = bookRepo.findById(bookId);
+
+        if (book.isEmpty()) {
+            return Optional.empty();
+        }
+
+        if (!includeHidden && Boolean.TRUE.equals(book.get().getHidden())) {
+            return Optional.empty();
+        }
+
+        return book;
     }
 
     @Override
-    public PageResponse<BookResponse> getAllBooks(int page, int size, String sortBy, String sortDir, String keyword, boolean includeHidden) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public PageResponse<BookResponse> getAllBooks(
+            int page,
+            int size,
+            String sortBy,
+            String sortDir,
+            String keyword,
+            boolean includeHidden) {
+
+        if (page < 0)
+            throw new IllegalArgumentException("Số trang không hợp lệ");
+
+        if (size < 1 || size > 1000)
+            throw new IllegalArgumentException("Kích thước trang phải từ 1 đến 1000");
+
+        if (!SORT_FIELDS.contains(sortBy))
+            throw new IllegalArgumentException("Trường sắp xếp không hợp lệ");
+
+        Sort sort = sortDir.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<Books> booksPage;
+
+        if (keyword != null && !keyword.isBlank()) {
+
+            booksPage = bookRepo.findByTitleContainingIgnoreCase(keyword, pageable);
+
+        } else {
+
+            booksPage = bookRepo.findAll(pageable);
+        }
+
+        List<BookResponse> content = booksPage.getContent()
+                .stream()
+
+                // nếu không được xem sách ẩn thì loại bỏ
+                .filter(book -> includeHidden || !Boolean.TRUE.equals(book.getHidden()))
+
+                .map(this::convertToResponse)
+                .toList();
+
+        PageResponse<BookResponse> response = new PageResponse<>();
+
+        response.setContent(content);
+        response.setPage(page);
+        response.setSize(size);
+        response.setTotalElements(includeHidden
+                ? booksPage.getTotalElements()
+                : content.size());
+
+        response.setTotalPages(booksPage.getTotalPages());
+
+        return response;
     }
-    
+
 }

@@ -1,16 +1,18 @@
 package com.library.libhub.config;
 
-import com.library.libhub.repository.UserRepository;
-import com.library.libhub.entity.Users;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+import java.nio.charset.StandardCharsets;
+
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
 import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-import java.nio.charset.StandardCharsets;
+import com.library.libhub.entity.Users;
+import com.library.libhub.repository.UserRepository;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 @Component
 public class LoginInterceptor implements HandlerInterceptor {
@@ -24,11 +26,14 @@ public class LoginInterceptor implements HandlerInterceptor {
     @NullMarked
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws Exception {
-        if (CorsUtils.isPreFlightRequest(request)) return true;
-        String path = request.getRequestURI();
-        if ("GET".equalsIgnoreCase(request.getMethod()) && isPublicCataloguePath(path)) return true;
+        if (CorsUtils.isPreFlightRequest(request))
+            return true;
+        String path = request.getServletPath();
+        if ("GET".equalsIgnoreCase(request.getMethod()) && isPublicCataloguePath(path))
+            return true;
         if (path.equals("/api/payments/vnpay/return")
-                || path.equals("/api/payments/vnpay/ipn")) return true;
+                || path.equals("/api/payments/vnpay/ipn"))
+            return true;
 
         HttpSession session = request.getSession(false);
         if (session == null || !(session.getAttribute("USER_LOGIN") instanceof Users sessionUser)
@@ -44,9 +49,12 @@ public class LoginInterceptor implements HandlerInterceptor {
         session.setAttribute("USER_LOGIN", user);
         session.setAttribute("ROLE", role);
 
-        if (isSelfServicePath(path)) return true;
-        if ("Admin".equalsIgnoreCase(role)) return true;
-        if ("Librarian".equalsIgnoreCase(role) && isLibrarianPath(path)) return true;
+        if (isSelfServicePath(path))
+            return true;
+        if ("Admin".equalsIgnoreCase(role))
+            return true;
+        if ("Librarian".equalsIgnoreCase(role) && isLibrarianPath(path))
+            return true;
         return reject(response, HttpServletResponse.SC_FORBIDDEN, "Không có quyền truy cập");
     }
 

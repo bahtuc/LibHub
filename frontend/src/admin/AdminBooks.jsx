@@ -11,6 +11,10 @@ export default function AdminBooks() {
   const categoryOptions = categories.map((c) => ({ value: c.category_id, label: c.category_name }));
   const authorOptions = authors.map((a) => ({ value: a.author_id, label: a.author_name }));
 
+  const books = booksStore.useCollection();
+
+  console.log("Books:", books);
+
   return (
     <AdminCrudPage
       title="Kho sách"

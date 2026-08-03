@@ -1,22 +1,28 @@
 package com.library.libhub.service.impl;
 
-import com.library.libhub.DTO.Request.ReturnBookRequest;
-import com.library.libhub.DTO.Request.ReturnDetailRequest;
-import com.library.libhub.dao.*;
-import com.library.libhub.entity.*;
-
-import org.junit.jupiter.api.Test;
-
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import com.library.libhub.DTO.Request.ReturnBookRequest;
+import com.library.libhub.DTO.Request.ReturnDetailRequest;
+import com.library.libhub.entity.BookCopies;
+import com.library.libhub.entity.BorrowDetails;
+import com.library.libhub.entity.BorrowTickets;
+import com.library.libhub.entity.ReturnDetails;
+import com.library.libhub.entity.Returns;
+import com.library.libhub.entity.Users;
 import com.library.libhub.repository.BookCopyRepository;
 import com.library.libhub.repository.BorrowDetailRepository;
 import com.library.libhub.repository.BorrowTicketRepository;
@@ -33,7 +39,13 @@ class ReturnServiceImplTest {
     private final BookCopyRepository copyRepo = mock(BookCopyRepository.class);
     private final FineRepository fineRepo = mock(FineRepository.class);
     private final UserRepository userRepo = mock(UserRepository.class);
-    private final ReturnServiceImpl service = new ReturnServiceImpl(returnRepo);
+    private final ReturnServiceImpl service = new ReturnServiceImpl(returnRepo,
+            returnDetailRepo,
+            ticketRepo,
+            borrowDetailRepo,
+            copyRepo,
+            fineRepo,
+            userRepo);
 
     @Test
     void returnBooksSynchronizesStateAndCreatesCombinedFine() {
@@ -86,7 +98,7 @@ class ReturnServiceImplTest {
         assertEquals("Returned", borrowDetail.getBorrowStatus());
         assertEquals("Damaged", copy.getStatus());
         verify(fineRepo).save(argThat(fine -> fine.getReturnDetailId().equals(40L)
-                && fine.getAmount().equals(110000d)
+                && fine.getAmount().compareTo(BigDecimal.valueOf(110000)) == 0
                 && fine.getReason().contains("Quá hạn 2 ngày")
                 && fine.getReason().contains("hư hỏng")
                 && fine.getPaidStatus().equals("Unpaid")));

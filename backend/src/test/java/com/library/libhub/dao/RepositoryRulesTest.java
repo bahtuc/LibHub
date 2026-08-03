@@ -19,63 +19,63 @@ import com.library.libhub.repository.BorrowTicketRepository;
 @DataJpaTest
 class RepositoryRulesTest {
     @Autowired
-    private BookRepository bookDAO;
+    private BookRepository bookRepo;
     @Autowired
-    private BookCopyRepository copyDAO;
+    private BookCopyRepository copyRepo;
     @Autowired
-    private BorrowTicketRepository ticketDAO;
+    private BorrowTicketRepository ticketRepo;
     @Autowired
-    private BorrowDetailRepository detailDAO;
+    private BorrowDetailRepository detailRepo;
 
     @Test
     void legacyNullHiddenFlagStillCountsAsVisible() {
         Books legacyBook = new Books();
         legacyBook.setTitle("Legacy visible book");
         legacyBook.setHidden(null);
-        bookDAO.saveAndFlush(legacyBook);
+        bookRepo.saveAndFlush(legacyBook);
 
-        assertTrue(bookDAO.findByHiddenFalse(PageRequest.of(0, 20))
+        assertTrue(bookRepo.findByHiddenFalse(PageRequest.of(0, 20))
                 .stream()
                 .anyMatch(book -> book.getBookId().equals(legacyBook.getBookId())));
-        assertTrue(bookDAO.findByBookIdAndHiddenFalse(legacyBook.getBookId()).isPresent());
+        assertTrue(bookRepo.findByBookIdAndHiddenFalse(legacyBook.getBookId()).isPresent());
     }
 
     @Test
     void cancelledTicketDoesNotBlockBorrowingTheSameBookAgain() {
         Books book = new Books();
         book.setTitle("Borrowable after cancellation");
-        book = bookDAO.saveAndFlush(book);
+        book = bookRepo.saveAndFlush(book);
 
         BookCopies copy = new BookCopies();
         copy.setBookId(book.getBookId());
         copy.setBarcode("TEST-CANCELLED-COPY");
         copy.setStatus("Available");
-        copy = copyDAO.saveAndFlush(copy);
+        copy = copyRepo.saveAndFlush(copy);
 
         BorrowTickets cancelled = new BorrowTickets();
         cancelled.setUserId(42L);
         cancelled.setStatus("Cancelled");
-        cancelled = ticketDAO.saveAndFlush(cancelled);
+        cancelled = ticketRepo.saveAndFlush(cancelled);
 
         BorrowDetails cancelledDetail = new BorrowDetails();
         cancelledDetail.setTicketId(cancelled.getTicketId());
         cancelledDetail.setCopyId(copy.getCopyId());
         cancelledDetail.setBorrowStatus("Borrowed");
-        detailDAO.saveAndFlush(cancelledDetail);
+        detailRepo.saveAndFlush(cancelledDetail);
 
-        assertFalse(detailDAO.existsActiveBorrow(42L, book.getBookId()));
+        assertFalse(detailRepo.existsActiveBorrow(42L, book.getBookId()));
 
         BorrowTickets active = new BorrowTickets();
         active.setUserId(43L);
         active.setStatus("Borrowed");
-        active = ticketDAO.saveAndFlush(active);
+        active = ticketRepo.saveAndFlush(active);
 
         BorrowDetails activeDetail = new BorrowDetails();
         activeDetail.setTicketId(active.getTicketId());
         activeDetail.setCopyId(copy.getCopyId());
         activeDetail.setBorrowStatus("Borrowed");
-        detailDAO.saveAndFlush(activeDetail);
+        detailRepo.saveAndFlush(activeDetail);
 
-        assertTrue(detailDAO.existsActiveBorrow(43L, book.getBookId()));
+        assertTrue(detailRepo.existsActiveBorrow(43L, book.getBookId()));
     }
 }

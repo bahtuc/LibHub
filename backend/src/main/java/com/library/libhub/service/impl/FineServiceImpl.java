@@ -95,4 +95,10 @@ public class FineServiceImpl implements IFineService {
     public List<Fines> findByPaidStatus(String paidStatus) {
         return fineRepo.findByPaidStatus(paidStatus);
     }
+
+    @Override
+    public List<Fines> findByUser(long userId) {
+        return fineRepo.findByUserId(userId);
+    }
+
 }

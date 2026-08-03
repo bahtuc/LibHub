@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.library.libhub.DTO.Response.UserSummaryResponse;
 import com.library.libhub.entity.Users;
 import com.library.libhub.exception.ResourceNotFoundException;
 import com.library.libhub.repository.UserRepository;
@@ -37,8 +38,10 @@ public class UserServiceImpl implements IUserService {
         if (user.getEmail() != null && userRepo.existsByEmail(user.getEmail()))
             throw new IllegalArgumentException("Email đã tồn tại");
         user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
-        if (user.getStatus() == null || user.getStatus().isBlank()) user.setStatus("ACTIVE");
-        if (user.getCreatedAt() == null) user.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+        if (user.getStatus() == null || user.getStatus().isBlank())
+            user.setStatus("ACTIVE");
+        if (user.getCreatedAt() == null)
+            user.setCreatedAt(new Timestamp(System.currentTimeMillis()));
         return userRepo.save(user);
     }
 
@@ -57,21 +60,30 @@ public class UserServiceImpl implements IUserService {
         Users existing = userRepo.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
-        // Chỉ cập nhật field được gửi lên; giữ nguyên passwordHash, createdAt, lastLogin
+        // Chỉ cập nhật field được gửi lên; giữ nguyên passwordHash, createdAt,
+        // lastLogin
         if (user.getUsername() != null && !user.getUsername().equals(existing.getUsername())) {
-            if (userRepo.existsByUsername(user.getUsername())) throw new IllegalArgumentException("Username đã tồn tại");
+            if (userRepo.existsByUsername(user.getUsername()))
+                throw new IllegalArgumentException("Username đã tồn tại");
             existing.setUsername(user.getUsername());
         }
-        if (user.getFullName() != null) existing.setFullName(user.getFullName());
+        if (user.getFullName() != null)
+            existing.setFullName(user.getFullName());
         if (user.getEmail() != null && !user.getEmail().equals(existing.getEmail())) {
-            if (userRepo.existsByEmail(user.getEmail())) throw new IllegalArgumentException("Email đã tồn tại");
+            if (userRepo.existsByEmail(user.getEmail()))
+                throw new IllegalArgumentException("Email đã tồn tại");
             existing.setEmail(user.getEmail());
         }
-        if (user.getPhone() != null) existing.setPhone(user.getPhone());
-        if (user.getAddress() != null) existing.setAddress(user.getAddress());
-        if (user.getAvatar() != null) existing.setAvatar(user.getAvatar());
-        if (user.getStatus() != null) existing.setStatus(user.getStatus());
-        if (user.getRole() != null) existing.setRole(user.getRole());
+        if (user.getPhone() != null)
+            existing.setPhone(user.getPhone());
+        if (user.getAddress() != null)
+            existing.setAddress(user.getAddress());
+        if (user.getAvatar() != null)
+            existing.setAvatar(user.getAvatar());
+        if (user.getStatus() != null)
+            existing.setStatus(user.getStatus());
+        if (user.getRole() != null)
+            existing.setRole(user.getRole());
 
         return userRepo.save(existing);
     }
@@ -104,5 +116,20 @@ public class UserServiceImpl implements IUserService {
     @Transactional
     public void updateLastLogin(long userId, Timestamp lastLogin) {
         userRepo.updateLastLogin(userId, lastLogin);
+    }
+
+    @Override
+    public List<UserSummaryResponse> getActiveBorrowers() {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public Users updateRole(long userId, long roleId) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public Users updateStatus(long userId, String status) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

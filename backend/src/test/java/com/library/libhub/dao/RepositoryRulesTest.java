@@ -1,27 +1,31 @@
 package com.library.libhub.dao;
 
-import com.library.libhub.entity.BookCopies;
-import com.library.libhub.entity.Books;
-import com.library.libhub.entity.BorrowDetails;
-import com.library.libhub.entity.BorrowTickets;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.data.domain.PageRequest;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import com.library.libhub.entity.BookCopies;
+import com.library.libhub.entity.Books;
+import com.library.libhub.entity.BorrowDetails;
+import com.library.libhub.entity.BorrowTickets;
+import com.library.libhub.repository.BookCopyRepository;
+import com.library.libhub.repository.BookRepository;
+import com.library.libhub.repository.BorrowDetailRepository;
+import com.library.libhub.repository.BorrowTicketRepository;
 
 @DataJpaTest
 class RepositoryRulesTest {
     @Autowired
-    private BookDAO bookDAO;
+    private BookRepository bookDAO;
     @Autowired
-    private BookCopyDAO copyDAO;
+    private BookCopyRepository copyDAO;
     @Autowired
-    private BorrowTicketDAO ticketDAO;
+    private BorrowTicketRepository ticketDAO;
     @Autowired
-    private BorrowDetailDAO detailDAO;
+    private BorrowDetailRepository detailDAO;
 
     @Test
     void legacyNullHiddenFlagStillCountsAsVisible() {

@@ -1,5 +1,6 @@
 package com.library.libhub.DTO.Response;
 
+import java.math.BigDecimal;
 import java.sql.Date;
 
 public class BorrowedItemResponse {
@@ -13,7 +14,7 @@ public class BorrowedItemResponse {
     private String conditionBook;
     private Long returnDetailId;
     private Long fineId;
-    private Double fineAmount;
+    private BigDecimal fineAmount;
     private String fineReason;
     private String finePaidStatus;
 
@@ -37,8 +38,8 @@ public class BorrowedItemResponse {
     public void setReturnDetailId(Long returnDetailId) { this.returnDetailId = returnDetailId; }
     public Long getFineId() { return fineId; }
     public void setFineId(Long fineId) { this.fineId = fineId; }
-    public Double getFineAmount() { return fineAmount; }
-    public void setFineAmount(Double fineAmount) { this.fineAmount = fineAmount; }
+    public BigDecimal getFineAmount() { return fineAmount; }
+    public void setFineAmount(BigDecimal fineAmount) { this.fineAmount = fineAmount; }
     public String getFineReason() { return fineReason; }
     public void setFineReason(String fineReason) { this.fineReason = fineReason; }
     public String getFinePaidStatus() { return finePaidStatus; }

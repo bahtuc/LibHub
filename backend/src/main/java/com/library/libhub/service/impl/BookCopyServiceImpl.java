@@ -97,4 +97,9 @@ public class BookCopyServiceImpl implements IBookCopyService {
         if (copy.getBarcode() == null || copy.getBarcode().isBlank())
             throw new IllegalArgumentException("Mã vạch không được để trống");
     }
+
+    @Override
+    public BookCopies updateShelfLocation(long copyId, String shelfLocation) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 }

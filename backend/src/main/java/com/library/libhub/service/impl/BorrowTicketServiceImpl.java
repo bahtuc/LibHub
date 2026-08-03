@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.library.libhub.DTO.Request.BorrowTicketRequest;
 import com.library.libhub.entity.BookCopies;
 import com.library.libhub.entity.Books;
 import com.library.libhub.entity.BorrowDetails;
@@ -175,5 +176,20 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
     @Override
     public List<BorrowTickets> findByStatus(String status) {
         return borrowTicketRepo.findByStatus(status);
+    }
+
+    @Override
+    public BorrowTickets borrowBooks(long userId, List<Long> bookIds) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public BorrowTickets createBorrowTicketWithCopies(BorrowTicketRequest request) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public BorrowTickets updateStatus(long ticketId, String status) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

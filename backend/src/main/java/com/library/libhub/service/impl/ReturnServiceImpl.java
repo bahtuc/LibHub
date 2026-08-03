@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.library.libhub.DTO.Request.ReturnBookRequest;
 import com.library.libhub.entity.Returns;
 import com.library.libhub.exception.ResourceNotFoundException;
 import com.library.libhub.repository.ReturnRepository;
@@ -43,10 +44,14 @@ public class ReturnServiceImpl implements IReturnService {
     public Returns updateReturn(long returnId, Returns returns) {
         Returns existing = returnRepo.findById(returnId)
                 .orElseThrow(() -> new ResourceNotFoundException("Return not found with id: " + returnId));
-        if (returns.getTicketId() != null) existing.setTicketId(returns.getTicketId());
-        if (returns.getReturnDate() != null) existing.setReturnDate(returns.getReturnDate());
-        if (returns.getReceivedBy() != null) existing.setReceivedBy(returns.getReceivedBy());
-        if (returns.getNote() != null) existing.setNote(returns.getNote());
+        if (returns.getTicketId() != null)
+            existing.setTicketId(returns.getTicketId());
+        if (returns.getReturnDate() != null)
+            existing.setReturnDate(returns.getReturnDate());
+        if (returns.getReceivedBy() != null)
+            existing.setReceivedBy(returns.getReceivedBy());
+        if (returns.getNote() != null)
+            existing.setNote(returns.getNote());
         return returnRepo.save(existing);
     }
 
@@ -67,5 +72,10 @@ public class ReturnServiceImpl implements IReturnService {
     @Override
     public List<Returns> findByReceivedBy(long receivedBy) {
         return returnRepo.findByReceivedBy(receivedBy);
+    }
+
+    @Override
+    public Returns returnBooks(ReturnBookRequest request, long currentStaffId) {
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 }

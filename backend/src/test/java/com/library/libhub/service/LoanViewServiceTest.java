@@ -1,14 +1,19 @@
 package com.library.libhub.service;
 
+import java.math.BigDecimal;
+import java.sql.Date;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import com.library.libhub.DTO.Response.BorrowTicketResponse;
-import com.library.libhub.dao.BookCopyDAO;
-import com.library.libhub.dao.BookDAO;
-import com.library.libhub.dao.BorrowDetailDAO;
-import com.library.libhub.dao.BorrowTicketDAO;
-import com.library.libhub.dao.FineDAO;
-import com.library.libhub.dao.ReturnDAO;
-import com.library.libhub.dao.ReturnDetailDAO;
-import com.library.libhub.dao.UserDAO;
 import com.library.libhub.entity.BookCopies;
 import com.library.libhub.entity.Books;
 import com.library.libhub.entity.BorrowDetails;
@@ -17,43 +22,47 @@ import com.library.libhub.entity.Fines;
 import com.library.libhub.entity.ReturnDetails;
 import com.library.libhub.entity.Returns;
 import com.library.libhub.entity.Users;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.sql.Date;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.when;
+import com.library.libhub.repository.BookCopyRepository;
+import com.library.libhub.repository.BookRepository;
+import com.library.libhub.repository.BorrowDetailRepository;
+import com.library.libhub.repository.BorrowTicketRepository;
+import com.library.libhub.repository.FineRepository;
+import com.library.libhub.repository.ReturnDetailRepository;
+import com.library.libhub.repository.ReturnRepository;
+import com.library.libhub.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 class LoanViewServiceTest {
-    @Mock private BorrowTicketDAO ticketDAO;
-    @Mock private BorrowDetailDAO detailDAO;
-    @Mock private BookCopyDAO copyDAO;
-    @Mock private BookDAO bookDAO;
-    @Mock private UserDAO userDAO;
-    @Mock private ReturnDAO returnDAO;
-    @Mock private ReturnDetailDAO returnDetailDAO;
-    @Mock private FineDAO fineDAO;
+    @Mock
+    private BorrowTicketRepository ticketRepo;
+    @Mock
+    private BorrowDetailRepository detailRepo;
+    @Mock
+    private BookCopyRepository copyRepo;
+    @Mock
+    private BookRepository bookRepo;
+    @Mock
+    private UserRepository userRepo;
+    @Mock
+    private ReturnRepository returnRepo;
+    @Mock
+    private ReturnDetailRepository returnDetailRepo;
+    @Mock
+    private FineRepository fineRepo;
 
     private LoanViewService service;
 
     @BeforeEach
     void setUp() {
         service = new LoanViewService(
-                ticketDAO,
-                detailDAO,
-                copyDAO,
-                bookDAO,
-                userDAO,
-                returnDAO,
-                returnDetailDAO,
-                fineDAO);
+                ticketRepo,
+                detailRepo,
+                copyRepo,
+                bookRepo,
+                userRepo,
+                returnRepo,
+                returnDetailRepo,
+                fineRepo);
     }
 
     @Test
@@ -99,18 +108,18 @@ class LoanViewServiceTest {
         Fines fine = new Fines();
         fine.setFineId(80L);
         fine.setReturnDetailId(70L);
-        fine.setAmount(120000D);
+        fine.setAmount(BigDecimal.valueOf(120000));
         fine.setReason("Bồi thường sách bị hư hỏng");
         fine.setPaidStatus("Unpaid");
 
-        when(ticketDAO.findAll()).thenReturn(List.of(ticket));
-        when(detailDAO.findAll()).thenReturn(List.of(detail));
-        when(copyDAO.findAll()).thenReturn(List.of(copy));
-        when(bookDAO.findAll()).thenReturn(List.of(book));
-        when(userDAO.findAll()).thenReturn(List.of(user));
-        when(returnDAO.findAll()).thenReturn(List.of(returned));
-        when(returnDetailDAO.findAll()).thenReturn(List.of(returnDetail));
-        when(fineDAO.findAll()).thenReturn(List.of(fine));
+        when(ticketRepo.findAll()).thenReturn(List.of(ticket));
+        when(detailRepo.findAll()).thenReturn(List.of(detail));
+        when(copyRepo.findAll()).thenReturn(List.of(copy));
+        when(bookRepo.findAll()).thenReturn(List.of(book));
+        when(userRepo.findAll()).thenReturn(List.of(user));
+        when(returnRepo.findAll()).thenReturn(List.of(returned));
+        when(returnDetailRepo.findAll()).thenReturn(List.of(returnDetail));
+        when(fineRepo.findAll()).thenReturn(List.of(fine));
 
         BorrowTicketResponse view = service.getAllViews().getFirst();
 

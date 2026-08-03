@@ -1,10 +1,11 @@
 package com.library.libhub.service;
 
-import com.library.libhub.entity.Users;
-import com.library.libhub.DTO.Response.UserSummaryResponse;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
+
+import com.library.libhub.DTO.Response.UserSummaryResponse;
+import com.library.libhub.entity.Users;
 
 public interface IUserService {
     Users createUser(Users user);

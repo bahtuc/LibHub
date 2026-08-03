@@ -175,4 +175,15 @@ public class BookServiceImpl implements IBookService {
 
         return response;
     }
+
+    @Override
+    public Optional<Books> getBookById(long bookId, boolean includeHidden) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public PageResponse<BookResponse> getAllBooks(int page, int size, String sortBy, String sortDir, String keyword, boolean includeHidden) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+    
 }

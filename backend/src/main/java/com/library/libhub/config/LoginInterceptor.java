@@ -1,6 +1,6 @@
 package com.library.libhub.config;
 
-import com.library.libhub.dao.UserDAO;
+import com.library.libhub.repository.UserRepository;
 import com.library.libhub.entity.Users;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,10 +14,10 @@ import java.nio.charset.StandardCharsets;
 
 @Component
 public class LoginInterceptor implements HandlerInterceptor {
-    private final UserDAO userDAO;
+    private final UserRepository userRepo;
 
-    public LoginInterceptor(UserDAO userDAO) {
-        this.userDAO = userDAO;
+    public LoginInterceptor(UserRepository userRepo) {
+        this.userRepo = userRepo;
     }
 
     @Override
@@ -35,7 +35,7 @@ public class LoginInterceptor implements HandlerInterceptor {
                 || sessionUser.getUserId() == null) {
             return reject(response, HttpServletResponse.SC_UNAUTHORIZED, "Chưa đăng nhập");
         }
-        Users user = userDAO.findById(sessionUser.getUserId()).orElse(null);
+        Users user = userRepo.findById(sessionUser.getUserId()).orElse(null);
         if (user == null || !"ACTIVE".equalsIgnoreCase(user.getStatus())) {
             session.invalidate();
             return reject(response, HttpServletResponse.SC_UNAUTHORIZED, "Tài khoản đã bị khóa hoặc không tồn tại");

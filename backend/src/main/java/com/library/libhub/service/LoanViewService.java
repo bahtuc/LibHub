@@ -2,14 +2,6 @@ package com.library.libhub.service;
 
 import com.library.libhub.DTO.Response.BorrowedItemResponse;
 import com.library.libhub.DTO.Response.BorrowTicketResponse;
-import com.library.libhub.dao.BookCopyDAO;
-import com.library.libhub.dao.BookDAO;
-import com.library.libhub.dao.BorrowDetailDAO;
-import com.library.libhub.dao.BorrowTicketDAO;
-import com.library.libhub.dao.FineDAO;
-import com.library.libhub.dao.ReturnDAO;
-import com.library.libhub.dao.ReturnDetailDAO;
-import com.library.libhub.dao.UserDAO;
 import com.library.libhub.entity.BookCopies;
 import com.library.libhub.entity.Books;
 import com.library.libhub.entity.BorrowDetails;
@@ -18,6 +10,15 @@ import com.library.libhub.entity.Fines;
 import com.library.libhub.entity.ReturnDetails;
 import com.library.libhub.entity.Returns;
 import com.library.libhub.entity.Users;
+import com.library.libhub.repository.BookCopyRepository;
+import com.library.libhub.repository.BookRepository;
+import com.library.libhub.repository.BorrowDetailRepository;
+import com.library.libhub.repository.BorrowTicketRepository;
+import com.library.libhub.repository.FineRepository;
+import com.library.libhub.repository.ReturnDetailRepository;
+import com.library.libhub.repository.ReturnRepository;
+import com.library.libhub.repository.UserRepository;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,40 +34,40 @@ import java.util.stream.Collectors;
 @Service
 @Transactional(readOnly = true)
 public class LoanViewService {
-    private final BorrowTicketDAO ticketDAO;
-    private final BorrowDetailDAO detailDAO;
-    private final BookCopyDAO copyDAO;
-    private final BookDAO bookDAO;
-    private final UserDAO userDAO;
-    private final ReturnDAO returnDAO;
-    private final ReturnDetailDAO returnDetailDAO;
-    private final FineDAO fineDAO;
+    private final BorrowTicketRepository ticketRepo;
+    private final BorrowDetailRepository detailRepo;
+    private final BookCopyRepository copyRepo;
+    private final BookRepository bookRepo;
+    private final UserRepository userRepo;
+    private final ReturnRepository returnRepo;
+    private final ReturnDetailRepository returnDetailRepo;
+    private final FineRepository fineRepo;
 
     public LoanViewService(
-            BorrowTicketDAO ticketDAO,
-            BorrowDetailDAO detailDAO,
-            BookCopyDAO copyDAO,
-            BookDAO bookDAO,
-            UserDAO userDAO,
-            ReturnDAO returnDAO,
-            ReturnDetailDAO returnDetailDAO,
-            FineDAO fineDAO) {
-        this.ticketDAO = ticketDAO;
-        this.detailDAO = detailDAO;
-        this.copyDAO = copyDAO;
-        this.bookDAO = bookDAO;
-        this.userDAO = userDAO;
-        this.returnDAO = returnDAO;
-        this.returnDetailDAO = returnDetailDAO;
-        this.fineDAO = fineDAO;
+            BorrowTicketRepository ticketRepo,
+            BorrowDetailRepository detailRepo,
+            BookCopyRepository copyRepo,
+            BookRepository bookRepo,
+            UserRepository userRepo,
+            ReturnRepository returnRepo,
+            ReturnDetailRepository returnDetailRepo,
+            FineRepository fineRepo) {
+        this.ticketRepo = ticketRepo;
+        this.detailRepo = detailRepo;
+        this.copyRepo = copyRepo;
+        this.bookRepo = bookRepo;
+        this.userRepo = userRepo;
+        this.returnRepo = returnRepo;
+        this.returnDetailRepo = returnDetailRepo;
+        this.fineRepo = fineRepo;
     }
 
     public List<BorrowTicketResponse> getAllViews() {
-        return buildViews(ticketDAO.findAll());
+        return buildViews(ticketRepo.findAll());
     }
 
     public List<BorrowTicketResponse> getViewsForUser(long userId) {
-        return buildViews(ticketDAO.findByUserId(userId));
+        return buildViews(ticketRepo.findByUserId(userId));
     }
 
     private List<BorrowTicketResponse> buildViews(List<BorrowTickets> tickets) {
@@ -76,23 +77,23 @@ public class LoanViewService {
                 .map(BorrowTickets::getTicketId)
                 .collect(Collectors.toSet());
 
-        Map<Long, Users> users = indexBy(userDAO.findAll(), Users::getUserId);
-        Map<Long, BookCopies> copies = indexBy(copyDAO.findAll(), BookCopies::getCopyId);
-        Map<Long, Books> books = indexBy(bookDAO.findAll(), Books::getBookId);
-        Map<Long, Returns> returns = indexBy(returnDAO.findAll(), Returns::getReturnId);
-        Map<Long, Fines> fines = fineDAO.findAll().stream()
+        Map<Long, Users> users = indexBy(userRepo.findAll(), Users::getUserId);
+        Map<Long, BookCopies> copies = indexBy(copyRepo.findAll(), BookCopies::getCopyId);
+        Map<Long, Books> books = indexBy(bookRepo.findAll(), Books::getBookId);
+        Map<Long, Returns> returns = indexBy(returnRepo.findAll(), Returns::getReturnId);
+        Map<Long, Fines> fines = fineRepo.findAll().stream()
                 .filter(fine -> fine.getReturnDetailId() != null)
                 .collect(Collectors.toMap(
                         Fines::getReturnDetailId,
                         Function.identity(),
                         (left, right) -> greaterId(left.getFineId(), right.getFineId()) ? left : right));
 
-        Map<Long, List<BorrowDetails>> detailsByTicket = detailDAO.findAll().stream()
+        Map<Long, List<BorrowDetails>> detailsByTicket = detailRepo.findAll().stream()
                 .filter(detail -> ticketIds.contains(detail.getTicketId()))
                 .collect(Collectors.groupingBy(BorrowDetails::getTicketId));
 
         Map<TicketCopyKey, ReturnedItem> returnedByTicketAndCopy = new HashMap<>();
-        for (ReturnDetails detail : returnDetailDAO.findAll()) {
+        for (ReturnDetails detail : returnDetailRepo.findAll()) {
             Returns returned = returns.get(detail.getReturnId());
             if (returned == null || !ticketIds.contains(returned.getTicketId())) continue;
             TicketCopyKey key = new TicketCopyKey(returned.getTicketId(), detail.getCopyId());

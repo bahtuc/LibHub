@@ -9,6 +9,7 @@ import * as authorApi from "../services/AuthorService";
 import * as copyApi from "../services/BookCopyService";
 import * as userApi from "../services/UserService";
 import * as roleApi from "../services/RoleService";
+import * as publisherApi from "../services/PublisherService";
 
 function makeApiStore({ idField, loadAll, create, update, remove, fromApi, toApi }) {
   let cache = [];
@@ -161,19 +162,23 @@ const toUser = (user, creating) => ({
   role: user.role_id ? { roleId: user.role_id } : null,
 });
 
+const fromPublisher = (publisher) => ({
+  ...publisher,
+  publisher_id: publisher.publisherId,
+  publisher_name: publisher.publisherName,
+});
+
+const toPublisher = (publisher) => ({
+  publisherName: publisher.publisher_name,
+  address: publisher.address || null,
+  phone: publisher.phone || null,
+});
+
+
 export const booksStore = makeApiStore({
   idField: "book_id",
-  // loadAll: async () => (await bookApi.getBooks({ size: 1000, includeHidden: true })).content ?? [],
-  loadAll: async () => {
-    const res = await bookApi.getBooks({
-      size: 1000,
-      includeHidden: true,
-    });
+  loadAll: async () => (await bookApi.getBooks({ size: 1000, includeHidden: true })).content ?? [],
 
-    console.log("Books API Response:", res);
-
-    return res.content ?? [];
-  },
   create: bookApi.createBook,
   update: bookApi.updateBook,
   remove: bookApi.deleteBook,
@@ -229,4 +234,14 @@ export const rolesStore = makeApiStore({
   remove: roleApi.deleteRole,
   fromApi: (role) => ({ ...role, role_id: role.roleId, role_name: role.roleName }),
   toApi: (role) => ({ roleName: role.role_name, description: role.description || null }),
+});
+
+export const publishersStore = makeApiStore({
+  idField: "publisher_id",
+  loadAll: publisherApi.getPublishers,
+  create: publisherApi.createPublisher,
+  update: publisherApi.updatePublisher,
+  remove: publisherApi.deletePublisher,
+  fromApi: fromPublisher,
+  toApi: toPublisher,
 });

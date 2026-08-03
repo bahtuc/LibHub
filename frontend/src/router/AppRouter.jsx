@@ -25,6 +25,7 @@ import AdminBookCopies from "../admin/AdminBookCopies.jsx";
 import AdminCategories from "../admin/AdminCategories.jsx";
 import AdminAuthors from "../admin/AdminAuthors.jsx";
 import AdminUsers from "../admin/AdminUsers.jsx";
+import AdminPublisher from "../admin/AdminPublishers.jsx";
 
 import RequireLibrarian from "../librarian/RequireLibrarian.jsx";
 import LibrarianLayout from "../librarian/LibrarianLayout.jsx";
@@ -62,6 +63,7 @@ export default function AppRouter() {
         <Route path="copies" element={<AdminBookCopies />} />
         <Route path="categories" element={<AdminCategories />} />
         <Route path="authors" element={<AdminAuthors />} />
+        <Route path="publishers" element={<AdminPublisher />} />
         <Route path="users" element={<AdminUsers />} />
       </Route>
 

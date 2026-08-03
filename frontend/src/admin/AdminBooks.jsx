@@ -1,7 +1,13 @@
 // src/admin/AdminBooks.jsx
 import AdminCrudPage from "./AdminCrudPage";
 import Badge from "./Badge";
-import { booksStore, categoriesStore, authorsStore, copiesStore } from "../data/adminStore";
+import {
+  booksStore,
+  categoriesStore,
+  authorsStore,
+  publishersStore,
+  copiesStore,
+} from "../data/adminStore";
 
 export default function AdminBooks() {
   const categories = categoriesStore.useCollection();
@@ -10,9 +16,13 @@ export default function AdminBooks() {
 
   const categoryOptions = categories.map((c) => ({ value: c.category_id, label: c.category_name }));
   const authorOptions = authors.map((a) => ({ value: a.author_id, label: a.author_name }));
+  const publishers = publishersStore.useCollection();
 
+  const publisherOptions = publishers.map((p) => ({
+    value: p.publisher_id,
+    label: p.publisher_name,
+  }));
   const books = booksStore.useCollection();
-
   console.log("Books:", books);
 
   return (
@@ -25,6 +35,13 @@ export default function AdminBooks() {
         title: "",
         author_id: authorOptions[0]?.value ?? "",
         category_id: categoryOptions[0]?.value ?? "",
+        name: "publisher_id",
+        label: "Nhà xuất bản",
+        type: "select",
+        options: publisherOptions,
+        numeric: true,
+        required: true,
+        publisher_id: publisherOptions[0]?.value ?? "",
         publish_year: new Date().getFullYear(),
         pages: 200,
         description: "",
@@ -63,6 +80,7 @@ export default function AdminBooks() {
       fields={[
         { name: "title", label: "Tên sách", required: true },
         { name: "author_id", label: "Tác giả", type: "select", options: authorOptions, numeric: true, required: true },
+        { name: "publisher_id", label: "Nhà xuất bản", type: "select", options: publisherOptions, numeric: true, required: true },
         { name: "category_id", label: "Thể loại", type: "select", options: categoryOptions, numeric: true, required: true },
         { name: "publish_year", label: "Năm xuất bản", type: "number" },
         { name: "pages", label: "Số trang", type: "number" },

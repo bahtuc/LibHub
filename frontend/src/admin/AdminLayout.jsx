@@ -10,6 +10,7 @@ const NAV = [
   { to: "/admin/copies", label: "Bản sao sách", icon: "layers" },
   { to: "/admin/categories", label: "Thể loại", icon: "compass" },
   { to: "/admin/authors", label: "Tác giả", icon: "users" },
+  { to: "/admin/Publishers", label: "Nhà xuất bản", icon: "users" },
   { to: "/admin/users", label: "Người dùng", icon: "user" },
 ];
 

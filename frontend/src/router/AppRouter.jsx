@@ -1,9 +1,5 @@
-// src/router/AppRouter.jsx
-//
-// Toàn bộ route của app. Thêm trang mới: tạo file trong src/pages,
-// rồi khai báo thêm 1 dòng <Route> ở đây.
-
 import { Routes, Route } from "react-router-dom";
+
 import Home from "../Home.jsx";
 import Login from "../pages/Login.jsx";
 import Register from "../pages/Register.jsx";
@@ -15,6 +11,8 @@ import BookDetail from "../pages/BookDetail.jsx";
 import Account from "../pages/Account.jsx";
 import Fines from "../pages/fines.jsx";
 import PaymentResult from "../pages/paymentResult.jsx";
+import BorrowBook from "../pages/BorrowBooks.jsx";
+
 import RequireAuth from "../auth/RequireAuth.jsx";
 
 import RequireAdmin from "../admin/RequireAdmin.jsx";
@@ -38,17 +36,77 @@ import LibrarianFines from "../librarian/LibrarianFines.jsx";
 export default function AppRouter() {
   return (
     <Routes>
+
+      {/* ================= PUBLIC ================= */}
+
       <Route path="/" element={<Home />} />
+
       <Route path="/login" element={<Login />} />
+
       <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/library" element={<Library />} />
-      <Route path="/genres" element={<Genres />} />
-      <Route path="/genres/:categoryId" element={<GenreDetail />} />
-      <Route path="/books/:bookId" element={<BookDetail />} />
-      <Route path="/account" element={<Account />} />
-      <Route path="/fines" element={<RequireAuth><Fines /></RequireAuth>} />
-      <Route path="/payment/result" element={<PaymentResult />} />
+
+      <Route
+        path="/forgot-password"
+        element={<ForgotPassword />}
+      />
+
+      <Route
+        path="/library"
+        element={<Library />}
+      />
+
+      <Route
+        path="/genres"
+        element={<Genres />}
+      />
+
+      <Route
+        path="/genres/:categoryId"
+        element={<GenreDetail />}
+      />
+
+      <Route
+        path="/books/:bookId"
+        element={<BookDetail />}
+      />
+
+      <Route
+        path="/payment/result"
+        element={<PaymentResult />}
+      />
+
+
+      {/* ================= USER ================= */}
+
+      <Route
+        path="/account"
+        element={
+          <RequireAuth>
+            <Account />
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="/fines"
+        element={
+          <RequireAuth>
+            <Fines />
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="/borrowbook"
+        element={
+          <RequireAuth>
+            <BorrowBook />
+          </RequireAuth>
+        }
+      />
+
+
+      {/* ================= ADMIN ================= */}
 
       <Route
         path="/admin"
@@ -58,14 +116,44 @@ export default function AppRouter() {
           </RequireAdmin>
         }
       >
-        <Route index element={<AdminDashboard />} />
-        <Route path="books" element={<AdminBooks />} />
-        <Route path="copies" element={<AdminBookCopies />} />
-        <Route path="categories" element={<AdminCategories />} />
-        <Route path="authors" element={<AdminAuthors />} />
-        <Route path="publishers" element={<AdminPublisher />} />
-        <Route path="users" element={<AdminUsers />} />
+        <Route
+          index
+          element={<AdminDashboard />}
+        />
+
+        <Route
+          path="books"
+          element={<AdminBooks />}
+        />
+
+        <Route
+          path="copies"
+          element={<AdminBookCopies />}
+        />
+
+        <Route
+          path="categories"
+          element={<AdminCategories />}
+        />
+
+        <Route
+          path="authors"
+          element={<AdminAuthors />}
+        />
+
+        <Route
+          path="publishers"
+          element={<AdminPublisher />}
+        />
+
+        <Route
+          path="users"
+          element={<AdminUsers />}
+        />
       </Route>
+
+
+      {/* ================= LIBRARIAN ================= */}
 
       <Route
         path="/librarian"
@@ -75,12 +163,32 @@ export default function AppRouter() {
           </RequireLibrarian>
         }
       >
-        <Route index element={<LibrarianDashboard />} />
-        <Route path="books" element={<LibrarianBooks />} />
-        <Route path="borrow" element={<LibrarianBorrow />} />
-        <Route path="tickets" element={<LibrarianTickets />} />
-        <Route path="fines" element={<LibrarianFines />} />
+        <Route
+          index
+          element={<LibrarianDashboard />}
+        />
+
+        <Route
+          path="books"
+          element={<LibrarianBooks />}
+        />
+
+        <Route
+          path="borrow"
+          element={<LibrarianBorrow />}
+        />
+
+        <Route
+          path="tickets"
+          element={<LibrarianTickets />}
+        />
+
+        <Route
+          path="fines"
+          element={<LibrarianFines />}
+        />
       </Route>
+
     </Routes>
   );
 }

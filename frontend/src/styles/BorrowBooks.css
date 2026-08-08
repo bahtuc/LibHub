@@ -1,0 +1,712 @@
+
+/* =========================================================
+   BORROW BOOKS PAGE
+   src/styles/BorrowBooks.css
+   ========================================================= */
+
+/* =========================================================
+   CONTAINER
+   ========================================================= */
+
+.borrow-page {
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.lh-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px 60px;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.borrow-header {
+  margin-bottom: 32px;
+}
+
+.borrow-header h1 {
+  margin: 0 0 10px;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #1e293b;
+}
+
+.borrow-header p {
+  margin: 0;
+  font-size: 16px;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   LOGIN WARNING
+   ========================================================= */
+
+.borrow-login-warning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+
+  margin-bottom: 28px;
+  padding: 18px 20px;
+
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+}
+
+.borrow-login-warning p {
+  margin: 0;
+  color: #1e40af;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* =========================================================
+   SUCCESS / ERROR
+   ========================================================= */
+
+.borrow-success,
+.borrow-error {
+  margin-bottom: 24px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.borrow-success {
+  color: #166534;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.borrow-error {
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+/* =========================================================
+   SECTION
+   ========================================================= */
+
+.borrow-books-section,
+.borrow-history-section {
+  margin-top: 36px;
+}
+
+.borrow-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  margin-bottom: 20px;
+}
+
+.borrow-section-header h2 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.borrow-section-header > span {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* =========================================================
+   REFRESH BUTTON
+   ========================================================= */
+
+.borrow-section-header button {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+
+  padding: 8px 16px;
+  border-radius: 8px;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.borrow-section-header button:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.borrow-section-header button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.borrow-section-header button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   BOOK GRID
+   ========================================================= */
+
+.borrow-book-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+/* =========================================================
+   BOOK CARD
+   ========================================================= */
+
+.borrow-book-card {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+
+  overflow: hidden;
+
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.borrow-book-card:hover {
+  transform: translateY(-4px);
+
+  border-color: #cbd5e1;
+
+  box-shadow:
+    0 12px 28px rgba(15, 23, 42, 0.1);
+}
+
+/* =========================================================
+   BOOK COVER
+   ========================================================= */
+
+.borrow-book-cover {
+  width: 100%;
+  height: 280px;
+
+  background: #f1f5f9;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+}
+
+.borrow-book-cover img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  display: block;
+
+  transition: transform 0.3s ease;
+}
+
+.borrow-book-card:hover .borrow-book-cover img {
+  transform: scale(1.03);
+}
+
+.borrow-book-cover-placeholder {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #64748b;
+  background: #e2e8f0;
+
+  font-size: 54px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   BOOK INFO
+   ========================================================= */
+
+.borrow-book-info {
+  display: flex;
+  flex-direction: column;
+
+  flex: 1;
+
+  padding: 20px;
+}
+
+.borrow-book-info h3 {
+  margin: 0 0 14px;
+
+  color: #0f172a;
+
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.borrow-book-info p {
+  margin: 0 0 8px;
+
+  color: #64748b;
+
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.borrow-book-info p strong {
+  color: #334155;
+  font-weight: 600;
+}
+
+/* =========================================================
+   BOOK STATUS
+   ========================================================= */
+
+.borrow-book-status {
+  margin-top: 8px;
+  margin-bottom: 18px;
+}
+
+.book-available,
+.book-unavailable {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 5px 10px;
+
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.book-available {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.book-unavailable {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+/* =========================================================
+   BOOK ACTIONS
+   ========================================================= */
+
+.borrow-book-actions {
+  display: flex;
+  gap: 10px;
+
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.borrow-book-actions .lh-btn {
+  flex: 1;
+
+  min-height: 42px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 9px 14px;
+
+  box-sizing: border-box;
+
+  border-radius: 8px;
+
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.borrow-book-actions .lh-btn:not(.lh-btn--primary) {
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.borrow-book-actions .lh-btn:not(.lh-btn--primary):hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.borrow-book-actions .lh-btn--primary {
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.borrow-book-actions .lh-btn--primary:hover:not(:disabled) {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.borrow-book-actions .lh-btn--primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.borrow-book-actions .lh-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.borrow-empty {
+  padding: 50px 24px;
+
+  text-align: center;
+
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+}
+
+.borrow-empty p {
+  margin: 0;
+
+  color: #64748b;
+
+  font-size: 15px;
+}
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+
+.borrow-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 160px;
+
+  color: #64748b;
+
+  font-size: 15px;
+}
+
+/* =========================================================
+   BORROW HISTORY
+   ========================================================= */
+
+.borrow-history {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.borrow-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+
+  padding: 20px;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.borrow-history-item:hover {
+  border-color: #cbd5e1;
+
+  box-shadow:
+    0 6px 18px rgba(15, 23, 42, 0.07);
+}
+
+/* =========================================================
+   HISTORY INFO
+   ========================================================= */
+
+.borrow-history-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.borrow-history-info h3 {
+  margin: 0 0 12px;
+
+  color: #0f172a;
+
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.borrow-history-info p {
+  margin: 6px 0;
+
+  color: #64748b;
+
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.borrow-history-info p strong {
+  color: #334155;
+  font-weight: 600;
+}
+
+/* =========================================================
+   HISTORY STATUS
+   ========================================================= */
+
+.borrow-history-status {
+  flex-shrink: 0;
+}
+
+.borrow-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 95px;
+
+  padding: 7px 12px;
+
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Pending */
+
+.borrow-status.pending {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+/* Approved */
+
+.borrow-status.approved {
+  color: #1d4ed8;
+  background: #dbeafe;
+}
+
+/* Borrowed */
+
+.borrow-status.borrowed {
+  color: #166534;
+  background: #dcfce7;
+}
+
+/* Returned */
+
+.borrow-status.returned {
+  color: #475569;
+  background: #e2e8f0;
+}
+
+/* Rejected */
+
+.borrow-status.rejected {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+/* Overdue */
+
+.borrow-status.overdue {
+  color: #9a3412;
+  background: #ffedd5;
+}
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 992px) {
+  .lh-container {
+    padding: 32px 20px 50px;
+  }
+
+  .borrow-book-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .borrow-book-cover {
+    height: 260px;
+  }
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .lh-container {
+    padding: 24px 16px 40px;
+  }
+
+  .borrow-header {
+    margin-bottom: 24px;
+  }
+
+  .borrow-header h1 {
+    font-size: 27px;
+  }
+
+  .borrow-header p {
+    font-size: 14px;
+  }
+
+  /* Login */
+
+  .borrow-login-warning {
+    flex-direction: column;
+    align-items: stretch;
+
+    padding: 16px;
+  }
+
+  .borrow-login-warning .lh-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Section */
+
+  .borrow-books-section,
+  .borrow-history-section {
+    margin-top: 28px;
+  }
+
+  .borrow-section-header {
+    align-items: flex-start;
+  }
+
+  .borrow-section-header h2 {
+    font-size: 19px;
+  }
+
+  /* Books */
+
+  .borrow-book-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .borrow-book-cover {
+    height: 300px;
+  }
+
+  .borrow-book-info {
+    padding: 18px;
+  }
+
+  .borrow-book-actions {
+    flex-direction: column;
+  }
+
+  .borrow-book-actions .lh-btn {
+    width: 100%;
+  }
+
+  /* History */
+
+  .borrow-history-item {
+    flex-direction: column;
+    align-items: stretch;
+
+    gap: 14px;
+
+    padding: 16px;
+  }
+
+  .borrow-history-status {
+    align-self: flex-start;
+  }
+
+  .borrow-status {
+    min-width: 90px;
+  }
+}
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 400px) {
+  .lh-container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .borrow-header h1 {
+    font-size: 24px;
+  }
+
+  .borrow-book-cover {
+    height: 260px;
+  }
+
+  .borrow-book-info h3 {
+    font-size: 17px;
+  }
+
+  .borrow-section-header h2 {
+    font-size: 18px;
+  }
+}
+

@@ -132,4 +132,27 @@ class LoanViewServiceTest {
         assertEquals("Unpaid", view.getItems().getFirst().getFinePaidStatus());
         assertNotNull(view.getItems().getFirst().getFineAmount());
     }
+
+    @Test
+    void usesGuestIdentityWhenTicketHasNoRegisteredUser() {
+        BorrowTickets ticket = new BorrowTickets();
+        ticket.setTicketId(11L);
+        ticket.setGuestName("Walk-in Reader");
+        ticket.setGuestPhone("0900000000");
+
+        when(ticketRepo.findAll()).thenReturn(List.of(ticket));
+        when(detailRepo.findAll()).thenReturn(List.of());
+        when(copyRepo.findAll()).thenReturn(List.of());
+        when(bookRepo.findAll()).thenReturn(List.of());
+        when(userRepo.findAll()).thenReturn(List.of());
+        when(returnRepo.findAll()).thenReturn(List.of());
+        when(returnDetailRepo.findAll()).thenReturn(List.of());
+        when(fineRepo.findAll()).thenReturn(List.of());
+
+        BorrowTicketResponse view = service.getAllViews().getFirst();
+
+        assertEquals("Walk-in Reader", view.getUserName());
+        assertEquals("Walk-in Reader", view.getGuestName());
+        assertEquals("0900000000", view.getGuestPhone());
+    }
 }

@@ -2,6 +2,7 @@ package com.library.libhub.repository;
 
 import java.sql.Timestamp;
 import java.util.Optional;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -30,6 +31,8 @@ public interface UserRepository extends JpaRepository<Users, Long> {
     boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);
+
+    List<Users> findByStatusIgnoreCase(String status);
 
     @Modifying
     @Query("UPDATE Users u SET u.lastLogin = :lastLogin WHERE u.userId = :userId")

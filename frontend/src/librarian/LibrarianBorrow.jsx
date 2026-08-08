@@ -14,7 +14,10 @@ export default function LibrarianBorrow() {
   const books = booksStore.useCollection();
   const copies = copiesStore.useCollection();
   const [borrowers, setBorrowers] = useState([]);
+  const [borrowerType, setBorrowerType] = useState("member");
   const [userId, setUserId] = useState("");
+  const [guestName, setGuestName] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
   const [dueDate, setDueDate] = useState(defaultDueDate());
   const [bookId, setBookId] = useState("");
   const [selectedCopyIds, setSelectedCopyIds] = useState([]);
@@ -72,13 +75,17 @@ export default function LibrarianBorrow() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (!userId || selectedCopyIds.length === 0) return;
+    const isGuest = borrowerType === "guest";
+    if ((!isGuest && !userId) || (isGuest && !guestName.trim()) || selectedCopyIds.length === 0) return;
     setSubmitting(true);
     setError("");
     setSuccess(null);
     try {
       const ticket = await createBorrowTicket({
-        userId: Number(userId),
+        userId: isGuest ? null : Number(userId),
+        guestName: isGuest ? guestName.trim() : null,
+        guestPhone: isGuest ? guestPhone.trim() || null : null,
+        borrowDate: new Date().toISOString().slice(0, 10),
         dueDate,
         copyIds: selectedCopyIds,
         note: note.trim() || null,
@@ -87,6 +94,8 @@ export default function LibrarianBorrow() {
       setSelectedCopyIds([]);
       setBookId("");
       setNote("");
+      setGuestName("");
+      setGuestPhone("");
       setDueDate(defaultDueDate());
       await copiesStore.refresh();
     } catch (requestError) {
@@ -123,6 +132,15 @@ export default function LibrarianBorrow() {
 
         <div className="lh-admin-form__grid">
           <label className="lh-field lh-admin-form__field">
+            Loại bạn đọc
+            <select value={borrowerType} onChange={(event) => setBorrowerType(event.target.value)}>
+              <option value="member">Thành viên</option>
+              <option value="guest">Khách vãng lai</option>
+            </select>
+          </label>
+
+          {borrowerType === "member" ? (
+          <label className="lh-field lh-admin-form__field">
             Bạn đọc
             <select value={userId} onChange={(event) => setUserId(event.target.value)} required>
               {borrowers.length === 0 && <option value="">— Chưa có bạn đọc đang hoạt động —</option>}
@@ -133,6 +151,28 @@ export default function LibrarianBorrow() {
               ))}
             </select>
           </label>
+          ) : (
+            <>
+              <label className="lh-field lh-admin-form__field">
+                Tên khách
+                <input
+                  type="text"
+                  value={guestName}
+                  onChange={(event) => setGuestName(event.target.value)}
+                  required
+                />
+              </label>
+              <label className="lh-field lh-admin-form__field">
+                Số điện thoại khách
+                <input
+                  type="tel"
+                  value={guestPhone}
+                  onChange={(event) => setGuestPhone(event.target.value)}
+                  placeholder="Tùy chọn"
+                />
+              </label>
+            </>
+          )}
 
           <label className="lh-field lh-admin-form__field">
             Hạn trả
@@ -221,7 +261,9 @@ export default function LibrarianBorrow() {
           <button
             type="submit"
             className="lh-btn lh-btn--primary"
-            disabled={submitting || !userId || cart.length === 0}
+            disabled={submitting
+              || (borrowerType === "member" ? !userId : !guestName.trim())
+              || cart.length === 0}
           >
             {submitting ? "Đang tạo..." : `Tạo phiếu mượn (${cart.length} cuốn)`}
           </button>

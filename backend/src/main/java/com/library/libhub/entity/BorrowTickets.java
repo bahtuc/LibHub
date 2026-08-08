@@ -16,6 +16,12 @@ public class BorrowTickets {
   @Column(name = "user_id")
   private Long userId;
 
+  @Column(name = "guest_name")
+  private String guestName;
+
+  @Column(name = "guest_phone")
+  private String guestPhone;
+
   @Column(name = "borrow_date")
   private Date borrowDate;
 
@@ -47,6 +53,22 @@ public class BorrowTickets {
 
   public void setUserId(Long userId) {
     this.userId = userId;
+  }
+
+  public String getGuestName() {
+    return guestName;
+  }
+
+  public void setGuestName(String guestName) {
+    this.guestName = guestName;
+  }
+
+  public String getGuestPhone() {
+    return guestPhone;
+  }
+
+  public void setGuestPhone(String guestPhone) {
+    this.guestPhone = guestPhone;
   }
 
 

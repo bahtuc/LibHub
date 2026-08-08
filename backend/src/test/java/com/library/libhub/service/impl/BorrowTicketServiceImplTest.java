@@ -1,5 +1,6 @@
 package com.library.libhub.service.impl;
 
+import com.library.libhub.DTO.Request.BorrowTicketRequest;
 import com.library.libhub.entity.BookCopies;
 import com.library.libhub.entity.Books;
 import com.library.libhub.entity.BorrowDetails;
@@ -9,6 +10,7 @@ import com.library.libhub.repository.BookCopyRepository;
 import com.library.libhub.repository.BookRepository;
 import com.library.libhub.repository.BorrowDetailRepository;
 import com.library.libhub.repository.BorrowTicketRepository;
+import com.library.libhub.repository.ReturnRepository;
 import com.library.libhub.repository.UserRepository;
 
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,8 +35,9 @@ class BorrowTicketServiceImplTest {
     private final BookCopyRepository copyRepo = mock(BookCopyRepository.class);
     private final BookRepository bookRepo = mock(BookRepository.class);
     private final UserRepository userRepo = mock(UserRepository.class);
+    private final ReturnRepository returnRepo = mock(ReturnRepository.class);
     private final BorrowTicketServiceImpl service = new BorrowTicketServiceImpl(
-            Repo, detailRepo, copyRepo, bookRepo, userRepo);
+            Repo, detailRepo, copyRepo, bookRepo, userRepo, returnRepo);
 
     @Test
     void createRejectsDueDateBeforeBorrowDate() {
@@ -146,6 +150,86 @@ class BorrowTicketServiceImplTest {
                 () -> service.borrowBook(3L, 9L));
         verify(Repo, never()).save(any());
         verify(detailRepo, never()).save(any(BorrowDetails.class));
+    }
+
+    @Test
+    void adminCreateTicketCreatesDetailsAndMarksExactCopiesBorrowed() {
+        Users user = new Users();
+        user.setStatus("ACTIVE");
+        BookCopies copy = new BookCopies();
+        copy.setCopyId(12L);
+        copy.setBookId(9L);
+        copy.setStatus("Available");
+        Books book = new Books();
+        book.setBookId(9L);
+
+        BorrowTicketRequest request = new BorrowTicketRequest();
+        request.setUserId(3L);
+        request.setBorrowDate(Date.valueOf("2026-08-08"));
+        request.setDueDate(Date.valueOf("2026-08-22"));
+        request.setCopyIds(List.of(12L));
+
+        when(userRepo.findByIdForUpdate(3L)).thenReturn(Optional.of(user));
+        when(copyRepo.findByIdForUpdate(12L)).thenReturn(Optional.of(copy));
+        when(bookRepo.findById(9L)).thenReturn(Optional.of(book));
+        when(Repo.save(any(BorrowTickets.class))).thenAnswer(invocation -> {
+            BorrowTickets saved = invocation.getArgument(0);
+            saved.setTicketId(20L);
+            return saved;
+        });
+
+        BorrowTickets result = service.createBorrowTicketWithCopies(request);
+
+        assertEquals(20L, result.getTicketId());
+        assertEquals("Borrowed", result.getStatus());
+        assertEquals("Borrowed", copy.getStatus());
+        verify(detailRepo).save(argThat(detail ->
+                detail.getTicketId().equals(20L) && detail.getCopyId().equals(12L)));
+        verify(copyRepo).save(copy);
+    }
+
+    @Test
+    void librarianCanCreateTicketForGuestWithoutUserAccount() {
+        BookCopies copy = new BookCopies();
+        copy.setCopyId(12L);
+        copy.setBookId(9L);
+        copy.setStatus("Available");
+        Books book = new Books();
+        book.setBookId(9L);
+
+        BorrowTicketRequest request = new BorrowTicketRequest();
+        request.setGuestName("Nguyen Van Guest");
+        request.setGuestPhone("0901234567");
+        request.setDueDate(Date.valueOf("2026-08-22"));
+        request.setCopyIds(List.of(12L));
+
+        when(copyRepo.findByIdForUpdate(12L)).thenReturn(Optional.of(copy));
+        when(bookRepo.findById(9L)).thenReturn(Optional.of(book));
+        when(Repo.save(any(BorrowTickets.class))).thenAnswer(invocation -> {
+            BorrowTickets saved = invocation.getArgument(0);
+            saved.setTicketId(21L);
+            return saved;
+        });
+
+        BorrowTickets result = service.createBorrowTicketWithCopies(request);
+
+        assertNull(result.getUserId());
+        assertEquals("Nguyen Van Guest", result.getGuestName());
+        assertEquals("0901234567", result.getGuestPhone());
+        assertEquals(Date.valueOf(LocalDate.now()), result.getBorrowDate());
+        verifyNoInteractions(userRepo);
+    }
+
+    @Test
+    void updateStatusNormalizesSupportedValue() {
+        BorrowTickets existing = ticket();
+        existing.setTicketId(7L);
+        when(Repo.findById(7L)).thenReturn(Optional.of(existing));
+        when(Repo.save(existing)).thenReturn(existing);
+
+        BorrowTickets result = service.updateStatus(7L, "overdue");
+
+        assertEquals("Overdue", result.getStatus());
     }
 
     private BorrowTickets ticket() {

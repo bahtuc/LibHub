@@ -55,7 +55,8 @@ class BorrowTicketServiceImplTest {
             detailRepo,
             copyRepo,
             bookRepo,
-            userRepo);
+            userRepo,
+            returnRepo);
 
     @Test
     void createRejectsDueDateBeforeBorrowDate() {

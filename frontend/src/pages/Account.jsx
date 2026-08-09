@@ -2,6 +2,7 @@
 // Trang tài khoản cá nhân — có "thẻ thành viên" bên trái (ăn theo motif thẻ
 // mượn sách ở trang Đăng nhập/Đăng ký) + nội dung tab bên phải.
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
@@ -35,7 +36,11 @@ const ROLE_TONE = { Admin: "warning", User: "success", Librarian: "info" };
 
 export default function Account() {
   const { user } = useAuth();
-  const [tab, setTab] = useState("profile");
+  const [searchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const [tab, setTab] = useState(
+    TABS.some((item) => item.id === requestedTab) ? requestedTab : "profile",
+  );
   const [fines, setFines] = useState([]);
   const [finesLoading, setFinesLoading] = useState(true);
   const [finesError, setFinesError] = useState("");

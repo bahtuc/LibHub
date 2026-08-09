@@ -32,7 +32,7 @@ export default function PaymentResult() {
                 {code && <p className="lh-muted lh-mono" style={{ fontSize: 12, marginBottom: 20 }}>Mã phản hồi VNPay: {code}</p>}
 
                 <div className="lh-row" style={{ justifyContent: "center", gap: 10 }}>
-                    <Link to="/fines" className="lh-btn lh-btn--primary">Về trang khoản phạt</Link>
+                    <Link to="/account?tab=fines" className="lh-btn lh-btn--primary">Về tài khoản</Link>
                     <Link to="/" className="lh-btn">Trang chủ</Link>
                 </div>
             </div>

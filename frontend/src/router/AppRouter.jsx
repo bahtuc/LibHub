@@ -152,6 +152,16 @@ export default function AppRouter() {
           path="users"
           element={<AdminUsers />}
         />
+
+        <Route
+          path="borrow-tickets"
+          element={<AdminBorrowTickets />}
+        />
+
+        <Route
+          path="fines"
+          element={<AdminFines />}
+        />
       </Route>
 
 

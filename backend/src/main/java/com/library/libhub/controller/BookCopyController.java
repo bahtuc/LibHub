@@ -25,7 +25,7 @@ public class BookCopyController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<BookCopies>> getBookCopyById(@PathVariable long id) {
+    public ResponseEntity<Optional<BookCopies>> getBookCopyById(@PathVariable Long id) {
         return ResponseEntity.ok(bookCopyService.getBookCopyById(id));
     }
 
@@ -36,13 +36,13 @@ public class BookCopyController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<BookCopies> updateBookCopy(@PathVariable long id, @RequestBody BookCopies bookCopy) {
+    public ResponseEntity<BookCopies> updateBookCopy(@PathVariable Long id, @RequestBody BookCopies bookCopy) {
         BookCopies updatedBookCopy = bookCopyService.updateBookCopy(id, bookCopy);
         return ResponseEntity.ok(updatedBookCopy);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBookCopy(@PathVariable long id) {
+    public ResponseEntity<Void> deleteBookCopy(@PathVariable Long id) {
         bookCopyService.deleteBookCopy(id);
         return ResponseEntity.noContent().build();
     }
@@ -53,24 +53,24 @@ public class BookCopyController {
     }
 
     @GetMapping("/book/{bookId}")
-    public ResponseEntity<List<BookCopies>> findByBook(@PathVariable long bookId) {
+    public ResponseEntity<List<BookCopies>> findByBook(@PathVariable Long bookId) {
         return ResponseEntity.ok(bookCopyService.findByBook(bookId));
     }
 
     @GetMapping("/book/{bookId}/status/{status}")
-    public ResponseEntity<List<BookCopies>> findByBookAndStatus(@PathVariable long bookId, @PathVariable String status) {
+    public ResponseEntity<List<BookCopies>> findByBookAndStatus(@PathVariable Long bookId, @PathVariable String status) {
         return ResponseEntity.ok(bookCopyService.findByBookAndStatus(bookId, status));
     }
 
     @PutMapping("/{id}/status/{status}")
-    public ResponseEntity<Void> updateStatus(@PathVariable long id, @PathVariable String status) {
+    public ResponseEntity<Void> updateStatus(@PathVariable Long id, @PathVariable String status) {
         bookCopyService.updateStatus(id, status);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/shelf-location")
     public ResponseEntity<BookCopies> updateShelfLocation(
-            @PathVariable long id, @RequestBody Map<String, String> body) {
+            @PathVariable Long id, @RequestBody Map<String, String> body) {
         String shelfLocation = body == null ? null : body.get("shelfLocation");
         return ResponseEntity.ok(bookCopyService.updateShelfLocation(id, shelfLocation));
     }

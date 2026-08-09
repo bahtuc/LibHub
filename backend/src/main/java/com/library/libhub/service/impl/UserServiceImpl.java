@@ -46,7 +46,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public Optional<Users> getUserById(long userId) {
+    public Optional<Users> getUserById(Long userId) {
         return userRepo.findById(userId);
     }
 
@@ -56,7 +56,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public Users updateUser(long userId, Users user) {
+    public Users updateUser(Long userId, Users user) {
         Users existing = userRepo.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
@@ -89,7 +89,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public void deleteUser(long userId) {
+    public void deleteUser(Long userId) {
         if (userRepo.existsById(userId)) {
             userRepo.deleteById(userId);
         } else {
@@ -114,7 +114,7 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     @Transactional
-    public void updateLastLogin(long userId, Timestamp lastLogin) {
+    public void updateLastLogin(Long userId, Timestamp lastLogin) {
         userRepo.updateLastLogin(userId, lastLogin);
     }
 
@@ -141,12 +141,12 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public Users updateRole(long userId, long roleId) {
+    public Users updateRole(Long userId, Long roleId) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    public Users updateStatus(long userId, String status) {
+    public Users updateStatus(Long userId, String status) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

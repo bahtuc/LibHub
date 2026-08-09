@@ -24,7 +24,7 @@ public class ReturnDetailController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<ReturnDetails>> getReturnDetailById(@PathVariable long id) {
+    public ResponseEntity<Optional<ReturnDetails>> getReturnDetailById(@PathVariable Long id) {
         return ResponseEntity.ok(returnDetailService.getReturnDetailById(id));
     }
 
@@ -35,24 +35,24 @@ public class ReturnDetailController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ReturnDetails> updateReturnDetail(@PathVariable long id, @RequestBody ReturnDetails returnDetail) {
+    public ResponseEntity<ReturnDetails> updateReturnDetail(@PathVariable Long id, @RequestBody ReturnDetails returnDetail) {
         ReturnDetails updatedReturnDetail = returnDetailService.updateReturnDetail(id, returnDetail);
         return ResponseEntity.ok(updatedReturnDetail);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteReturnDetail(@PathVariable long id) {
+    public ResponseEntity<Void> deleteReturnDetail(@PathVariable Long id) {
         returnDetailService.deleteReturnDetail(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/return/{returnId}")
-    public ResponseEntity<List<ReturnDetails>> findByReturn(@PathVariable long returnId) {
+    public ResponseEntity<List<ReturnDetails>> findByReturn(@PathVariable Long returnId) {
         return ResponseEntity.ok(returnDetailService.findByReturn(returnId));
     }
 
     @GetMapping("/copy/{copyId}")
-    public ResponseEntity<List<ReturnDetails>> findByCopy(@PathVariable long copyId) {
+    public ResponseEntity<List<ReturnDetails>> findByCopy(@PathVariable Long copyId) {
         return ResponseEntity.ok(returnDetailService.findByCopy(copyId));
     }
 

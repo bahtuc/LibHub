@@ -9,11 +9,11 @@ import java.util.List;
 @Repository
 public interface ReturnDetailRepository extends JpaRepository<ReturnDetails, Long> {
 
-    List<ReturnDetails> findByReturnId(long returnId);
+    List<ReturnDetails> findByReturnId(Long returnId);
 
-    List<ReturnDetails> findByCopyId(long copyId);
+    List<ReturnDetails> findByCopyId(Long copyId);
 
     List<ReturnDetails> findByConditionBook(String conditionBook);
 
-    boolean existsByCopyId(long copyId);
+    boolean existsByCopyId(Long copyId);
 }

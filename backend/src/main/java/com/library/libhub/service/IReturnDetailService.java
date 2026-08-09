@@ -6,11 +6,11 @@ import java.util.Optional;
 
 public interface IReturnDetailService {
     ReturnDetails createReturnDetail(ReturnDetails returnDetail);
-    Optional<ReturnDetails> getReturnDetailById(long returnDetailId);
+    Optional<ReturnDetails> getReturnDetailById(Long returnDetailId);
     List<ReturnDetails> getAllReturnDetails();
-    ReturnDetails updateReturnDetail(long returnDetailId, ReturnDetails returnDetail);
-    void deleteReturnDetail(long returnDetailId);
-    List<ReturnDetails> findByReturn(long returnId);
-    List<ReturnDetails> findByCopy(long copyId);
+    ReturnDetails updateReturnDetail(Long returnDetailId, ReturnDetails returnDetail);
+    void deleteReturnDetail(Long returnDetailId);
+    List<ReturnDetails> findByReturn(Long returnId);
+    List<ReturnDetails> findByCopy(Long copyId);
     List<ReturnDetails> findByCondition(String conditionBook);
 }

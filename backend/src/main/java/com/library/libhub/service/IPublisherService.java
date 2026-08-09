@@ -6,9 +6,9 @@ import java.util.Optional;
 
 public interface IPublisherService {
     Publishers createPublisher(Publishers publisher);
-    Optional<Publishers> getPublisherById(long publisherId);
+    Optional<Publishers> getPublisherById(Long publisherId);
     List<Publishers> getAllPublishers();
-    Publishers updatePublisher(long publisherId, Publishers publisher);
-    void deletePublisher(long publisherId);
+    Publishers updatePublisher(Long publisherId, Publishers publisher);
+    void deletePublisher(Long publisherId);
     Optional<Publishers> findByName(String publisherName);
 }

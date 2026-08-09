@@ -32,7 +32,7 @@ public class BookCopyServiceImpl implements IBookCopyService {
     }
 
     @Override
-    public Optional<BookCopies> getBookCopyById(long copyId) {
+    public Optional<BookCopies> getBookCopyById(Long copyId) {
         return bookCopyRepo.findById(copyId);
     }
 
@@ -42,7 +42,7 @@ public class BookCopyServiceImpl implements IBookCopyService {
     }
 
     @Override
-    public BookCopies updateBookCopy(long copyId, BookCopies bookCopy) {
+    public BookCopies updateBookCopy(Long copyId, BookCopies bookCopy) {
         BookCopies existing = bookCopyRepo.findById(copyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Book copy not found with id: " + copyId));
 
@@ -61,7 +61,7 @@ public class BookCopyServiceImpl implements IBookCopyService {
     }
 
     @Override
-    public void deleteBookCopy(long copyId) {
+    public void deleteBookCopy(Long copyId) {
         if (bookCopyRepo.existsById(copyId)) {
             bookCopyRepo.deleteById(copyId);
         } else {
@@ -75,18 +75,18 @@ public class BookCopyServiceImpl implements IBookCopyService {
     }
 
     @Override
-    public List<BookCopies> findByBook(long bookId) {
+    public List<BookCopies> findByBook(Long bookId) {
         return bookCopyRepo.findByBookId(bookId);
     }
 
     @Override
-    public List<BookCopies> findByBookAndStatus(long bookId, String status) {
+    public List<BookCopies> findByBookAndStatus(Long bookId, String status) {
         return bookCopyRepo.findByBookIdAndStatus(bookId, status);
     }
 
     @Override
     @Transactional
-    public void updateStatus(long copyId, String status) {
+    public void updateStatus(Long copyId, String status) {
         if (status == null || status.isBlank()) throw new IllegalArgumentException("Trạng thái không được để trống");
         if (bookCopyRepo.updateStatus(copyId, status) == 0)
             throw new ResourceNotFoundException("Book copy not found with id: " + copyId);
@@ -99,7 +99,7 @@ public class BookCopyServiceImpl implements IBookCopyService {
     }
 
     @Override
-    public BookCopies updateShelfLocation(long copyId, String shelfLocation) {
+    public BookCopies updateShelfLocation(Long copyId, String shelfLocation) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

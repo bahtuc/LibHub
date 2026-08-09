@@ -9,7 +9,7 @@ import com.library.libhub.DTO.Response.AuthResponse;
 public interface IAuthService {
     AuthResponse register(RegisterRequest request);
     AuthResponse login(LoginRequest request);
-    AuthResponse getProfile(long userId);
-    AuthResponse updateProfile(long userId, UpdateProfileRequest request);
-    AuthResponse changePassword(long userId, ChangePasswordRequest request);
+    AuthResponse getProfile(Long userId);
+    AuthResponse updateProfile(Long userId, UpdateProfileRequest request);
+    AuthResponse changePassword(Long userId, ChangePasswordRequest request);
 }

@@ -6,11 +6,11 @@ import java.util.Optional;
 
 public interface IFineService {
     Fines createFine(Fines fine);
-    Optional<Fines> getFineById(long fineId);
+    Optional<Fines> getFineById(Long fineId);
     List<Fines> getAllFines();
-    Fines updateFine(long fineId, Fines fine);
-    void deleteFine(long fineId);
-    List<Fines> findByReturnDetail(long returnDetailId);
+    Fines updateFine(Long fineId, Fines fine);
+    void deleteFine(Long fineId);
+    List<Fines> findByReturnDetail(Long returnDetailId);
     List<Fines> findByPaidStatus(String paidStatus);
-    List<Fines> findByUser(long userId);
+    List<Fines> findByUser(Long userId);
 }

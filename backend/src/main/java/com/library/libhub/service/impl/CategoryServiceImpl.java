@@ -37,7 +37,7 @@ public class CategoryServiceImpl implements ICategoryService {
     }
 
     @Override
-    public Optional<Categories> getCategoryById(long categoryId) {
+    public Optional<Categories> getCategoryById(Long categoryId) {
         return categoryRepo.findById(categoryId);
     }
 
@@ -47,7 +47,7 @@ public class CategoryServiceImpl implements ICategoryService {
     }
 
     @Override
-    public Categories updateCategory(long categoryId, Categories category) {
+    public Categories updateCategory(Long categoryId, Categories category) {
         if (!categoryRepo.existsById(categoryId)) {
             throw new ResourceNotFoundException("Category not found with id: " + categoryId);
         }
@@ -67,7 +67,7 @@ public class CategoryServiceImpl implements ICategoryService {
     }
 
     @Override
-    public void deleteCategory(long categoryId) {
+    public void deleteCategory(Long categoryId) {
         if (categoryRepo.existsById(categoryId)) {
             categoryRepo.deleteById(categoryId);
         } else {

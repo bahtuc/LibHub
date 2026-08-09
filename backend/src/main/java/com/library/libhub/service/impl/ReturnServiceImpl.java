@@ -65,7 +65,7 @@ public class ReturnServiceImpl implements IReturnService {
     }
 
     @Override
-    public Optional<Returns> getReturnById(long returnId) {
+    public Optional<Returns> getReturnById(Long returnId) {
         return returnRepo.findById(returnId);
     }
 
@@ -75,7 +75,7 @@ public class ReturnServiceImpl implements IReturnService {
     }
 
     @Override
-    public Returns updateReturn(long returnId, Returns returns) {
+    public Returns updateReturn(Long returnId, Returns returns) {
         Returns existing = returnRepo.findById(returnId)
                 .orElseThrow(() -> new ResourceNotFoundException("Return not found with id: " + returnId));
         if (returns.getTicketId() != null)
@@ -90,7 +90,7 @@ public class ReturnServiceImpl implements IReturnService {
     }
 
     @Override
-    public void deleteReturn(long returnId) {
+    public void deleteReturn(Long returnId) {
         if (returnRepo.existsById(returnId)) {
             returnRepo.deleteById(returnId);
         } else {
@@ -99,17 +99,17 @@ public class ReturnServiceImpl implements IReturnService {
     }
 
     @Override
-    public List<Returns> findByTicket(long ticketId) {
+    public List<Returns> findByTicket(Long ticketId) {
         return returnRepo.findByTicketId(ticketId);
     }
 
     @Override
-    public List<Returns> findByReceivedBy(long receivedBy) {
+    public List<Returns> findByReceivedBy(Long receivedBy) {
         return returnRepo.findByReceivedBy(receivedBy);
     }
 
     @Override
-    public Returns returnBooks(ReturnBookRequest request, long currentStaffId) {
+    public Returns returnBooks(ReturnBookRequest request, Long currentStaffId) {
 
         Users staff = userRepo.findById(currentStaffId)
                 .orElseThrow(() -> new ResourceNotFoundException("Staff not found"));

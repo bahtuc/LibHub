@@ -24,7 +24,7 @@ public class BorrowDetailController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<BorrowDetails>> getBorrowDetailById(@PathVariable long id) {
+    public ResponseEntity<Optional<BorrowDetails>> getBorrowDetailById(@PathVariable Long id) {
         return ResponseEntity.ok(borrowDetailService.getBorrowDetailById(id));
     }
 
@@ -35,24 +35,24 @@ public class BorrowDetailController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<BorrowDetails> updateBorrowDetail(@PathVariable long id, @RequestBody BorrowDetails borrowDetail) {
+    public ResponseEntity<BorrowDetails> updateBorrowDetail(@PathVariable Long id, @RequestBody BorrowDetails borrowDetail) {
         BorrowDetails updatedBorrowDetail = borrowDetailService.updateBorrowDetail(id, borrowDetail);
         return ResponseEntity.ok(updatedBorrowDetail);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBorrowDetail(@PathVariable long id) {
+    public ResponseEntity<Void> deleteBorrowDetail(@PathVariable Long id) {
         borrowDetailService.deleteBorrowDetail(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/ticket/{ticketId}")
-    public ResponseEntity<List<BorrowDetails>> findByTicket(@PathVariable long ticketId) {
+    public ResponseEntity<List<BorrowDetails>> findByTicket(@PathVariable Long ticketId) {
         return ResponseEntity.ok(borrowDetailService.findByTicket(ticketId));
     }
 
     @GetMapping("/copy/{copyId}")
-    public ResponseEntity<List<BorrowDetails>> findByCopy(@PathVariable long copyId) {
+    public ResponseEntity<List<BorrowDetails>> findByCopy(@PathVariable Long copyId) {
         return ResponseEntity.ok(borrowDetailService.findByCopy(copyId));
     }
 

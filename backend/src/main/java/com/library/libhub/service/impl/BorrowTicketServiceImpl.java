@@ -113,9 +113,20 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
         return borrowTicketRepo.save(borrowTicket);
     }
 
+<<<<<<< HEAD
     // =========================================================
     // MƯỢN 1 ĐẦU SÁCH
     // =========================================================
+=======
+    @Override
+    public BorrowTickets borrowBook(Long userId, Long bookId) {
+        Users user = userRepo.findByIdForUpdate(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Không tìm thấy tài khoản"));
+        if (!"ACTIVE".equalsIgnoreCase(user.getStatus())) {
+            throw new IllegalArgumentException("Tài khoản không thể mượn sách");
+        }
+>>>>>>> 904b812 (FRONTENDDDD)
 
     @Override
     public BorrowTickets borrowBook(
@@ -622,11 +633,16 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
     // =========================================================
 
     @Override
+<<<<<<< HEAD
     public Optional<BorrowTickets> getBorrowTicketById(
             long ticketId) {
 
         return borrowTicketRepo.findById(
                 ticketId);
+=======
+    public Optional<BorrowTickets> getBorrowTicketById(Long ticketId) {
+        return borrowTicketRepo.findById(ticketId);
+>>>>>>> 904b812 (FRONTENDDDD)
     }
 
     @Override
@@ -636,6 +652,7 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
     }
 
     @Override
+<<<<<<< HEAD
     public List<BorrowTickets> findByUser(
             long userId) {
 
@@ -672,6 +689,11 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
                                 + ticketId));
 
         // User
+=======
+    public BorrowTickets updateBorrowTicket(Long ticketId, BorrowTickets borrowTicket) {
+        BorrowTickets existing = borrowTicketRepo.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Borrow ticket not found with id: " + ticketId));
+>>>>>>> 904b812 (FRONTENDDDD)
         if (borrowTicket.getUserId() != null) {
 
             Users user = userRepo.findById(
@@ -733,6 +755,7 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
     // =========================================================
 
     @Override
+<<<<<<< HEAD
     public void deleteBorrowTicket(
             long ticketId) {
 
@@ -742,22 +765,49 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
             throw new ResourceNotFoundException(
                     "Không tìm thấy phiếu mượn: "
                             + ticketId);
+=======
+    public void deleteBorrowTicket(Long ticketId) {
+        BorrowTickets ticket = borrowTicketRepo.findById(ticketId).orElse(null);
+        if (ticket == null) {
+            throw new ResourceNotFoundException("Borrow ticket not found with id: " + ticketId);
+        }
+        if (!returnRepo.findByTicketId(ticketId).isEmpty()) {
+            throw new IllegalArgumentException("Returned tickets cannot be deleted because they have return history");
+>>>>>>> 904b812 (FRONTENDDDD)
         }
 
         borrowTicketRepo.deleteById(
                 ticketId);
     }
 
+<<<<<<< HEAD
     // =========================================================
     // HELPER
     // =========================================================
+=======
+    @Override
+    public List<BorrowTickets> findByUser(Long userId) {
+        return borrowTicketRepo.findByUserId(userId);
+    }
+>>>>>>> 904b812 (FRONTENDDDD)
 
     private void checkActiveUser(
             Users user) {
 
+<<<<<<< HEAD
         if (user == null) {
             throw new IllegalArgumentException(
                     "Người dùng không tồn tại.");
+=======
+    @Override
+    public BorrowTickets borrowBooks(Long userId, List<Long> bookIds) {
+        if (bookIds == null || bookIds.isEmpty()) {
+            throw new IllegalArgumentException("Book list is required");
+        }
+        Set<Long> uniqueBookIds = new LinkedHashSet<>(bookIds);
+        if (uniqueBookIds.size() != bookIds.size() || uniqueBookIds.contains(null)) {
+            throw new IllegalArgumentException("Book list contains duplicate or invalid IDs");
+>>>>>>> 904b812 (FRONTENDDDD)
         }
 
         if (!"ACTIVE".equalsIgnoreCase(
@@ -855,4 +905,127 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
 
         return escaped.toString();
     }
+<<<<<<< HEAD
 }
+=======
+
+    @Override
+    public BorrowTickets createBorrowTicketWithCopies(BorrowTicketRequest request) {
+        if (request == null || !hasValidBorrower(request.getUserId(), request.getGuestName())
+                || request.getDueDate() == null
+                || request.getCopyIds() == null || request.getCopyIds().isEmpty()) {
+            throw new IllegalArgumentException("A member or guest, due date, and at least one copy are required");
+        }
+        Set<Long> uniqueCopyIds = new LinkedHashSet<>(request.getCopyIds());
+        if (uniqueCopyIds.size() != request.getCopyIds().size() || uniqueCopyIds.contains(null)) {
+            throw new IllegalArgumentException("Copy list contains duplicate or invalid IDs");
+        }
+        return createTicketWithCopies(
+                request.getUserId(),
+                normalizeGuestValue(request.getGuestName()),
+                normalizeGuestValue(request.getGuestPhone()),
+                request.getBorrowDate() == null
+                        ? Date.valueOf(LocalDate.now())
+                        : new Date(request.getBorrowDate().getTime()),
+                new Date(request.getDueDate().getTime()),
+                request.getNote(),
+                List.copyOf(uniqueCopyIds));
+    }
+
+    @Override
+    public BorrowTickets updateStatus(Long ticketId, String status) {
+        if (status == null || status.isBlank()) {
+            throw new IllegalArgumentException("Status is required");
+        }
+        String canonicalStatus = switch (status.trim().toLowerCase()) {
+            case "borrowed" -> "Borrowed";
+            case "overdue" -> "Overdue";
+            case "returned" -> "Returned";
+            case "cancelled" -> "Cancelled";
+            default -> throw new IllegalArgumentException("Unsupported borrow-ticket status: " + status);
+        };
+        BorrowTickets ticket = borrowTicketRepo.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Borrow ticket not found with id: " + ticketId));
+        ticket.setStatus(canonicalStatus);
+        return borrowTicketRepo.save(ticket);
+    }
+
+    private Users requireActiveUser(Long userId) {
+        Users user = userRepo.findByIdForUpdate(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        if (!"ACTIVE".equalsIgnoreCase(user.getStatus())) {
+            throw new IllegalArgumentException("User account is not active");
+        }
+        return user;
+    }
+
+    private BorrowTickets createTicketWithCopies(
+            Long userId,
+            String guestName,
+            String guestPhone,
+            Date borrowDate,
+            Date dueDate,
+            String note,
+            List<Long> copyIds) {
+        if (!hasValidBorrower(userId, guestName)) {
+            throw new IllegalArgumentException("Choose an active member or enter a guest name");
+        }
+        if (userId != null) {
+            requireActiveUser(userId);
+        }
+        if (dueDate.before(borrowDate)) {
+            throw new IllegalArgumentException("Due date cannot be before borrow date");
+        }
+
+        List<BookCopies> copies = copyIds.stream().map(copyId -> {
+            BookCopies copy = bookCopyRepo.findByIdForUpdate(copyId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Book copy not found with id: " + copyId));
+            if (!"Available".equalsIgnoreCase(copy.getStatus())) {
+                throw new IllegalArgumentException("Book copy " + copyId + " is not available");
+            }
+            Books book = bookRepo.findById(copy.getBookId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Book not found for copy " + copyId));
+            if (Boolean.TRUE.equals(book.getHidden())) {
+                throw new IllegalArgumentException("Book copy " + copyId + " belongs to a hidden book");
+            }
+            if (userId != null && borrowDetailRepo.existsActiveBorrow(userId, copy.getBookId())) {
+                throw new IllegalArgumentException("Member is already borrowing book " + copy.getBookId());
+            }
+            return copy;
+        }).toList();
+
+        BorrowTickets ticket = new BorrowTickets();
+        ticket.setUserId(userId);
+        ticket.setGuestName(userId == null ? guestName : null);
+        ticket.setGuestPhone(userId == null ? guestPhone : null);
+        ticket.setBorrowDate(borrowDate);
+        ticket.setDueDate(dueDate);
+        ticket.setStatus("Borrowed");
+        ticket.setNote(note);
+        ticket.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+        ticket = borrowTicketRepo.save(ticket);
+
+        for (BookCopies copy : copies) {
+            BorrowDetails detail = new BorrowDetails();
+            detail.setTicketId(ticket.getTicketId());
+            detail.setCopyId(copy.getCopyId());
+            detail.setBorrowStatus("Borrowed");
+            borrowDetailRepo.save(detail);
+            copy.setStatus("Borrowed");
+            bookCopyRepo.save(copy);
+        }
+        return ticket;
+    }
+
+    private boolean hasValidBorrower(Long userId, String guestName) {
+        boolean hasUser = userId != null;
+        boolean hasGuest = guestName != null && !guestName.isBlank();
+        return hasUser != hasGuest;
+    }
+
+    private String normalizeGuestValue(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+}
+>>>>>>> 904b812 (FRONTENDDDD)

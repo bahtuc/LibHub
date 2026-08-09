@@ -13,7 +13,7 @@ import org.springframework.data.jpa.repository.Modifying;
 @Repository
 public interface BorrowTicketRepository extends JpaRepository<BorrowTickets, Long> {
 
-    List<BorrowTickets> findByUserId(long userId);
+    List<BorrowTickets> findByUserId(Long userId);
 
     List<BorrowTickets> findByStatus(String status);
 

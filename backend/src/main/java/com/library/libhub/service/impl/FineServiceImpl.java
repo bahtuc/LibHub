@@ -47,7 +47,7 @@ public class FineServiceImpl implements IFineService {
     }
 
     @Override
-    public Optional<Fines> getFineById(long fineId) {
+    public Optional<Fines> getFineById(Long fineId) {
         return fineRepo.findById(fineId);
     }
 
@@ -57,7 +57,7 @@ public class FineServiceImpl implements IFineService {
     }
 
     @Override
-    public Fines updateFine(long fineId, Fines fine) {
+    public Fines updateFine(Long fineId, Fines fine) {
         Fines existing = fineRepo.findById(fineId)
                 .orElseThrow(() -> new ResourceNotFoundException("Fine not found with id: " + fineId));
         if (fine.getReturnDetailId() != null)
@@ -78,7 +78,7 @@ public class FineServiceImpl implements IFineService {
     }
 
     @Override
-    public void deleteFine(long fineId) {
+    public void deleteFine(Long fineId) {
         if (fineRepo.existsById(fineId)) {
             fineRepo.deleteById(fineId);
         } else {
@@ -87,7 +87,7 @@ public class FineServiceImpl implements IFineService {
     }
 
     @Override
-    public List<Fines> findByReturnDetail(long returnDetailId) {
+    public List<Fines> findByReturnDetail(Long returnDetailId) {
         return fineRepo.findByReturnDetailId(returnDetailId);
     }
 
@@ -97,7 +97,7 @@ public class FineServiceImpl implements IFineService {
     }
 
     @Override
-    public List<Fines> findByUser(long userId) {
+    public List<Fines> findByUser(Long userId) {
         return fineRepo.findByUserId(userId);
     }
 

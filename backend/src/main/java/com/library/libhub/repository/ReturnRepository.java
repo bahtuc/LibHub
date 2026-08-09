@@ -9,7 +9,7 @@ import java.util.List;
 @Repository
 public interface ReturnRepository extends JpaRepository<Returns, Long> {
 
-    List<Returns> findByTicketId(long ticketId);
+    List<Returns> findByTicketId(Long ticketId);
 
-    List<Returns> findByReceivedBy(long receivedBy);
+    List<Returns> findByReceivedBy(Long receivedBy);
 }

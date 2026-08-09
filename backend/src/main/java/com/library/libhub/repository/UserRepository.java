@@ -30,9 +30,13 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT u FROM Users u WHERE u.userId = :userId")
+<<<<<<< HEAD
     Optional<Users> findByIdForUpdate(
             @Param("userId") long userId
     );
+=======
+    Optional<Users> findByIdForUpdate(@Param("userId") Long userId);
+>>>>>>> 904b812 (FRONTENDDDD)
 
     boolean existsByUsername(String username);
 
@@ -41,6 +45,7 @@ public interface UserRepository extends JpaRepository<Users, Long> {
     List<Users> findByStatusIgnoreCase(String status);
 
     @Modifying
+<<<<<<< HEAD
     @Query("""
         UPDATE Users u
         SET u.lastLogin = :lastLogin
@@ -61,3 +66,8 @@ public interface UserRepository extends JpaRepository<Users, Long> {
     """)
     List<Users> findActiveBorrowers();
 }
+=======
+    @Query("UPDATE Users u SET u.lastLogin = :lastLogin WHERE u.userId = :userId")
+    void updateLastLogin(@Param("userId") Long userId, @Param("lastLogin") Timestamp lastLogin);
+}
+>>>>>>> 904b812 (FRONTENDDDD)

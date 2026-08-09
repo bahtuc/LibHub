@@ -25,7 +25,7 @@ public class FineController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<Fines>> getFineById(@PathVariable long id) {
+    public ResponseEntity<Optional<Fines>> getFineById(@PathVariable Long id) {
         return ResponseEntity.ok(fineService.getFineById(id));
     }
 
@@ -36,19 +36,19 @@ public class FineController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Fines> updateFine(@PathVariable long id, @RequestBody Fines fine) {
+    public ResponseEntity<Fines> updateFine(@PathVariable Long id, @RequestBody Fines fine) {
         Fines updatedFine = fineService.updateFine(id, fine);
         return ResponseEntity.ok(updatedFine);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteFine(@PathVariable long id) {
+    public ResponseEntity<Void> deleteFine(@PathVariable Long id) {
         fineService.deleteFine(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/return-detail/{returnDetailId}")
-    public ResponseEntity<List<Fines>> findByReturnDetail(@PathVariable long returnDetailId) {
+    public ResponseEntity<List<Fines>> findByReturnDetail(@PathVariable Long returnDetailId) {
         return ResponseEntity.ok(fineService.findByReturnDetail(returnDetailId));
     }
 
@@ -59,7 +59,7 @@ public class FineController {
 
     @PatchMapping("/{id}/paid-status")
     public ResponseEntity<Fines> updatePaidStatus(
-            @PathVariable long id, @RequestBody Map<String, String> body) {
+            @PathVariable Long id, @RequestBody Map<String, String> body) {
         Fines patch = new Fines();
         patch.setPaidStatus(body == null ? null : body.get("paidStatus"));
         return ResponseEntity.ok(fineService.updateFine(id, patch));

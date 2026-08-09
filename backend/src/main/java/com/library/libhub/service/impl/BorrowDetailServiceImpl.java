@@ -32,7 +32,7 @@ public class BorrowDetailServiceImpl implements IBorrowDetailService {
     }
 
     @Override
-    public Optional<BorrowDetails> getBorrowDetailById(long detailId) {
+    public Optional<BorrowDetails> getBorrowDetailById(Long detailId) {
         return borrowDetailRepo.findById(detailId);
     }
 
@@ -42,7 +42,7 @@ public class BorrowDetailServiceImpl implements IBorrowDetailService {
     }
 
     @Override
-    public BorrowDetails updateBorrowDetail(long detailId, BorrowDetails borrowDetail) {
+    public BorrowDetails updateBorrowDetail(Long detailId, BorrowDetails borrowDetail) {
         BorrowDetails existing = borrowDetailRepo.findById(detailId)
                 .orElseThrow(() -> new ResourceNotFoundException("Borrow detail not found with id: " + detailId));
         if (borrowDetail.getTicketId() != null) existing.setTicketId(borrowDetail.getTicketId());
@@ -52,7 +52,7 @@ public class BorrowDetailServiceImpl implements IBorrowDetailService {
     }
 
     @Override
-    public void deleteBorrowDetail(long detailId) {
+    public void deleteBorrowDetail(Long detailId) {
         if (borrowDetailRepo.existsById(detailId)) {
             borrowDetailRepo.deleteById(detailId);
         } else {
@@ -61,12 +61,12 @@ public class BorrowDetailServiceImpl implements IBorrowDetailService {
     }
 
     @Override
-    public List<BorrowDetails> findByTicket(long ticketId) {
+    public List<BorrowDetails> findByTicket(Long ticketId) {
         return borrowDetailRepo.findByTicketId(ticketId);
     }
 
     @Override
-    public List<BorrowDetails> findByCopy(long copyId) {
+    public List<BorrowDetails> findByCopy(Long copyId) {
         return borrowDetailRepo.findByCopyId(copyId);
     }
 

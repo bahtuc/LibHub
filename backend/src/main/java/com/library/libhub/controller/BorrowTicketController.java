@@ -39,7 +39,7 @@ public class BorrowTicketController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BorrowTickets> getBorrowTicketById(@PathVariable long id) {
+    public ResponseEntity<BorrowTickets> getBorrowTicketById(@PathVariable Long id) {
         return ResponseEntity.of(borrowTicketService.getBorrowTicketById(id));
     }
 
@@ -64,25 +64,25 @@ public class BorrowTicketController {
 
     @PutMapping("/{id}")
     public ResponseEntity<BorrowTickets> updateBorrowTicket(
-            @PathVariable long id, @RequestBody BorrowTickets ticket) {
+            @PathVariable Long id, @RequestBody BorrowTickets ticket) {
         return ResponseEntity.ok(borrowTicketService.updateBorrowTicket(id, ticket));
     }
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<BorrowTickets> updateStatus(
-            @PathVariable long id, @RequestBody UpdateBorrowStatusRequest request) {
+            @PathVariable Long id, @RequestBody UpdateBorrowStatusRequest request) {
         if (request == null) throw new IllegalArgumentException("Thiếu trạng thái");
         return ResponseEntity.ok(borrowTicketService.updateStatus(id, request.getStatus()));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBorrowTicket(@PathVariable long id) {
+    public ResponseEntity<Void> deleteBorrowTicket(@PathVariable Long id) {
         borrowTicketService.deleteBorrowTicket(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<BorrowTickets>> findByUser(@PathVariable long userId) {
+    public ResponseEntity<List<BorrowTickets>> findByUser(@PathVariable Long userId) {
         return ResponseEntity.ok(borrowTicketService.findByUser(userId));
     }
 

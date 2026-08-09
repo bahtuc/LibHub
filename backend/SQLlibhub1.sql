@@ -178,8 +178,8 @@ CREATE TABLE BookCopies
 
     shelf_location NVARCHAR(50),
 
-    status NVARCHAR(30)
-        DEFAULT N'Có sẵn',
+    status VARCHAR(30)
+        DEFAULT 'Available',
 
     acquired_date DATE,
 
@@ -613,17 +613,17 @@ GO
 INSERT INTO BookCopies
 (book_id,barcode,shelf_location,status,acquired_date)
 VALUES
-(1,'BC000001',N'A1',N'Có sẵn','2025-01-01'),
-(1,'BC000002',N'A1',N'Đang mượn','2025-01-01'),
-(2,'BC000003',N'A2',N'Có sẵn','2025-01-05'),
-(2,'BC000004',N'A2',N'Có sẵn','2025-01-05'),
-(3,'BC000005',N'B1',N'Có sẵn','2025-02-01'),
-(4,'BC000006',N'B2',N'Có sẵn','2025-02-05'),
-(5,'BC000007',N'C1',N'Có sẵn','2025-03-01'),
-(6,'BC000008',N'C2',N'Có sẵn','2025-03-01'),
-(7,'BC000009',N'D1',N'Có sẵn','2025-03-10'),
-(8,'BC000010',N'D2',N'Có sẵn','2025-04-01'),
-(9,'BC000011',N'E1',N'Có sẵn','2025-04-05');
+(1,'BC000001',N'A1','Available','2025-01-01'),
+(1,'BC000002',N'A1','Borrowed','2025-01-01'),
+(2,'BC000003',N'A2','Available','2025-01-05'),
+(2,'BC000004',N'A2','Available','2025-01-05'),
+(3,'BC000005',N'B1','Available','2025-02-01'),
+(4,'BC000006',N'B2','Available','2025-02-05'),
+(5,'BC000007',N'C1','Available','2025-03-01'),
+(6,'BC000008',N'C2','Available','2025-03-01'),
+(7,'BC000009',N'D1','Available','2025-03-10'),
+(8,'BC000010',N'D2','Available','2025-04-01'),
+(9,'BC000011',N'E1','Available','2025-04-05');
 GO
 
 -- ============================================

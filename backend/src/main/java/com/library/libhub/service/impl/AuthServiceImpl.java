@@ -91,12 +91,12 @@ public class AuthServiceImpl implements IAuthService {
     }
 
     @Override
-    public AuthResponse getProfile(long userId) {
+    public AuthResponse getProfile(Long userId) {
         return mapToResponse(findUser(userId));
     }
 
     @Override
-    public AuthResponse updateProfile(long userId, UpdateProfileRequest request) {
+    public AuthResponse updateProfile(Long userId, UpdateProfileRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Dữ liệu không hợp lệ");
         }
@@ -128,7 +128,7 @@ public class AuthServiceImpl implements IAuthService {
     }
 
     @Override
-    public AuthResponse changePassword(long userId, ChangePasswordRequest request) {
+    public AuthResponse changePassword(Long userId, ChangePasswordRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Dữ liệu không hợp lệ");
         }
@@ -204,7 +204,7 @@ public class AuthServiceImpl implements IAuthService {
         return response;
     }
 
-    private Users findUser(long userId) {
+    private Users findUser(Long userId) {
         return userRepo.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "User not found with id: " + userId));

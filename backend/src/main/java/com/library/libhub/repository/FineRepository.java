@@ -11,11 +11,11 @@ import org.springframework.data.repository.query.Param;
 @Repository
 public interface FineRepository extends JpaRepository<Fines, Long> {
 
-    List<Fines> findByReturnDetailId(long returnDetailId);
+    List<Fines> findByReturnDetailId(Long returnDetailId);
 
     List<Fines> findByPaidStatus(String paidStatus);
 
-    boolean existsByReturnDetailId(long returnDetailId);
+    boolean existsByReturnDetailId(Long returnDetailId);
 
     @Query("""
             SELECT f.paidStatus, COUNT(f), COALESCE(SUM(f.amount), 0)
@@ -34,5 +34,5 @@ public interface FineRepository extends JpaRepository<Fines, Long> {
               AND t.userId = :userId
             ORDER BY f.createdAt DESC
             """)
-    List<Fines> findByUserId(@Param("userId") long userId);
+    List<Fines> findByUserId(@Param("userId") Long userId);
 }

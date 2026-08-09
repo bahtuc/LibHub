@@ -25,12 +25,16 @@ public interface BookCopyRepository extends JpaRepository<BookCopies, Long> {
 
     Optional<BookCopies> findByBarcode(String barcode);
 
-    List<BookCopies> findByBookId(long bookId);
+    List<BookCopies> findByBookId(Long bookId);
 
+<<<<<<< HEAD
     List<BookCopies> findByBookIdAndStatus(
             long bookId,
             String status
     );
+=======
+    List<BookCopies> findByBookIdAndStatus(Long bookId, String status);
+>>>>>>> 904b812 (FRONTENDDDD)
 
     // =========================================================
     // Lấy tất cả bản sao AVAILABLE của nhiều đầu sách
@@ -72,14 +76,20 @@ public interface BookCopyRepository extends JpaRepository<BookCopies, Long> {
     // =========================================================
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<BookCopies> findFirstByBookIdAndStatusIgnoreCaseOrderByCopyIdAsc(
+<<<<<<< HEAD
             long bookId,
             String status
     );
+=======
+            Long bookId,
+            String status);
+>>>>>>> 904b812 (FRONTENDDDD)
 
     // =========================================================
     // Khóa một bản sao theo ID
     // =========================================================
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+<<<<<<< HEAD
     @Query("""
         SELECT c
         FROM BookCopies c
@@ -88,11 +98,16 @@ public interface BookCopyRepository extends JpaRepository<BookCopies, Long> {
     Optional<BookCopies> findByIdForUpdate(
             @Param("copyId") long copyId
     );
+=======
+    @Query("SELECT c FROM BookCopies c WHERE c.copyId = :copyId")
+    Optional<BookCopies> findByIdForUpdate(@Param("copyId") Long copyId);
+>>>>>>> 904b812 (FRONTENDDDD)
 
     // =========================================================
     // Update trạng thái bản sao
     // =========================================================
     @Modifying
+<<<<<<< HEAD
     @Query("""
         UPDATE BookCopies c
         SET c.status = :status
@@ -103,3 +118,8 @@ public interface BookCopyRepository extends JpaRepository<BookCopies, Long> {
             @Param("status") String status
     );
 }
+=======
+    @Query("UPDATE BookCopies c SET c.status = :status WHERE c.copyId = :copyId")
+    int updateStatus(@Param("copyId") Long copyId, @Param("status") String status);
+}
+>>>>>>> 904b812 (FRONTENDDDD)

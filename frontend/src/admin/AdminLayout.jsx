@@ -11,7 +11,6 @@ const NAV = [
   { to: "/admin/categories", label: "Thể loại", icon: "compass" },
   { to: "/admin/authors", label: "Tác giả", icon: "users" },
   { to: "/admin/Publishers", label: "Nhà xuất bản", icon: "users" },
-  { to: "/librarian/borrow", label: "Mượn sách", icon: "plus" },
   { to: "/admin/users", label: "Người dùng", icon: "user" },
   { to: "/admin/borrow-tickets", label: "Phiếu mượn", icon: "book-open" },
   { to: "/admin/fines", label: "Khoản phạt", icon: "briefcase" },

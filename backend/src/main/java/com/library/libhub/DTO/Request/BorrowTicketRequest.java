@@ -6,6 +6,8 @@ import java.util.List;
 public class BorrowTicketRequest {
 
     private Long userId;
+    private String guestName;
+    private String guestPhone;
     private Date borrowDate;
     private Date dueDate;
     private String note;
@@ -16,6 +18,18 @@ public class BorrowTicketRequest {
     }
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+    public String getGuestName() {
+        return guestName;
+    }
+    public void setGuestName(String guestName) {
+        this.guestName = guestName;
+    }
+    public String getGuestPhone() {
+        return guestPhone;
+    }
+    public void setGuestPhone(String guestPhone) {
+        this.guestPhone = guestPhone;
     }
     public Date getBorrowDate() {
         return borrowDate;

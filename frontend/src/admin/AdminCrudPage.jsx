@@ -26,6 +26,10 @@ export default function AdminCrudPage({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const isNew = editing && !items.some((i) => i[idField] === editing[idField]);
+  const visibleFields = fields.filter((field) =>
+    (!field.createOnly || isNew)
+    && (!field.editOnly || !isNew)
+    && (!field.when || editing == null || field.when(editing, isNew)));
 
   function openAdd() {
     setEditing({ ...emptyItem });
@@ -93,7 +97,7 @@ export default function AdminCrudPage({
           </h2>
 
           <div className="lh-admin-form__grid">
-            {fields.map((f) => (
+            {visibleFields.map((f) => (
               <label key={f.name} className="lh-field lh-admin-form__field">
                 {f.label}
 

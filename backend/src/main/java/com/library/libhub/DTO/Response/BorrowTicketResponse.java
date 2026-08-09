@@ -8,6 +8,8 @@ public class BorrowTicketResponse {
     private Long ticketId;
     private Long userId;
     private String userName;
+    private String guestName;
+    private String guestPhone;
     private Date borrowDate;
     private Date dueDate;
     private String status;
@@ -36,6 +38,22 @@ public class BorrowTicketResponse {
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+
+    public String getGuestName() {
+        return guestName;
+    }
+
+    public void setGuestName(String guestName) {
+        this.guestName = guestName;
+    }
+
+    public String getGuestPhone() {
+        return guestPhone;
+    }
+
+    public void setGuestPhone(String guestPhone) {
+        this.guestPhone = guestPhone;
     }
 
     public Date getBorrowDate() {

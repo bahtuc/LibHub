@@ -27,6 +27,13 @@ export function updateBorrowTicket(id, payload) {
     return apiRequest(`/borrow-tickets/${id}`, { method: "PUT", body: payload });
 }
 
+export function updateBorrowTicketStatus(id, status) {
+    return apiRequest(`/borrow-tickets/${id}/status`, {
+        method: "PATCH",
+        body: { status },
+    });
+}
+
 export function deleteBorrowTicket(id) {
     return apiRequest(`/borrow-tickets/${id}`, { method: "DELETE" });
 }

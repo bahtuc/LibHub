@@ -135,8 +135,10 @@ public class LoanViewService {
         response.setUserId(ticket.getUserId());
         Users user = users.get(ticket.getUserId());
         response.setUserName(user == null
-                ? null
+                ? ticket.getGuestName()
                 : firstNonBlank(user.getFullName(), user.getUsername()));
+        response.setGuestName(ticket.getGuestName());
+        response.setGuestPhone(ticket.getGuestPhone());
         response.setBorrowDate(ticket.getBorrowDate());
         response.setDueDate(ticket.getDueDate());
         response.setStatus(ticket.getStatus());

@@ -10,6 +10,8 @@ import * as copyApi from "../services/BookCopyService";
 import * as userApi from "../services/UserService";
 import * as roleApi from "../services/RoleService";
 import * as publisherApi from "../services/PublisherService";
+import * as fineApi from "../services/FineService";
+import * as borrowTicketApi from "../services/BorrowTicketService";
 
 function makeApiStore({ idField, loadAll, create, update, remove, fromApi, toApi }) {
   let cache = [];
@@ -174,6 +176,55 @@ const toPublisher = (publisher) => ({
   phone: publisher.phone || null,
 });
 
+const fromFine = (fine) => ({
+  ...fine,
+  fine_id: fine.fineId,
+  return_detail_id: fine.returnDetailId,
+  paid_status: fine.paidStatus,
+  created_at: fine.createdAt,
+});
+
+const toFine = (fine) => ({
+  returnDetailId: Number(fine.return_detail_id),
+  amount: Number(fine.amount),
+  reason: fine.reason || null,
+  paidStatus: fine.paid_status || "Unpaid",
+});
+
+const fromBorrowTicket = (ticket) => ({
+  ...ticket,
+  ticket_id: ticket.ticketId,
+  user_id: ticket.userId,
+  borrower_type: ticket.userId == null ? "guest" : "member",
+  guest_name: ticket.guestName || "",
+  guest_phone: ticket.guestPhone || "",
+  borrow_date: ticket.borrowDate,
+  due_date: ticket.dueDate,
+  created_at: ticket.createdAt,
+  copy_ids: "",
+});
+
+const toBorrowTicket = (ticket, creating) => creating ? ({
+  userId: ticket.borrower_type === "guest" ? null : Number(ticket.user_id),
+  guestName: ticket.borrower_type === "guest" ? ticket.guest_name?.trim() : null,
+  guestPhone: ticket.borrower_type === "guest" ? ticket.guest_phone?.trim() || null : null,
+  borrowDate: ticket.borrow_date,
+  dueDate: ticket.due_date,
+  note: ticket.note || null,
+  copyIds: String(ticket.copy_ids || "")
+    .split(",")
+    .map((value) => Number(value.trim()))
+    .filter((value) => Number.isFinite(value) && value > 0),
+}) : ({
+  userId: ticket.borrower_type === "guest" ? null : Number(ticket.user_id),
+  guestName: ticket.borrower_type === "guest" ? ticket.guest_name?.trim() : null,
+  guestPhone: ticket.borrower_type === "guest" ? ticket.guest_phone?.trim() || null : null,
+  borrowDate: ticket.borrow_date,
+  dueDate: ticket.due_date,
+  status: ticket.status,
+  note: ticket.note || null,
+});
+
 
 export const booksStore = makeApiStore({
   idField: "book_id",
@@ -244,4 +295,24 @@ export const publishersStore = makeApiStore({
   remove: publisherApi.deletePublisher,
   fromApi: fromPublisher,
   toApi: toPublisher,
+});
+
+export const finesStore = makeApiStore({
+  idField: "fine_id",
+  loadAll: fineApi.getFines,
+  create: fineApi.createFine,
+  update: fineApi.updateFine,
+  remove: fineApi.deleteFine,
+  fromApi: fromFine,
+  toApi: toFine,
+});
+
+export const borrowTicketsStore = makeApiStore({
+  idField: "ticket_id",
+  loadAll: borrowTicketApi.getBorrowTickets,
+  create: borrowTicketApi.createBorrowTicket,
+  update: borrowTicketApi.updateBorrowTicket,
+  remove: borrowTicketApi.deleteBorrowTicket,
+  fromApi: fromBorrowTicket,
+  toApi: toBorrowTicket,
 });

@@ -22,7 +22,7 @@ public class Fines {
   @Column(name = "return_detail_id")
   private Long returnDetailId;
 
-  @Column(name = "amount")
+  @Column(name = "amount", precision = 18, scale = 2)
   private BigDecimal amount;
 
   @Column(name = "reason")

@@ -24,6 +24,8 @@ import AdminCategories from "../admin/AdminCategories.jsx";
 import AdminAuthors from "../admin/AdminAuthors.jsx";
 import AdminUsers from "../admin/AdminUsers.jsx";
 import AdminPublisher from "../admin/AdminPublishers.jsx";
+import AdminBorrowTickets from "../admin/AdminBorrowTickets.jsx";
+import AdminFines from "../admin/AdminFines.jsx";
 
 import RequireLibrarian from "../librarian/RequireLibrarian.jsx";
 import LibrarianLayout from "../librarian/LibrarianLayout.jsx";

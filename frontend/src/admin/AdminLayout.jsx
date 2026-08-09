@@ -13,6 +13,8 @@ const NAV = [
   { to: "/admin/Publishers", label: "Nhà xuất bản", icon: "users" },
   { to: "/librarian/borrow", label: "Mượn sách", icon: "plus" },
   { to: "/admin/users", label: "Người dùng", icon: "user" },
+  { to: "/admin/borrow-tickets", label: "Phiếu mượn", icon: "book-open" },
+  { to: "/admin/fines", label: "Khoản phạt", icon: "briefcase" },
 ];
 
 export default function AdminLayout() {

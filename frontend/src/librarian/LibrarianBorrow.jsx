@@ -15,7 +15,13 @@ export default function LibrarianBorrow() {
   const copies = copiesStore.useCollection();
 
   const [borrowers, setBorrowers] = useState([]);
+
+  const [borrowerType, setBorrowerType] = useState("member");
   const [userId, setUserId] = useState("");
+
+  const [guestName, setGuestName] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+
   const [dueDate, setDueDate] = useState(defaultDueDate());
   const [bookId, setBookId] = useState("");
   const [selectedCopyIds, setSelectedCopyIds] = useState([]);
@@ -128,13 +134,35 @@ export default function LibrarianBorrow() {
   }
 
   // =========================
+  // Thay đổi loại bạn đọc
+  // =========================
+  function handleBorrowerTypeChange(event) {
+    const type = event.target.value;
+
+    setBorrowerType(type);
+
+    if (type === "guest") {
+      setUserId("");
+    } else {
+      setGuestName("");
+      setGuestPhone("");
+    }
+
+    setError("");
+    setSuccess(null);
+  }
+
+  // =========================
   // Tạo phiếu mượn
   // =========================
   async function handleSubmit(event) {
     event.preventDefault();
 
+    const isGuest = borrowerType === "guest";
+
     if (
-      !userId ||
+      (!isGuest && !userId) ||
+      (isGuest && !guestName.trim()) ||
       selectedCopyIds.length === 0
     ) {
       return;
@@ -146,9 +174,26 @@ export default function LibrarianBorrow() {
 
     try {
       const ticket = await createBorrowTicket({
-        userId: Number(userId),
+        userId: isGuest
+          ? null
+          : Number(userId),
+
+        guestName: isGuest
+          ? guestName.trim()
+          : null,
+
+        guestPhone: isGuest
+          ? guestPhone.trim() || null
+          : null,
+
+        borrowDate: new Date()
+          .toISOString()
+          .slice(0, 10),
+
         dueDate,
+
         copyIds: selectedCopyIds,
+
         note: note.trim() || null,
       });
 
@@ -158,6 +203,8 @@ export default function LibrarianBorrow() {
       setSelectedCopyIds([]);
       setBookId("");
       setNote("");
+      setGuestName("");
+      setGuestPhone("");
       setDueDate(defaultDueDate());
 
       // Reload trạng thái bản sao
@@ -185,6 +232,10 @@ export default function LibrarianBorrow() {
 
   return (
     <div className="lh-admin-page">
+
+      {/* =========================
+          Header
+      ========================= */}
       <div className="lh-admin-page__header">
         <div>
           <h1>Mượn sách</h1>
@@ -196,6 +247,9 @@ export default function LibrarianBorrow() {
         </div>
       </div>
 
+      {/* =========================
+          Success
+      ========================= */}
       {success && (
         <p
           className="lh-auth-form__success"
@@ -205,12 +259,18 @@ export default function LibrarianBorrow() {
         </p>
       )}
 
+      {/* =========================
+          Error
+      ========================= */}
       {error && (
         <p className="lh-auth-form__error">
           {error}
         </p>
       )}
 
+      {/* =========================
+          Form
+      ========================= */}
       <form
         className="lh-admin-form"
         onSubmit={handleSubmit}
@@ -224,51 +284,106 @@ export default function LibrarianBorrow() {
             Thông tin phiếu mượn
         ====================== */}
         <div className="lh-admin-form__grid">
+
+          {/* Loại bạn đọc */}
           <label className="lh-field lh-admin-form__field">
-            Bạn đọc
+            Loại bạn đọc
 
             <select
-              value={userId}
-              onChange={(event) =>
-                setUserId(event.target.value)
-              }
-              required
+              value={borrowerType}
+              onChange={handleBorrowerTypeChange}
             >
-              {borrowers.length === 0 ? (
-                <option value="">
-                  — Chưa có bạn đọc đang hoạt động —
-                </option>
-              ) : (
-                <>
-                  <option value="">
-                    — Chọn bạn đọc —
-                  </option>
+              <option value="member">
+                Thành viên
+              </option>
 
-                  {borrowers.map((borrower) => (
-                    <option
-                      key={borrower.userId}
-                      value={borrower.userId}
-                    >
-                      {borrower.fullName ||
-                        borrower.username}{" "}
-                      ({borrower.username})
-                    </option>
-                  ))}
-                </>
-              )}
+              <option value="guest">
+                Khách vãng lai
+              </option>
             </select>
           </label>
 
+          {/* =====================
+              Thành viên
+          ====================== */}
+          {borrowerType === "member" ? (
+            <label className="lh-field lh-admin-form__field">
+              Bạn đọc
+
+              <select
+                value={userId}
+                onChange={(event) =>
+                  setUserId(event.target.value)
+                }
+                required
+              >
+                {borrowers.length === 0 ? (
+                  <option value="">
+                    — Chưa có bạn đọc đang hoạt động —
+                  </option>
+                ) : (
+                  <>
+                    <option value="">
+                      — Chọn bạn đọc —
+                    </option>
+
+                    {borrowers.map((borrower) => (
+                      <option
+                        key={borrower.userId}
+                        value={borrower.userId}
+                      >
+                        {borrower.fullName ||
+                          borrower.username}{" "}
+                        ({borrower.username})
+                      </option>
+                    ))}
+                  </>
+                )}
+              </select>
+            </label>
+          ) : (
+            <>
+              {/* =====================
+                  Khách vãng lai
+              ====================== */}
+              <label className="lh-field lh-admin-form__field">
+                Tên khách
+
+                <input
+                  type="text"
+                  value={guestName}
+                  onChange={(event) =>
+                    setGuestName(event.target.value)
+                  }
+                  placeholder="Nhập tên khách"
+                  required
+                />
+              </label>
+
+              <label className="lh-field lh-admin-form__field">
+                Số điện thoại khách
+
+                <input
+                  type="tel"
+                  value={guestPhone}
+                  onChange={(event) =>
+                    setGuestPhone(event.target.value)
+                  }
+                  placeholder="Tùy chọn"
+                />
+              </label>
+            </>
+          )}
+
+          {/* Hạn trả */}
           <label className="lh-field lh-admin-form__field">
             Hạn trả
 
             <input
               type="date"
-              min={
-                new Date()
-                  .toISOString()
-                  .slice(0, 10)
-              }
+              min={new Date()
+                .toISOString()
+                .slice(0, 10)}
               value={dueDate}
               onChange={(event) =>
                 setDueDate(event.target.value)
@@ -277,6 +392,7 @@ export default function LibrarianBorrow() {
             />
           </label>
 
+          {/* Ghi chú */}
           <label className="lh-field lh-admin-form__field">
             Ghi chú (tùy chọn)
 
@@ -298,6 +414,7 @@ export default function LibrarianBorrow() {
           className="lh-admin-form__grid"
           style={{ marginTop: -4 }}
         >
+          {/* Chọn đầu sách */}
           <label className="lh-field lh-admin-form__field">
             Chọn sách
 
@@ -322,6 +439,7 @@ export default function LibrarianBorrow() {
             </select>
           </label>
 
+          {/* Chọn bản sao */}
           <label className="lh-field lh-admin-form__field">
             Bản sao còn sẵn
 
@@ -423,7 +541,11 @@ export default function LibrarianBorrow() {
             className="lh-btn lh-btn--primary"
             disabled={
               submitting ||
-              !userId ||
+              (
+                borrowerType === "member"
+                  ? !userId
+                  : !guestName.trim()
+              ) ||
               cart.length === 0
             }
           >

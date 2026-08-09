@@ -253,6 +253,23 @@ class BorrowTicketServiceImplTest {
     }
 
     @Test
+    void borrowBookRejectsMemberWhoAlreadyHasFiveActiveLoans() {
+        Users user = new Users();
+        user.setStatus("ACTIVE");
+
+        when(userRepo.findByIdForUpdate(3L)).thenReturn(Optional.of(user));
+        when(detailRepo.countActiveBorrowsByUserId(3L)).thenReturn(5L);
+
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.borrowBook(3L, 9L));
+
+        assertTrue(error.getMessage().contains("tối đa 5 cuốn"));
+        verifyNoInteractions(bookRepo);
+        verifyNoInteractions(copyRepo);
+    }
+
+    @Test
     void adminCreateTicketCreatesDetailsAndMarksExactCopiesBorrowed() {
 
         Users user = new Users();
@@ -369,6 +386,22 @@ class BorrowTicketServiceImplTest {
                 result.getBorrowDate());
 
         verifyNoInteractions(userRepo);
+    }
+
+    @Test
+    void librarianCannotCreateGuestTicketWithMoreThanFiveCopies() {
+        BorrowTicketRequest request = new BorrowTicketRequest();
+        request.setGuestName("Guest");
+        request.setDueDate(Date.valueOf("2026-08-22"));
+        request.setCopyIds(List.of(1L, 2L, 3L, 4L, 5L, 6L));
+
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.createBorrowTicketWithCopies(request));
+
+        assertTrue(error.getMessage().contains("tối đa 5 cuốn"));
+        verifyNoInteractions(copyRepo);
+        verifyNoInteractions(Repo);
     }
 
     @Test

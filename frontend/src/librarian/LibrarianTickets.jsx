@@ -33,12 +33,14 @@ export default function LibrarianTickets() {
   const { tickets, loading, error, refresh } = useLoanViews(getBorrowTicketViews);
   const [openTicketId, setOpenTicketId] = useState(null);
   const [conditions, setConditions] = useState({});
+  const [selectedCopyIds, setSelectedCopyIds] = useState([]);
   const [actionError, setActionError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   function openReturn(ticket) {
     if (ticket.ticketId === openTicketId) {
       setOpenTicketId(null);
+      setSelectedCopyIds([]);
       return;
     }
     const initial = {};
@@ -46,21 +48,25 @@ export default function LibrarianTickets() {
       initial[item.copyId] = "Good";
     });
     setConditions(initial);
+    setSelectedCopyIds([]);
     setActionError("");
     setOpenTicketId(ticket.ticketId);
   }
 
   async function submitReturn(ticket) {
-    const details = pendingItems(ticket).map((item) => ({
-      copyId: item.copyId,
-      conditionBook: conditions[item.copyId] || "Good",
-    }));
+    const details = pendingItems(ticket)
+      .filter((item) => selectedCopyIds.includes(item.copyId))
+      .map((item) => ({
+        copyId: item.copyId,
+        conditionBook: conditions[item.copyId] || "Good",
+      }));
     if (details.length === 0) return;
     setSubmitting(true);
     setActionError("");
     try {
       await createReturn({ ticketId: ticket.ticketId, details });
       setOpenTicketId(null);
+      setSelectedCopyIds([]);
       await Promise.all([refresh(), copiesStore.refresh()]);
     } catch (requestError) {
       setActionError(requestError.message || "Không thể xử lý trả sách.");
@@ -126,6 +132,7 @@ export default function LibrarianTickets() {
                             <table className="lh-admin-table" style={{ background: "#fff" }}>
                               <thead>
                                 <tr>
+                                  <th style={{ width: 72 }}>Trả</th>
                                   <th>Sách</th>
                                   <th>Mã vạch</th>
                                   <th>Tình trạng khi trả</th>
@@ -134,11 +141,26 @@ export default function LibrarianTickets() {
                               <tbody>
                                 {pending.map((item) => (
                                   <tr key={item.detailId ?? item.copyId}>
+                                    <td>
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedCopyIds.includes(item.copyId)}
+                                        aria-label={`Chọn trả ${item.bookTitle || item.barcode || item.copyId}`}
+                                        onChange={(event) =>
+                                          setSelectedCopyIds((current) =>
+                                            event.target.checked
+                                              ? [...current, item.copyId]
+                                              : current.filter((copyId) => copyId !== item.copyId),
+                                          )
+                                        }
+                                      />
+                                    </td>
                                     <td>{item.bookTitle || "—"}</td>
                                     <td>{item.barcode || "—"}</td>
                                     <td>
                                       <select
                                         value={conditions[item.copyId] || "Good"}
+                                        disabled={!selectedCopyIds.includes(item.copyId)}
                                         onChange={(event) =>
                                           setConditions((current) => ({
                                             ...current,
@@ -155,14 +177,35 @@ export default function LibrarianTickets() {
                                 ))}
                               </tbody>
                             </table>
+                            <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 14, flexWrap: "wrap" }}>
+                              <button
+                                type="button"
+                                className="lh-btn lh-btn--ghost"
+                                onClick={() => setSelectedCopyIds(pending.map((item) => item.copyId))}
+                              >
+                                Chọn tất cả
+                              </button>
+                              {selectedCopyIds.length > 0 && (
+                                <button
+                                  type="button"
+                                  className="lh-btn lh-btn--ghost"
+                                  onClick={() => setSelectedCopyIds([])}
+                                >
+                                  Bỏ chọn
+                                </button>
+                              )}
+                              <span style={{ color: "var(--lh-text-muted)", fontSize: "0.86rem" }}>
+                                Đã chọn {selectedCopyIds.length} cuốn để trả
+                              </span>
+                            </div>
                             <button
                               className="lh-btn lh-btn--primary"
                               style={{ marginTop: 14 }}
-                              disabled={submitting}
+                              disabled={submitting || selectedCopyIds.length === 0}
                               onClick={() => submitReturn(ticket)}
                             >
                               <Icon name="check-circle" size={15} />
-                              {submitting ? "Đang xử lý..." : "Xác nhận trả"}
+                              {submitting ? "Đang xử lý..." : `Xác nhận trả ${selectedCopyIds.length} cuốn`}
                             </button>
                           </div>
                         </td>

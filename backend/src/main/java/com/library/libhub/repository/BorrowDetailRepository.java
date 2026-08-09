@@ -38,6 +38,16 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetails, Lon
             @Param("bookId") long bookId);
 
     @Query("""
+            SELECT COUNT(d)
+            FROM BorrowDetails d, BorrowTickets t
+            WHERE d.ticketId = t.ticketId
+              AND t.userId = :userId
+              AND LOWER(t.status) NOT IN ('returned', 'cancelled')
+              AND LOWER(d.borrowStatus) NOT IN ('returned', 'cancelled')
+            """)
+    long countActiveBorrowsByUserId(@Param("userId") long userId);
+
+    @Query("""
             SELECT b.bookId, b.title, COUNT(d)
             FROM BorrowDetails d, BookCopies c, Books b
             WHERE d.copyId = c.copyId

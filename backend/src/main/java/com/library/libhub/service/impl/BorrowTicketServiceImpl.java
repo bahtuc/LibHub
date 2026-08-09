@@ -31,6 +31,8 @@ import jakarta.transaction.Transactional;
 @Transactional
 public class BorrowTicketServiceImpl implements IBorrowTicketService {
 
+    private static final int MAX_ACTIVE_LOANS_PER_BORROWER = 5;
+
     private final BorrowTicketRepository borrowTicketRepo;
     private final BorrowDetailRepository borrowDetailRepo;
     private final BookCopyRepository bookCopyRepo;
@@ -73,6 +75,7 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
         if (!"ACTIVE".equalsIgnoreCase(user.getStatus())) {
             throw new IllegalArgumentException("Tài khoản không thể mượn sách");
         }
+        ensureWithinBorrowLimit(userId, 1);
 
         Books book = bookRepo.findById(bookId)
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -303,8 +306,12 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
         if (!hasValidBorrower(userId, guestName)) {
             throw new IllegalArgumentException("Choose an active member or enter a guest name");
         }
+        if (copyIds.size() > MAX_ACTIVE_LOANS_PER_BORROWER) {
+            throw new IllegalArgumentException("Mỗi người chỉ được mượn tối đa 5 cuốn sách");
+        }
         if (userId != null) {
             requireActiveUser(userId);
+            ensureWithinBorrowLimit(userId, copyIds.size());
         }
         if (dueDate.before(borrowDate)) {
             throw new IllegalArgumentException("Due date cannot be before borrow date");
@@ -348,6 +355,16 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
             bookCopyRepo.save(copy);
         }
         return ticket;
+    }
+
+    private void ensureWithinBorrowLimit(long userId, int requestedCopies) {
+        long activeLoans = borrowDetailRepo.countActiveBorrowsByUserId(userId);
+        if (activeLoans + requestedCopies > MAX_ACTIVE_LOANS_PER_BORROWER) {
+            long remaining = Math.max(0, MAX_ACTIVE_LOANS_PER_BORROWER - activeLoans);
+            throw new IllegalArgumentException(
+                    "Mỗi thành viên chỉ được mượn tối đa 5 cuốn; hiện chỉ có thể mượn thêm "
+                            + remaining + " cuốn");
+        }
     }
 
     private boolean hasValidBorrower(Long userId, String guestName) {

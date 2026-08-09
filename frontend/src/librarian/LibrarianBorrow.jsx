@@ -118,6 +118,12 @@ export default function LibrarianBorrow() {
       return;
     }
 
+    if (selectedCopyIds.length >= 5) {
+      setError("Mỗi người chỉ được mượn tối đa 5 cuốn sách.");
+      return;
+    }
+
+    setError("");
     setSelectedCopyIds((ids) => [
       ...ids,
       numericId,
@@ -448,10 +454,12 @@ export default function LibrarianBorrow() {
               onChange={(event) =>
                 addCopy(event.target.value)
               }
-              disabled={!bookId}
+              disabled={!bookId || selectedCopyIds.length >= 5}
             >
               <option value="">
-                {bookId
+                {selectedCopyIds.length >= 5
+                  ? "Đã đạt giới hạn 5 cuốn"
+                  : bookId
                   ? availableCopiesForBook.length
                     ? "— Chọn bản để thêm vào phiếu —"
                     : "Sách này không còn bản sẵn"
@@ -531,6 +539,9 @@ export default function LibrarianBorrow() {
             </table>
           </div>
         )}
+        <p style={{ margin: "-8px 0 18px", color: "var(--lh-text-muted)", fontSize: "0.86rem" }}>
+          Đã chọn {selectedCopyIds.length}/5 cuốn. Backend cũng kiểm tra tổng số sách thành viên đang mượn.
+        </p>
 
         {/* =====================
             Submit

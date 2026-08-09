@@ -4,7 +4,7 @@ import Icon from "./Icon";
 import { useAuth } from "../auth/useAuth";
 import "../styles/Header.css";
 
-const NAV_LINKS = [{ label: "Kho sách", to: "/library" }, { label: "Thể loại", to: "/genres" }, { label: "Mượn sách", to: "/borrowbook" }, { label: "Liên hệ", to: "/#contact" }];
+const NAV_LINKS = [{ label: "Kho sách", to: "/library" }, { label: "Thể loại", to: "/genres" }, { label: "Liên hệ", to: "/#contact" }];
 export default function Header() {
   const [open, setOpen] = useState(false); const { user, logout } = useAuth();
   const panel = user?.role_name === "Admin" ? { to: "/admin", label: "Quản trị" } : user?.role_name === "Librarian" ? { to: "/librarian", label: "Thủ thư" } : null;

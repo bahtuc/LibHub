@@ -21,7 +21,7 @@ export default function BookDetail() {
   const category = categories.find((item) => item.category_id === book?.category_id);
   const author = authors.find((item) => item.author_id === book?.author_id);
 
-  if (loading) return <p>Đang tải...</p>;
+  if (loading) return <div className="lh-root"><Header /><main className="lh-book-detail-state"><span className="lh-spinner" /><p>Đang tải thông tin sách...</p></main><Footer /></div>;
   if (!book) {
     return <div className="lh-root"><Header /><section className="lh-section"><div className="lh-container"><p>Không tìm thấy sách.</p></div></section><Footer /></div>;
   }
@@ -37,7 +37,7 @@ export default function BookDetail() {
     setError("");
     try {
       const ticket = await borrowBook(book.book_id);
-      setMessage(`Mượn sách thành công. Hạn trả: ${formatDate(ticket.dueDate)}.`);
+      setMessage(`Mượn sách thành công. Hạn trả: ${formatDate(ticket.dueDate ?? ticket.due_date)}.`);
       await refresh();
     } catch (requestError) {
       setError(requestError.message || "Không thể mượn sách.");
@@ -63,18 +63,21 @@ export default function BookDetail() {
               {author?.author_name ?? "Chưa rõ tác giả"} · {book.publish_year} · {book.pages} trang
             </p>
             <p className="lh-book-detail__description">{book.description}</p>
-            <span className={`lh-book-card__status ${available ? "is-available" : "is-borrowed"}`}>
-              {available ? "Còn sách" : "Đã mượn hết"}
-            </span>
+            <div className="lh-book-detail__availability">
+              <span className={`lh-book-detail__status ${available ? "is-available" : "is-borrowed"}`}>
+                {available ? "Còn sách" : "Đã mượn hết"}
+              </span>
+              <span>{available ? `${book.available_copies} / ${book.total_copies} bản đang có sẵn` : `${book.total_copies} bản hiện đều đang được mượn`}</span>
+            </div>
 
-            <div style={{ marginTop: 20 }}>
+            <div className="lh-book-detail__actions">
               {!user ? (
                 <Link to="/login" state={{ from: `/books/${book.book_id}` }} className="lh-btn lh-btn--primary">
                   Đăng nhập để mượn
                 </Link>
               ) : (
-                <button type="button" className="lh-btn lh-btn--primary" disabled={!available || borrowing} onClick={handleBorrow}>
-                  {borrowing ? "Đang mượn..." : "Mượn sách"}
+                <button type="button" className="lh-btn lh-btn--primary" disabled={!available || borrowing || Boolean(message)} onClick={handleBorrow}>
+                  {borrowing ? "Đang xử lý..." : message ? "Đã mượn thành công" : available ? "Mượn sách" : "Hiện đã hết sách"}
                 </button>
               )}
             </div>

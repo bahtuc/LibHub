@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Navigate, Routes, Route } from "react-router-dom";
 
 import Home from "../Home.jsx";
 import Login from "../pages/Login.jsx";
@@ -11,7 +11,6 @@ import BookDetail from "../pages/BookDetail.jsx";
 import Account from "../pages/Account.jsx";
 import Fines from "../pages/fines.jsx";
 import PaymentResult from "../pages/paymentResult.jsx";
-import BorrowBook from "../pages/BorrowBooks.jsx";
 
 import RequireAuth from "../auth/RequireAuth.jsx";
 
@@ -100,11 +99,7 @@ export default function AppRouter() {
 
       <Route
         path="/borrowbook"
-        element={
-          <RequireAuth>
-            <BorrowBook />
-          </RequireAuth>
-        }
+        element={<Navigate to="/library" replace />}
       />
 
 

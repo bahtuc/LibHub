@@ -51,10 +51,52 @@
 }
 
 .lh-book-detail__status {
-  position: static;
-  display: inline-block;
-  margin-bottom: 18px;
+  display: inline-flex;
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.76rem;
+  font-weight: 700;
   border: 1px solid var(--lh-border);
+}
+
+.lh-book-detail__status.is-available {
+  color: var(--lh-forest);
+  border-color: color-mix(in srgb, var(--lh-forest) 35%, white);
+}
+
+.lh-book-detail__status.is-borrowed {
+  color: var(--lh-rust);
+}
+
+.lh-book-detail__availability {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: var(--lh-text-muted);
+  font-size: 0.82rem;
+}
+
+.lh-book-detail__actions {
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.lh-book-detail__actions .lh-btn {
+  min-width: 170px;
+  justify-content: center;
+}
+
+.lh-book-detail-state {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--lh-text-muted);
 }
 
 .lh-book-detail__description {

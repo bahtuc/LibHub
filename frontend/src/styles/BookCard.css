@@ -26,6 +26,7 @@
   background: var(--spine);
   background: linear-gradient(155deg, var(--spine) 0%, color-mix(in srgb, var(--spine) 65%, #1c2620) 100%);
   overflow: hidden;
+  text-decoration: none;
 }
 
 .lh-book-card__img {
@@ -93,10 +94,26 @@
   margin: 0 0 5px;
 }
 
+.lh-book-card__title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.lh-book-card__title a:hover {
+  color: var(--lh-forest);
+}
+
 .lh-book-card__meta {
   font-size: 0.82rem;
   color: var(--lh-text-muted);
   margin: 0 0 12px;
+}
+
+.lh-book-card__copies {
+  margin: -5px 0 12px;
+  color: var(--lh-text-muted);
+  font-size: 0.74rem;
+  line-height: 1.4;
 }
 
 .lh-book-card__link {

@@ -2,8 +2,11 @@ package com.library.libhub.service.impl;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -15,6 +18,7 @@ import com.library.libhub.DTO.Response.BookResponse;
 import com.library.libhub.DTO.Response.PageResponse;
 import com.library.libhub.entity.Books;
 import com.library.libhub.exception.ResourceNotFoundException;
+import com.library.libhub.repository.BookCopyRepository;
 import com.library.libhub.repository.BookRepository;
 import com.library.libhub.service.IBookService;
 
@@ -27,9 +31,11 @@ public class BookServiceImpl implements IBookService {
     private static final Set<String> SORT_FIELDS = Set.of("bookId", "title", "isbn", "publishYear", "createdAt");
 
     private final BookRepository bookRepo;
+    private final BookCopyRepository bookCopyRepo;
 
-    public BookServiceImpl(BookRepository bookRepo) {
+    public BookServiceImpl(BookRepository bookRepo, BookCopyRepository bookCopyRepo) {
         this.bookRepo = bookRepo;
+        this.bookCopyRepo = bookCopyRepo;
     }
 
     @Override
@@ -145,10 +151,7 @@ public class BookServiceImpl implements IBookService {
             booksPage = bookRepo.findAll(pageable);
         }
 
-        List<BookResponse> content = booksPage.getContent()
-                .stream()
-                .map(this::convertToResponse)
-                .toList();
+        List<BookResponse> content = convertToResponses(booksPage.getContent());
 
         PageResponse<BookResponse> response = new PageResponse<>();
 
@@ -170,7 +173,31 @@ public class BookServiceImpl implements IBookService {
             throw new IllegalArgumentException("Năm xuất bản không hợp lệ");
     }
 
-    private BookResponse convertToResponse(Books book) {
+    private List<BookResponse> convertToResponses(List<Books> books) {
+        if (books.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> bookIds = books.stream()
+                .map(Books::getBookId)
+                .filter(id -> id != null)
+                .toList();
+
+        Map<Long, BookCopyRepository.BookAvailability> availabilityByBook = bookIds.isEmpty()
+                ? Map.of()
+                : bookCopyRepo.summarizeAvailability(bookIds).stream()
+                        .collect(Collectors.toMap(
+                                BookCopyRepository.BookAvailability::getBookId,
+                                Function.identity()));
+
+        return books.stream()
+                .map(book -> convertToResponse(book, availabilityByBook.get(book.getBookId())))
+                .toList();
+    }
+
+    private BookResponse convertToResponse(
+            Books book,
+            BookCopyRepository.BookAvailability availability) {
 
         BookResponse response = new BookResponse();
 
@@ -188,6 +215,8 @@ public class BookServiceImpl implements IBookService {
         response.setPublisherId(book.getPublisherId());
         response.setHidden(book.getHidden());
         response.setFeatured(book.getFeatured());
+        response.setTotalCopies(availability == null ? 0L : availability.getTotalCopies());
+        response.setAvailableCopies(availability == null ? 0L : availability.getAvailableCopies());
 
         return response;
     }
@@ -243,14 +272,14 @@ public class BookServiceImpl implements IBookService {
             booksPage = bookRepo.findAll(pageable);
         }
 
-        List<BookResponse> content = booksPage.getContent()
+        List<Books> visibleBooks = booksPage.getContent()
                 .stream()
 
                 // nếu không được xem sách ẩn thì loại bỏ
                 .filter(book -> includeHidden || !Boolean.TRUE.equals(book.getHidden()))
-
-                .map(this::convertToResponse)
                 .toList();
+
+        List<BookResponse> content = convertToResponses(visibleBooks);
 
         PageResponse<BookResponse> response = new PageResponse<>();
 

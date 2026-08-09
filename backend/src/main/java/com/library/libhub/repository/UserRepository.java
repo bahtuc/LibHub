@@ -1,6 +1,7 @@
 package com.library.libhub.repository;
 
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,17 +22,39 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 
     Optional<Users> findByEmail(String email);
 
-    Optional<Users> findByUsernameOrEmail(String username, String email);
+    Optional<Users> findByUsernameOrEmail(
+            String username,
+            String email
+    );
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT u FROM Users u WHERE u.userId = :userId")
-    Optional<Users> findByIdForUpdate(@Param("userId") long userId);
+    Optional<Users> findByIdForUpdate(
+            @Param("userId") long userId
+    );
 
     boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);
 
     @Modifying
-    @Query("UPDATE Users u SET u.lastLogin = :lastLogin WHERE u.userId = :userId")
-    void updateLastLogin(@Param("userId") long userId, @Param("lastLogin") Timestamp lastLogin);
+    @Query("""
+        UPDATE Users u
+        SET u.lastLogin = :lastLogin
+        WHERE u.userId = :userId
+    """)
+    void updateLastLogin(
+            @Param("userId") long userId,
+            @Param("lastLogin") Timestamp lastLogin
+    );
+
+    // =========================
+    // Bạn đọc đang hoạt động
+    // =========================
+    @Query("""
+        SELECT u
+        FROM Users u
+        WHERE u.status = 'ACTIVE'
+    """)
+    List<Users> findActiveBorrowers();
 }

@@ -120,7 +120,24 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public List<UserSummaryResponse> getActiveBorrowers() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        return userRepo.findActiveBorrowers()
+                .stream()
+                .map(user -> {
+                    UserSummaryResponse response = new UserSummaryResponse();
+
+                    response.setUserId(user.getUserId());
+                    response.setUsername(user.getUsername());
+                    response.setFullName(user.getFullName());
+                    response.setStatus(user.getStatus());
+
+                    if (user.getRole() != null) {
+                        response.setRoleName(
+                                user.getRole().getRoleName());
+                    }
+
+                    return response;
+                })
+                .toList();
     }
 
     @Override

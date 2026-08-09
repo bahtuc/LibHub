@@ -1,7 +1,18 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Icon from "./Icon";
 import "../styles/Hero.css";
 
 export default function Hero() {
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+
+  function handleSearch(event) {
+    event.preventDefault();
+    const keyword = query.trim();
+    navigate(keyword ? `/library?q=${encodeURIComponent(keyword)}` : "/library");
+  }
+
   return (
     <section className="lh-hero" id="top">
       <div className="lh-hero__bg" aria-hidden="true" />
@@ -19,10 +30,12 @@ export default function Hero() {
           toàn bộ dữ liệu thư viện của bạn, gọn trong một nơi.
         </p>
 
-        <form className="lh-catalog-search" onSubmit={(e) => e.preventDefault()}>
+        <form className="lh-catalog-search" onSubmit={handleSearch}>
           <Icon name="search" size={18} className="lh-catalog-search__icon" />
           <input
             type="text"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
             placeholder="Tìm theo tên sách, tác giả hoặc ISBN…"
             aria-label="Tìm kiếm sách"
           />

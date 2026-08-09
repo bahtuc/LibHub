@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -11,10 +12,15 @@ import "../styles/Library.css";
 
 export default function Library() {
   const { books, categories, authors, loading, error } = useCatalog();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState("all");
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
   const [availability, setAvailability] = useState("all");
   const [sortBy, setSortBy] = useState("title");
+
+  useEffect(() => {
+    setQuery(searchParams.get("q") ?? "");
+  }, [searchParams]);
 
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("vi");
@@ -38,6 +44,7 @@ export default function Library() {
 
   function clearFilters() {
     setQuery("");
+    setSearchParams({});
     setActiveCategory("all");
     setAvailability("all");
   }

@@ -66,7 +66,7 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
     }
 
     @Override
-    public BorrowTickets borrowBook(Long userId, Long bookId) {
+    public BorrowTickets borrowBook(long userId, long bookId) {
         Users user = userRepo.findByIdForUpdate(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Không tìm thấy tài khoản"));
@@ -142,7 +142,7 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
     }
 
     @Override
-    public Optional<BorrowTickets> getBorrowTicketById(Long ticketId) {
+    public Optional<BorrowTickets> getBorrowTicketById(long ticketId) {
         return borrowTicketRepo.findById(ticketId);
     }
 
@@ -152,7 +152,7 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
     }
 
     @Override
-    public BorrowTickets updateBorrowTicket(Long ticketId, BorrowTickets borrowTicket) {
+    public BorrowTickets updateBorrowTicket(long ticketId, BorrowTickets borrowTicket) {
         BorrowTickets existing = borrowTicketRepo.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Borrow ticket not found with id: " + ticketId));
         if (borrowTicket.getUserId() != null) {
@@ -175,7 +175,7 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
     }
 
     @Override
-    public void deleteBorrowTicket(Long ticketId) {
+    public void deleteBorrowTicket(long ticketId) {
         BorrowTickets ticket = borrowTicketRepo.findById(ticketId).orElse(null);
         if (ticket == null) {
             throw new ResourceNotFoundException("Borrow ticket not found with id: " + ticketId);
@@ -196,7 +196,7 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
     }
 
     @Override
-    public List<BorrowTickets> findByUser(Long userId) {
+    public List<BorrowTickets> findByUser(long userId) {
         return borrowTicketRepo.findByUserId(userId);
     }
 
@@ -206,7 +206,7 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
     }
 
     @Override
-    public BorrowTickets borrowBooks(Long userId, List<Long> bookIds) {
+    public BorrowTickets borrowBooks(long userId, List<Long> bookIds) {
         if (bookIds == null || bookIds.isEmpty()) {
             throw new IllegalArgumentException("Book list is required");
         }
@@ -265,7 +265,7 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
     }
 
     @Override
-    public BorrowTickets updateStatus(Long ticketId, String status) {
+    public BorrowTickets updateStatus(long ticketId, String status) {
         if (status == null || status.isBlank()) {
             throw new IllegalArgumentException("Status is required");
         }
@@ -283,7 +283,7 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
         return borrowTicketRepo.save(ticket);
     }
 
-    private Users requireActiveUser(Long userId) {
+    private Users requireActiveUser(long userId) {
         Users user = userRepo.findByIdForUpdate(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         if (!"ACTIVE".equalsIgnoreCase(user.getStatus())) {

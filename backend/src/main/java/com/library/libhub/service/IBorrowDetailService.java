@@ -6,11 +6,11 @@ import java.util.Optional;
 
 public interface IBorrowDetailService {
     BorrowDetails createBorrowDetail(BorrowDetails borrowDetail);
-    Optional<BorrowDetails> getBorrowDetailById(Long detailId);
+    Optional<BorrowDetails> getBorrowDetailById(long detailId);
     List<BorrowDetails> getAllBorrowDetails();
-    BorrowDetails updateBorrowDetail(Long detailId, BorrowDetails borrowDetail);
-    void deleteBorrowDetail(Long detailId);
-    List<BorrowDetails> findByTicket(Long ticketId);
-    List<BorrowDetails> findByCopy(Long copyId);
+    BorrowDetails updateBorrowDetail(long detailId, BorrowDetails borrowDetail);
+    void deleteBorrowDetail(long detailId);
+    List<BorrowDetails> findByTicket(long ticketId);
+    List<BorrowDetails> findByCopy(long copyId);
     List<BorrowDetails> findByStatus(String borrowStatus);
 }

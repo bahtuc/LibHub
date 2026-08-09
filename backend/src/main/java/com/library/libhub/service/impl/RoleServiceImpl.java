@@ -31,7 +31,7 @@ public class RoleServiceImpl implements IRoleService {
     }
 
     @Override
-    public Optional<Roles> getRoleById(Long roleId) {
+    public Optional<Roles> getRoleById(long roleId) {
         return roleRepo.findById(roleId);
     }
 
@@ -41,7 +41,7 @@ public class RoleServiceImpl implements IRoleService {
     }
 
     @Override
-    public Roles updateRole(Long roleId, Roles role) {
+    public Roles updateRole(long roleId, Roles role) {
         Roles existing = roleRepo.findById(roleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
         if (role.getRoleName() != null) existing.setRoleName(role.getRoleName());
@@ -54,7 +54,7 @@ public class RoleServiceImpl implements IRoleService {
     }
 
     @Override
-    public void deleteRole(Long roleId) {
+    public void deleteRole(long roleId) {
         if (roleRepo.existsById(roleId)) {
             roleRepo.deleteById(roleId);
         } else {

@@ -23,9 +23,9 @@ public interface BookRepository extends JpaRepository<Books, Long> {
             """)
     Optional<Books> findByIsbnAndHiddenFalse(@Param("isbn") String isbn);
 
-    List<Books> findByCategoryId(Long categoryId);
+    List<Books> findByCategoryId(long categoryId);
 
-    List<Books> findByAuthorId(Long authorId);
+    List<Books> findByAuthorId(long authorId);
 
     List<Books> findByTitleContainingIgnoreCase(String keyword);
 
@@ -51,21 +51,21 @@ public interface BookRepository extends JpaRepository<Books, Long> {
             WHERE b.bookId = :bookId
               AND (b.hidden = false OR b.hidden IS NULL)
             """)
-    Optional<Books> findByBookIdAndHiddenFalse(@Param("bookId") Long bookId);
+    Optional<Books> findByBookIdAndHiddenFalse(@Param("bookId") long bookId);
 
     @Query("""
             SELECT b FROM Books b
             WHERE b.categoryId = :categoryId
               AND (b.hidden = false OR b.hidden IS NULL)
             """)
-    List<Books> findByCategoryIdAndHiddenFalse(@Param("categoryId") Long categoryId);
+    List<Books> findByCategoryIdAndHiddenFalse(@Param("categoryId") long categoryId);
 
     @Query("""
             SELECT b FROM Books b
             WHERE b.authorId = :authorId
               AND (b.hidden = false OR b.hidden IS NULL)
             """)
-    List<Books> findByAuthorIdAndHiddenFalse(@Param("authorId") Long authorId);
+    List<Books> findByAuthorIdAndHiddenFalse(@Param("authorId") long authorId);
 
     @Query("""
             SELECT b FROM Books b

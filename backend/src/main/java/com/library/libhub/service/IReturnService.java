@@ -7,11 +7,11 @@ import java.util.Optional;
 
 public interface IReturnService {
     Returns createReturn(Returns returns);
-    Returns returnBooks(ReturnBookRequest request, Long currentStaffId);
-    Optional<Returns> getReturnById(Long returnId);
+    Returns returnBooks(ReturnBookRequest request, long currentStaffId);
+    Optional<Returns> getReturnById(long returnId);
     List<Returns> getAllReturns();
-    Returns updateReturn(Long returnId, Returns returns);
-    void deleteReturn(Long returnId);
-    List<Returns> findByTicket(Long ticketId);
-    List<Returns> findByReceivedBy(Long receivedBy);
+    Returns updateReturn(long returnId, Returns returns);
+    void deleteReturn(long returnId);
+    List<Returns> findByTicket(long ticketId);
+    List<Returns> findByReceivedBy(long receivedBy);
 }

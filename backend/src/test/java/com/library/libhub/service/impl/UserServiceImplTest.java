@@ -31,7 +31,7 @@ class UserServiceImplTest {
         assertEquals("member01", result.getFirst().getUsername());
     }
 
-    private Users user(Long id, String username, String roleName, String status) {
+    private Users user(long id, String username, String roleName, String status) {
         Roles role = new Roles();
         role.setRoleName(roleName);
         Users user = new Users();

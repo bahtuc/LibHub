@@ -26,7 +26,7 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT u FROM Users u WHERE u.userId = :userId")
-    Optional<Users> findByIdForUpdate(@Param("userId") Long userId);
+    Optional<Users> findByIdForUpdate(@Param("userId") long userId);
 
     boolean existsByUsername(String username);
 
@@ -36,5 +36,5 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 
     @Modifying
     @Query("UPDATE Users u SET u.lastLogin = :lastLogin WHERE u.userId = :userId")
-    void updateLastLogin(@Param("userId") Long userId, @Param("lastLogin") Timestamp lastLogin);
+    void updateLastLogin(@Param("userId") long userId, @Param("lastLogin") Timestamp lastLogin);
 }

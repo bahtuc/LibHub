@@ -37,7 +37,7 @@ public class PublisherServiceImpl implements IPublisherService {
     }
 
     @Override
-    public Optional<Publishers> getPublisherById(Long publisherId) {
+    public Optional<Publishers> getPublisherById(long publisherId) {
         return publisherRepo.findById(publisherId);
     }
 
@@ -47,7 +47,7 @@ public class PublisherServiceImpl implements IPublisherService {
     }
 
     @Override
-    public Publishers updatePublisher(Long publisherId, Publishers publisher) {
+    public Publishers updatePublisher(long publisherId, Publishers publisher) {
         if (!publisherRepo.existsById(publisherId)) {
             throw new ResourceNotFoundException("Publisher not found with id: " + publisherId);
         }
@@ -66,7 +66,7 @@ public class PublisherServiceImpl implements IPublisherService {
     }
 
     @Override
-    public void deletePublisher(Long publisherId) {
+    public void deletePublisher(long publisherId) {
         if (publisherRepo.existsById(publisherId)) {
             publisherRepo.deleteById(publisherId);
         } else {

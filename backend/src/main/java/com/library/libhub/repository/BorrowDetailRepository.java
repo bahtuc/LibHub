@@ -13,15 +13,15 @@ import com.library.libhub.entity.BorrowDetails;
 @Repository
 public interface BorrowDetailRepository extends JpaRepository<BorrowDetails, Long> {
 
-    List<BorrowDetails> findByTicketId(Long ticketId);
+    List<BorrowDetails> findByTicketId(long ticketId);
 
-    List<BorrowDetails> findByCopyId(Long copyId);
+    List<BorrowDetails> findByCopyId(long copyId);
 
     List<BorrowDetails> findByBorrowStatus(String borrowStatus);
 
-    Optional<BorrowDetails> findByTicketIdAndCopyId(Long ticketId, Long copyId);
+    Optional<BorrowDetails> findByTicketIdAndCopyId(long ticketId, long copyId);
 
-    long countByTicketIdAndBorrowStatusNotIgnoreCase(Long ticketId, String borrowStatus);
+    long countByTicketIdAndBorrowStatusNotIgnoreCase(long ticketId, String borrowStatus);
 
     @Query("""
             SELECT CASE WHEN COUNT(d) > 0 THEN true ELSE false END
@@ -34,8 +34,8 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetails, Lon
               AND LOWER(d.borrowStatus) NOT IN ('returned', 'cancelled')
             """)
     boolean existsActiveBorrow(
-            @Param("userId") Long userId,
-            @Param("bookId") Long bookId);
+            @Param("userId") long userId,
+            @Param("bookId") long bookId);
 
     @Query("""
             SELECT b.bookId, b.title, COUNT(d)

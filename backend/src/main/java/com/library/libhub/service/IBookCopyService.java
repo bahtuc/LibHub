@@ -6,13 +6,13 @@ import java.util.Optional;
 
 public interface IBookCopyService {
     BookCopies createBookCopy(BookCopies bookCopy);
-    Optional<BookCopies> getBookCopyById(Long copyId);
+    Optional<BookCopies> getBookCopyById(long copyId);
     List<BookCopies> getAllBookCopies();
-    BookCopies updateBookCopy(Long copyId, BookCopies bookCopy);
-    void deleteBookCopy(Long copyId);
+    BookCopies updateBookCopy(long copyId, BookCopies bookCopy);
+    void deleteBookCopy(long copyId);
     Optional<BookCopies> findByBarcode(String barcode);
-    List<BookCopies> findByBook(Long bookId);
-    List<BookCopies> findByBookAndStatus(Long bookId, String status);
-    void updateStatus(Long copyId, String status);
-    BookCopies updateShelfLocation(Long copyId, String shelfLocation);
+    List<BookCopies> findByBook(long bookId);
+    List<BookCopies> findByBookAndStatus(long bookId, String status);
+    void updateStatus(long copyId, String status);
+    BookCopies updateShelfLocation(long copyId, String shelfLocation);
 }

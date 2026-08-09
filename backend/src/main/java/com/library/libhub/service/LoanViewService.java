@@ -66,7 +66,7 @@ public class LoanViewService {
         return buildViews(ticketRepo.findAll());
     }
 
-    public List<BorrowTicketResponse> getViewsForUser(Long userId) {
+    public List<BorrowTicketResponse> getViewsForUser(long userId) {
         return buildViews(ticketRepo.findByUserId(userId));
     }
 
@@ -163,7 +163,7 @@ public class LoanViewService {
     }
 
     private BorrowedItemResponse toItem(
-            Long ticketId,
+            long ticketId,
             BorrowDetails detail,
             Map<Long, BookCopies> copies,
             Map<Long, Books> books,

@@ -6,9 +6,9 @@ import java.util.Optional;
 
 public interface IRoleService {
     Roles createRole(Roles role);
-    Optional<Roles> getRoleById(Long roleId);
+    Optional<Roles> getRoleById(long roleId);
     List<Roles> getAllRoles();
-    Roles updateRole(Long roleId, Roles role);
-    void deleteRole(Long roleId);
+    Roles updateRole(long roleId, Roles role);
+    void deleteRole(long roleId);
     Optional<Roles> findByName(String roleName);
 }

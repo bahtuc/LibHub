@@ -28,7 +28,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<Users>> getUserById(@PathVariable Long id) {
+    public ResponseEntity<Optional<Users>> getUserById(@PathVariable long id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
@@ -39,13 +39,13 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Users> updateUser(@PathVariable Long id, @RequestBody Users user) {
+    public ResponseEntity<Users> updateUser(@PathVariable long id, @RequestBody Users user) {
         Users updatedUser = userService.updateUser(id, user);
         return ResponseEntity.ok(updatedUser);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
@@ -66,7 +66,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}/last-login")
-    public ResponseEntity<Void> updateLastLogin(@PathVariable Long id) {
+    public ResponseEntity<Void> updateLastLogin(@PathVariable long id) {
         userService.updateLastLogin(id, new Timestamp(System.currentTimeMillis()));
         return ResponseEntity.noContent().build();
     }
@@ -78,7 +78,7 @@ public class UserController {
 
     @PatchMapping("/{id}/role")
     public ResponseEntity<Users> updateRole(
-            @PathVariable Long id, @RequestBody UpdateUserRoleRequest request) {
+            @PathVariable long id, @RequestBody UpdateUserRoleRequest request) {
         if (request == null || request.getRoleId() == null) {
             throw new IllegalArgumentException("Thiếu roleId");
         }
@@ -87,7 +87,7 @@ public class UserController {
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<Users> updateStatus(
-            @PathVariable Long id, @RequestBody UpdateAccountStatusRequest request) {
+            @PathVariable long id, @RequestBody UpdateAccountStatusRequest request) {
         if (request == null) throw new IllegalArgumentException("Thiếu trạng thái");
         return ResponseEntity.ok(userService.updateStatus(id, request.getStatus()));
     }

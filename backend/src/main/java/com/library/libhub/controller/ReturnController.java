@@ -26,7 +26,7 @@ public class ReturnController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Returns> getReturnById(@PathVariable Long id) {
+    public ResponseEntity<Returns> getReturnById(@PathVariable long id) {
         return ResponseEntity.of(returnService.getReturnById(id));
     }
 
@@ -40,23 +40,23 @@ public class ReturnController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Returns> updateReturn(@PathVariable Long id, @RequestBody Returns returns) {
+    public ResponseEntity<Returns> updateReturn(@PathVariable long id, @RequestBody Returns returns) {
         return ResponseEntity.ok(returnService.updateReturn(id, returns));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteReturn(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteReturn(@PathVariable long id) {
         returnService.deleteReturn(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/ticket/{ticketId}")
-    public ResponseEntity<List<Returns>> findByTicket(@PathVariable Long ticketId) {
+    public ResponseEntity<List<Returns>> findByTicket(@PathVariable long ticketId) {
         return ResponseEntity.ok(returnService.findByTicket(ticketId));
     }
 
     @GetMapping("/received-by/{receivedBy}")
-    public ResponseEntity<List<Returns>> findByReceivedBy(@PathVariable Long receivedBy) {
+    public ResponseEntity<List<Returns>> findByReceivedBy(@PathVariable long receivedBy) {
         return ResponseEntity.ok(returnService.findByReceivedBy(receivedBy));
     }
 }

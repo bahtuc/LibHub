@@ -7,14 +7,14 @@ import java.util.Optional;
 
 public interface IBorrowTicketService {
     BorrowTickets createBorrowTicket(BorrowTickets borrowTicket);
-    BorrowTickets borrowBook(Long userId, Long bookId);
-    BorrowTickets borrowBooks(Long userId, List<Long> bookIds);
+    BorrowTickets borrowBook(long userId, long bookId);
+    BorrowTickets borrowBooks(long userId, List<Long> bookIds);
     BorrowTickets createBorrowTicketWithCopies(BorrowTicketRequest request);
-    BorrowTickets updateStatus(Long ticketId, String status);
-    Optional<BorrowTickets> getBorrowTicketById(Long ticketId);
+    BorrowTickets updateStatus(long ticketId, String status);
+    Optional<BorrowTickets> getBorrowTicketById(long ticketId);
     List<BorrowTickets> getAllBorrowTickets();
-    BorrowTickets updateBorrowTicket(Long ticketId, BorrowTickets borrowTicket);
-    void deleteBorrowTicket(Long ticketId);
-    List<BorrowTickets> findByUser(Long userId);
+    BorrowTickets updateBorrowTicket(long ticketId, BorrowTickets borrowTicket);
+    void deleteBorrowTicket(long ticketId);
+    List<BorrowTickets> findByUser(long userId);
     List<BorrowTickets> findByStatus(String status);
 }

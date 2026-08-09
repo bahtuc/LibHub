@@ -41,7 +41,7 @@ public class BookServiceImpl implements IBookService {
     }
 
     @Override
-    public Optional<Books> getBookById(Long bookId) {
+    public Optional<Books> getBookById(long bookId) {
         return bookRepo.findById(bookId);
     }
 
@@ -51,7 +51,7 @@ public class BookServiceImpl implements IBookService {
     }
 
     @Override
-    public Books updateBook(Long bookId, Books book) {
+    public Books updateBook(long bookId, Books book) {
         Books existing = bookRepo.findById(bookId)
                 .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + bookId));
 
@@ -87,7 +87,7 @@ public class BookServiceImpl implements IBookService {
     }
 
     @Override
-    public void deleteBook(Long bookId) {
+    public void deleteBook(long bookId) {
         if (bookRepo.existsById(bookId)) {
             bookRepo.deleteById(bookId);
         } else {
@@ -101,12 +101,12 @@ public class BookServiceImpl implements IBookService {
     }
 
     @Override
-    public List<Books> findByCategory(Long categoryId) {
+    public List<Books> findByCategory(long categoryId) {
         return bookRepo.findByCategoryId(categoryId);
     }
 
     @Override
-    public List<Books> findByAuthor(Long authorId) {
+    public List<Books> findByAuthor(long authorId) {
         return bookRepo.findByAuthorId(authorId);
     }
 
@@ -193,7 +193,7 @@ public class BookServiceImpl implements IBookService {
     }
 
     @Override
-    public Optional<Books> getBookById(Long bookId, boolean includeHidden) {
+    public Optional<Books> getBookById(long bookId, boolean includeHidden) {
 
         Optional<Books> book = bookRepo.findById(bookId);
 

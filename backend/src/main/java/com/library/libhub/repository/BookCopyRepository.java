@@ -25,9 +25,9 @@ public interface BookCopyRepository extends JpaRepository<BookCopies, Long> {
 
     Optional<BookCopies> findByBarcode(String barcode);
 
-    List<BookCopies> findByBookId(Long bookId);
+    List<BookCopies> findByBookId(long bookId);
 
-    List<BookCopies> findByBookIdAndStatus(Long bookId, String status);
+    List<BookCopies> findByBookIdAndStatus(long bookId, String status);
 
     @Query("""
             SELECT c.bookId AS bookId,
@@ -41,14 +41,14 @@ public interface BookCopyRepository extends JpaRepository<BookCopies, Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<BookCopies> findFirstByBookIdAndStatusIgnoreCaseOrderByCopyIdAsc(
-            Long bookId,
+            long bookId,
             String status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT c FROM BookCopies c WHERE c.copyId = :copyId")
-    Optional<BookCopies> findByIdForUpdate(@Param("copyId") Long copyId);
+    Optional<BookCopies> findByIdForUpdate(@Param("copyId") long copyId);
 
     @Modifying
     @Query("UPDATE BookCopies c SET c.status = :status WHERE c.copyId = :copyId")
-    int updateStatus(@Param("copyId") Long copyId, @Param("status") String status);
+    int updateStatus(@Param("copyId") long copyId, @Param("status") String status);
 }

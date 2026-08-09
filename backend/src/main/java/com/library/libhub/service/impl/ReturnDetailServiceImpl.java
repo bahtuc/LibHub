@@ -30,7 +30,7 @@ public class ReturnDetailServiceImpl implements IReturnDetailService {
     }
 
     @Override
-    public Optional<ReturnDetails> getReturnDetailById(Long returnDetailId) {
+    public Optional<ReturnDetails> getReturnDetailById(long returnDetailId) {
         return returnDetailRepo.findById(returnDetailId);
     }
 
@@ -40,7 +40,7 @@ public class ReturnDetailServiceImpl implements IReturnDetailService {
     }
 
     @Override
-    public ReturnDetails updateReturnDetail(Long returnDetailId, ReturnDetails returnDetail) {
+    public ReturnDetails updateReturnDetail(long returnDetailId, ReturnDetails returnDetail) {
         ReturnDetails existing = returnDetailRepo.findById(returnDetailId)
                 .orElseThrow(() -> new ResourceNotFoundException("Return detail not found with id: " + returnDetailId));
         if (returnDetail.getReturnId() != null) existing.setReturnId(returnDetail.getReturnId());
@@ -50,7 +50,7 @@ public class ReturnDetailServiceImpl implements IReturnDetailService {
     }
 
     @Override
-    public void deleteReturnDetail(Long returnDetailId) {
+    public void deleteReturnDetail(long returnDetailId) {
         if (returnDetailRepo.existsById(returnDetailId)) {
             returnDetailRepo.deleteById(returnDetailId);
         } else {
@@ -59,12 +59,12 @@ public class ReturnDetailServiceImpl implements IReturnDetailService {
     }
 
     @Override
-    public List<ReturnDetails> findByReturn(Long returnId) {
+    public List<ReturnDetails> findByReturn(long returnId) {
         return returnDetailRepo.findByReturnId(returnId);
     }
 
     @Override
-    public List<ReturnDetails> findByCopy(Long copyId) {
+    public List<ReturnDetails> findByCopy(long copyId) {
         return returnDetailRepo.findByCopyId(copyId);
     }
 

@@ -10,20 +10,20 @@ import com.library.libhub.entity.Books;
 public interface IBookService {
     Books createBook(Books book);
 
-    Optional<Books> getBookById(Long bookId);
-    Optional<Books> getBookById(Long bookId, boolean includeHidden);
+    Optional<Books> getBookById(long bookId);
+    Optional<Books> getBookById(long bookId, boolean includeHidden);
 
     List<Books> getAllBooks();
 
-    Books updateBook(Long bookId, Books book);
+    Books updateBook(long bookId, Books book);
 
-    void deleteBook(Long bookId);
+    void deleteBook(long bookId);
 
     Optional<Books> findByIsbn(String isbn);
 
-    List<Books> findByCategory(Long categoryId);
+    List<Books> findByCategory(long categoryId);
 
-    List<Books> findByAuthor(Long authorId);
+    List<Books> findByAuthor(long authorId);
 
     List<Books> searchByTitle(String keyword);
 

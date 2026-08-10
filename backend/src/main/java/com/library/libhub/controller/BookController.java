@@ -14,9 +14,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 import com.library.libhub.entity.Books;
 import com.library.libhub.service.IBookService;
+import com.library.libhub.service.BookImportService;
+import com.library.libhub.DTO.Response.BookImportResponse;
 import jakarta.servlet.http.HttpSession;
 
 @RestController
@@ -24,9 +30,11 @@ import jakarta.servlet.http.HttpSession;
 public class BookController {
 
     private final IBookService bookService;
+    private final BookImportService bookImportService;
 
-    public BookController(IBookService bookService) {
+    public BookController(IBookService bookService, BookImportService bookImportService) {
         this.bookService = bookService;
+        this.bookImportService = bookImportService;
     }
 
     @GetMapping
@@ -64,6 +72,27 @@ public class BookController {
     public ResponseEntity<Books> createBook(@RequestBody Books book) {
         Books createdBook = bookService.createBook(book);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdBook);
+    }
+
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<BookImportResponse> importBooks(@RequestPart("file") MultipartFile file) {
+        return ResponseEntity.ok(bookImportService.importBooks(file));
+    }
+
+    @GetMapping("/import/template.csv")
+    public ResponseEntity<byte[]> downloadCsvTemplate() {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=libhub-book-import-template.csv")
+                .contentType(MediaType.parseMediaType("text/csv;charset=UTF-8"))
+                .body(bookImportService.csvTemplate());
+    }
+
+    @GetMapping("/import/template.xlsx")
+    public ResponseEntity<byte[]> downloadXlsxTemplate() {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=libhub-book-import-template.xlsx")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(bookImportService.xlsxTemplate());
     }
 
     @PutMapping("/{id}")

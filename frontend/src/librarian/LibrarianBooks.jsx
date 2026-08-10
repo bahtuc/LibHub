@@ -4,6 +4,7 @@
 import AdminCrudPage from "../admin/AdminCrudPage";
 import Icon from "../components/Icon";
 import Badge from "../admin/Badge";
+import BookDataTools from "../components/BookDataTools";
 import { booksStore, categoriesStore, authorsStore, copiesStore } from "../data/adminStore";
 
 export default function LibrarianBooks() {
@@ -18,6 +19,7 @@ export default function LibrarianBooks() {
     <AdminCrudPage
       title="Kho sách"
       subtitle="Thêm đầu sách mới hoặc ẩn/hiện sách khỏi trang thư viện công khai."
+      headerActions={<BookDataTools onImported={() => booksStore.refresh()} />}
       store={booksStore}
       idField="book_id"
       hideDelete

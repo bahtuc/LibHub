@@ -1,6 +1,7 @@
 // src/admin/AdminBooks.jsx
 import AdminCrudPage from "./AdminCrudPage";
 import Badge from "./Badge";
+import BookDataTools from "../components/BookDataTools";
 import {
   booksStore,
   categoriesStore,
@@ -29,6 +30,7 @@ export default function AdminBooks() {
     <AdminCrudPage
       title="Kho sách"
       subtitle="Quản lý toàn bộ đầu sách trong thư viện."
+      headerActions={<BookDataTools onImported={() => booksStore.refresh()} />}
       store={booksStore}
       idField="book_id"
       emptyItem={{

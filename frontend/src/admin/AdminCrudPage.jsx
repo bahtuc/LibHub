@@ -19,6 +19,7 @@ export default function AdminCrudPage({
   canDelete, // (item) => boolean, mặc định luôn cho xóa
   hideDelete = false, // ẩn hẳn nút xóa (vd: trang Thủ thư chỉ được Ẩn/Hiện, không được xóa)
   rowActions, // (item) => JSX, render thêm nút riêng trước nút Sửa/Xóa
+  headerActions,
 }) {
   const items = store.useCollection();
   const [editing, setEditing] = useState(null);
@@ -84,9 +85,12 @@ export default function AdminCrudPage({
           <h1 className="lh-admin-page__title">{title}</h1>
           {subtitle && <p className="lh-admin-page__subtitle">{subtitle}</p>}
         </div>
-        <button className="lh-btn lh-btn--primary" onClick={openAdd}>
-          <Icon name="plus" size={16} /> Thêm mới
-        </button>
+        <div style={{ display: "flex", gap: 10, alignItems: "flex-start", flexWrap: "wrap", justifyContent: "flex-end" }}>
+          {headerActions}
+          <button className="lh-btn lh-btn--primary" onClick={openAdd}>
+            <Icon name="plus" size={16} /> Thêm mới
+          </button>
+        </div>
       </div>
 
       {editing && (

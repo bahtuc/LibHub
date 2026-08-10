@@ -540,7 +540,7 @@ export default function LibrarianBorrow() {
           </div>
         )}
         <p style={{ margin: "-8px 0 18px", color: "var(--lh-text-muted)", fontSize: "0.86rem" }}>
-          Đã chọn {selectedCopyIds.length}/5 cuốn. Backend cũng kiểm tra tổng số sách thành viên đang mượn.
+          Đã chọn {selectedCopyIds.length}/5 cuốn.
         </p>
 
         {/* =====================

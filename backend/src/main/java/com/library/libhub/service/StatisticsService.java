@@ -2,6 +2,7 @@ package com.library.libhub.service;
 
 
 import com.library.libhub.entity.BorrowTickets;
+import com.library.libhub.entity.Books;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +16,10 @@ import java.util.Map;
 import com.library.libhub.repository.BorrowDetailRepository;
 import com.library.libhub.repository.BorrowTicketRepository;
 import com.library.libhub.repository.FineRepository;
+import com.library.libhub.repository.BookRepository;
+import com.library.libhub.repository.BookCopyRepository;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -22,12 +27,43 @@ public class StatisticsService {
     private final BorrowDetailRepository borrowDetailRepo;
     private final BorrowTicketRepository borrowTicketRepo;
     private final FineRepository fineRepo;
+    private final BookRepository bookRepo;
+    private final BookCopyRepository bookCopyRepo;
 
     public StatisticsService(
-            BorrowDetailRepository borrowDetailRepo, BorrowTicketRepository borrowTicketRepo, FineRepository fineRepo) {
+            BorrowDetailRepository borrowDetailRepo,
+            BorrowTicketRepository borrowTicketRepo,
+            FineRepository fineRepo,
+            BookRepository bookRepo,
+            BookCopyRepository bookCopyRepo) {
         this.borrowDetailRepo = borrowDetailRepo;
         this.borrowTicketRepo = borrowTicketRepo;
         this.fineRepo = fineRepo;
+        this.bookRepo = bookRepo;
+        this.bookCopyRepo = bookCopyRepo;
+    }
+
+    public List<Map<String, Object>> inventory() {
+        List<Books> books = bookRepo.findAll();
+        if (books.isEmpty()) return List.of();
+        Map<Long, BookCopyRepository.BookAvailability> availability = bookCopyRepo
+                .summarizeAvailability(books.stream().map(Books::getBookId).toList())
+                .stream()
+                .collect(Collectors.toMap(BookCopyRepository.BookAvailability::getBookId, Function.identity()));
+        return books.stream().map(book -> {
+            BookCopyRepository.BookAvailability counts = availability.get(book.getBookId());
+            long total = counts == null ? 0 : counts.getTotalCopies();
+            long available = counts == null ? 0 : counts.getAvailableCopies();
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("bookId", book.getBookId());
+            item.put("title", book.getTitle());
+            item.put("isbn", book.getIsbn());
+            item.put("totalCopies", total);
+            item.put("availableCopies", available);
+            item.put("unavailableCopies", total - available);
+            item.put("hidden", Boolean.TRUE.equals(book.getHidden()));
+            return item;
+        }).toList();
     }
 
     public List<Map<String, Object>> currentlyBorrowed() {

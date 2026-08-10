@@ -51,9 +51,6 @@ export default function LibrarianDashboard() {
         ))}
       </div>
 
-      <p style={{ color: "var(--lh-text-muted)", fontSize: "0.88rem" }}>
-        Số liệu được đọc trực tiếp từ SQL Server và tự tải lại khi mở trang.
-      </p>
     </div>
   );
 }

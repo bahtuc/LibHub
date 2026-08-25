@@ -16,7 +16,7 @@ import jakarta.transaction.Transactional;
 
 @Service
 @Transactional
-public class FineServiceImpl implements IFineService {
+public class  FineServiceImpl implements IFineService {
 
     private final FineRepository fineRepo;
 

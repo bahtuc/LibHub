@@ -62,7 +62,6 @@ public final class VNPayUtil {
         return calculated.equalsIgnoreCase(received);
     }
 
-    /** Random numeric transaction reference. */
     public static String randomTxnRef() {
         SecureRandom rnd = new SecureRandom();
         StringBuilder sb = new StringBuilder(8);

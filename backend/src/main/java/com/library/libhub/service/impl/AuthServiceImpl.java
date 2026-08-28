@@ -67,6 +67,12 @@ public class AuthServiceImpl implements IAuthService {
 
     @Override
     public AuthResponse login(LoginRequest request) {
+        Users user = authenticate(request);
+        return completeLogin(user.getUserId(), session);
+    }
+
+    @Override
+    public Users authenticate(LoginRequest request) {
         validateLogin(request);
 
         Users user = userRepo.findByUsernameOrEmail(
@@ -81,12 +87,21 @@ public class AuthServiceImpl implements IAuthService {
             throw new IllegalArgumentException("Tên đăng nhập hoặc mật khẩu không đúng");
         }
 
+        return user;
+    }
+
+    @Override
+    public AuthResponse completeLogin(long userId, HttpSession targetSession) {
+        Users user = findUser(userId);
+        if (!"ACTIVE".equalsIgnoreCase(user.getStatus())) {
+            throw new IllegalArgumentException("Tài khoản bị khóa");
+        }
+
         user.setLastLogin(new Timestamp(System.currentTimeMillis()));
         userRepo.save(user);
-        session.setAttribute("USER_LOGIN", user);
-        session.setAttribute("ROLE",
+        targetSession.setAttribute("USER_LOGIN", user);
+        targetSession.setAttribute("ROLE",
                 user.getRole() != null ? user.getRole().getRoleName() : null);
-
         return mapToResponse(user);
     }
 

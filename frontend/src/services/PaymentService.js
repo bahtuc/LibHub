@@ -8,3 +8,10 @@ export function createVnpayPayment(fineId) {
         body: { fineId },
     });
 }
+
+export function createBorrowVnpayPayment(bookId, borrowDays = 14) {
+    return apiRequest("/payments/vnpay/borrow/create", {
+        method: "POST",
+        body: { bookId, borrowDays },
+    });
+}

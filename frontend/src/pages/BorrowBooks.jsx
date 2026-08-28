@@ -10,10 +10,8 @@ import Footer from "../components/Footer";
 import { useCatalog } from "../context/CatalogContext";
 import { useAuth } from "../auth/useAuth";
 
-import {
-  borrowBook,
-  getMyBorrowHistory,
-} from "../services/BorrowTicketService.js";
+import { getMyBorrowHistory } from "../services/BorrowTicketService.js";
+import { createBorrowVnpayPayment } from "../services/PaymentService.js";
 
 import "../styles/Library.css";
 import "../styles/BorrowBooks.css";
@@ -39,6 +37,8 @@ export default function BorrowBooks() {
   const [message, setMessage] = useState("");
 
   const [error, setError] = useState("");
+
+  const [borrowDays, setBorrowDays] = useState(14);
 
   // =========================
   // LOAD BORROW HISTORY
@@ -88,6 +88,9 @@ export default function BorrowBooks() {
       return;
     }
 
+    const fee = borrowDays * 5000;
+    if (!window.confirm(`Bạn sẽ được chuyển sang VNPay để thanh toán ${fee.toLocaleString("vi-VN")}đ cho ${borrowDays} ngày mượn. Tiếp tục?`)) return;
+
     try {
       setBorrowingId(bookId);
 
@@ -95,14 +98,9 @@ export default function BorrowBooks() {
 
       setError("");
 
-      await borrowBook(bookId);
-
-      setMessage(
-        "Mượn sách thành công!"
-      );
-
-      // Load lại lịch sử
-      await loadBorrowHistory();
+      const payment = await createBorrowVnpayPayment(bookId, borrowDays);
+      if (!payment?.payUrl) throw new Error("Không nhận được đường dẫn thanh toán VNPay.");
+      window.location.assign(payment.payUrl);
     } catch (err) {
       console.error(
         "Lỗi mượn sách:",
@@ -299,6 +297,26 @@ export default function BorrowBooks() {
 
         <section className="borrow-books-section">
 
+          <div className="borrow-duration-panel">
+            <label htmlFor="borrow-days">Số ngày muốn mượn</label>
+            <div className="borrow-duration-panel__controls">
+              <input
+                id="borrow-days"
+                type="number"
+                min="1"
+                max="30"
+                value={borrowDays}
+                onChange={(event) => {
+                  const days = Number(event.target.value);
+                  setBorrowDays(Math.min(30, Math.max(1, Number.isFinite(days) ? days : 1)));
+                }}
+              />
+              <span>ngày</span>
+            </div>
+            <strong>Phí mượn: {(borrowDays * 5000).toLocaleString("vi-VN")}đ</strong>
+            <small>5.000đ × {borrowDays} ngày · tối đa 30 ngày</small>
+          </div>
+
           <div className="borrow-section-header">
 
             <h2>
@@ -442,9 +460,9 @@ export default function BorrowBooks() {
                         >
 
                           {isBorrowing
-                            ? "Đang xử lý..."
+                            ? "Đang chuyển VNPay..."
                             : available
-                              ? "Mượn sách"
+                              ? "Mượn & thanh toán"
                               : "Hết sách"}
 
                         </button>

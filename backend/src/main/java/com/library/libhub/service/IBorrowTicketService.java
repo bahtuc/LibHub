@@ -9,6 +9,10 @@ public interface IBorrowTicketService {
     BorrowTickets createBorrowTicket(BorrowTickets borrowTicket);
     BorrowTickets borrowBook(long userId, long bookId);
     BorrowTickets borrowBooks(long userId, List<Long> bookIds);
+    BorrowTickets borrowBooks(long userId, List<Long> bookIds, int borrowDays);
+    BorrowTickets createOnlineBorrow(long userId, List<Long> bookIds, int borrowDays);
+    BorrowTickets completeOnlinePayment(long ticketId);
+    BorrowTickets cancelOnlinePayment(long ticketId);
     BorrowTickets createBorrowTicketWithCopies(BorrowTicketRequest request);
     BorrowTickets updateStatus(long ticketId, String status);
     Optional<BorrowTickets> getBorrowTicketById(long ticketId);

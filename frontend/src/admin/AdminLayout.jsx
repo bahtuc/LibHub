@@ -4,16 +4,26 @@ import Icon from "../components/Icon";
 import { useAuth } from "../auth/useAuth";
 import "./admin.css";
 
-const NAV = [
-  { to: "/admin", label: "Tổng quan", icon: "dashboard", end: true },
-  { to: "/admin/books", label: "Kho sách", icon: "book-open" },
-  { to: "/admin/copies", label: "Bản sao sách", icon: "layers" },
-  { to: "/admin/categories", label: "Thể loại", icon: "compass" },
-  { to: "/admin/authors", label: "Tác giả", icon: "users" },
-  { to: "/admin/Publishers", label: "Nhà xuất bản", icon: "users" },
-  { to: "/admin/users", label: "Người dùng", icon: "user" },
-  { to: "/admin/borrow-tickets", label: "Phiếu mượn", icon: "book-open" },
-  { to: "/admin/fines", label: "Khoản phạt", icon: "briefcase" },
+const NAV_SECTIONS = [
+  { label: "Điều hành", items: [
+    { to: "/admin", label: "Tổng quan", icon: "dashboard", end: true },
+    { to: "/admin/statistics", label: "Thống kê", icon: "star" },
+  ]},
+  { label: "Nghiệp vụ thủ thư", items: [
+    { to: "/admin/borrow", label: "Lập phiếu mượn", icon: "plus" },
+    { to: "/admin/circulation", label: "Mượn · trả sách", icon: "layers" },
+    { to: "/admin/fine-collection", label: "Thu khoản phạt", icon: "landmark" },
+    { to: "/admin/books", label: "Kho sách", icon: "book-open" },
+    { to: "/admin/copies", label: "Bản sao sách", icon: "layers" },
+  ]},
+  { label: "Quản trị hệ thống", items: [
+    { to: "/admin/categories", label: "Thể loại", icon: "compass" },
+    { to: "/admin/authors", label: "Tác giả", icon: "users" },
+    { to: "/admin/publishers", label: "Nhà xuất bản", icon: "users" },
+    { to: "/admin/users", label: "Người dùng", icon: "user" },
+    { to: "/admin/borrow-tickets", label: "Quản lý phiếu mượn", icon: "book-open" },
+    { to: "/admin/fines", label: "Quản lý khoản phạt", icon: "briefcase" },
+  ]},
 ];
 
 export default function AdminLayout() {
@@ -29,20 +39,13 @@ export default function AdminLayout() {
           </span>
         </div>
 
-        <p className="lh-admin__nav-label">Quản lý</p>
-
         <nav className="lh-admin__nav">
-          {NAV.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) => (isActive ? "is-active" : "")}
-            >
-              <Icon name={item.icon} size={17} />
-              {item.label}
-            </NavLink>
-          ))}
+          {NAV_SECTIONS.map((section) => <div className="lh-admin__nav-section" key={section.label}>
+            <p className="lh-admin__nav-label">{section.label}</p>
+            {section.items.map((item) => <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => (isActive ? "is-active" : "")}>
+              <Icon name={item.icon} size={17} />{item.label}
+            </NavLink>)}
+          </div>)}
         </nav>
 
         <div className="lh-admin__sidebar-foot">

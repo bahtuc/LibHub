@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.library.libhub.exception.ResourceNotFoundException;
 
@@ -25,6 +26,14 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         return build(HttpStatus.NOT_FOUND, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleResponseStatus(
+            ResponseStatusException ex,
+            HttpServletRequest request) {
+        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+        return build(status, ex.getReason(), request);
     }
 
     // Lỗi nghiệp vụ / validation → trả về 400 kèm message

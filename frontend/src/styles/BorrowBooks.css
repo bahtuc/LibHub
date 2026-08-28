@@ -330,6 +330,44 @@
    BOOK ACTIONS
    ========================================================= */
 
+.borrow-duration-panel {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  gap: 8px 14px;
+  margin-bottom: 22px;
+  padding: 16px 18px;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #1e3a5f;
+}
+
+.borrow-duration-panel label,
+.borrow-duration-panel strong {
+  font-weight: 700;
+}
+
+.borrow-duration-panel__controls {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.borrow-duration-panel input {
+  width: 76px;
+  padding: 8px 10px;
+  border: 1px solid #93c5fd;
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+}
+
+.borrow-duration-panel small {
+  grid-column: 1 / -1;
+  color: #475569;
+}
+
 .borrow-book-actions {
   display: flex;
   gap: 10px;
@@ -638,6 +676,14 @@
 
   .borrow-section-header h2 {
     font-size: 19px;
+  }
+
+  .borrow-duration-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .borrow-duration-panel small {
+    grid-column: auto;
   }
 
   /* Books */

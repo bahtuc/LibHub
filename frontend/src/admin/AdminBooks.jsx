@@ -46,6 +46,13 @@ export default function AdminBooks() {
         cover_image: null,
       }}
       columns={[
+        {
+          key: "cover_image",
+          label: "Bìa",
+          render: (i) => i.cover_image ? (
+            <img className="lh-admin-book-cover" src={i.cover_image} alt={`Bìa ${i.title}`} />
+          ) : "—",
+        },
         { key: "title", label: "Tên sách" },
         {
           key: "author_id",
@@ -82,6 +89,14 @@ export default function AdminBooks() {
         { name: "category_id", label: "Thể loại", type: "select", options: categoryOptions, numeric: true, required: true },
         { name: "publish_year", label: "Năm xuất bản", type: "number" },
         { name: "pages", label: "Số trang", type: "number" },
+        {
+          name: "cover_image",
+          label: "Ảnh bìa (URL)",
+          type: "url",
+          placeholder: "https://example.com/anh-bia.jpg",
+          maxLength: 255,
+          previewImage: true,
+        },
         { name: "is_featured", label: "Hiện ở mục nổi bật (trang chủ)", type: "checkbox" },
         { name: "description", label: "Mô tả", type: "textarea" },
       ]}

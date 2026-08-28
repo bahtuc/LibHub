@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -44,22 +45,18 @@ public class BorrowTicketController {
     }
 
     @PostMapping
-    public ResponseEntity<BorrowTickets> createBorrowTicket(@RequestBody BorrowTicketRequest request) {
+    public ResponseEntity<BorrowTickets> createBorrowTicket(
+            @RequestBody BorrowTicketRequest request,
+            HttpSession session) {
+        requireLibrarian(session);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(borrowTicketService.createBorrowTicketWithCopies(request));
     }
 
     @PostMapping("/borrow")
     public ResponseEntity<BorrowTickets> borrowBooks(@RequestBody BorrowBookRequest request, HttpSession session) {
-        Users user = requireUser(session);
-        if (request == null) throw new IllegalArgumentException("Thiếu danh sách sách");
-        List<Long> bookIds = request.getBookIds();
-        if (bookIds == null || bookIds.isEmpty()) {
-            if (request.getBookId() == null) throw new IllegalArgumentException("Thiếu bookId");
-            bookIds = List.of(request.getBookId());
-        }
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(borrowTicketService.borrowBooks(user.getUserId(), bookIds));
+        requireUser(session);
+        throw new IllegalArgumentException("Mượn sách online phải thanh toán qua VNPay");
     }
 
     @PutMapping("/{id}")
@@ -107,5 +104,14 @@ public class BorrowTicketController {
         Users user = (Users) session.getAttribute("USER_LOGIN");
         if (user == null) throw new IllegalArgumentException("Chưa đăng nhập");
         return user;
+    }
+
+    private void requireLibrarian(HttpSession session) {
+        String role = String.valueOf(session.getAttribute("ROLE"));
+        if (!"Librarian".equalsIgnoreCase(role)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Chỉ thủ thư mới được tạo phiếu và thu tiền mặt");
+        }
     }
 }

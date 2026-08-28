@@ -2,15 +2,15 @@ import { Navigate, Routes, Route } from "react-router-dom";
 
 import Home from "../Home.jsx";
 import Login from "../pages/Login.jsx";
-import Register from "../pages/Register.jsx";
+import Register from "../pages/register.jsx";
 import ForgotPassword from "../pages/ForgotPassword.jsx";
 import Library from "../pages/Library.jsx";
 import Genres from "../pages/Genres.jsx";
 import GenreDetail from "../pages/GenreDetail.jsx";
-import BookDetail from "../pages/BookDetail.jsx";
+import BookDetail from "../pages/bookDetail.jsx";
 import Account from "../pages/Account.jsx";
-import Fines from "../pages/fines.jsx";
 import PaymentResult from "../pages/paymentResult.jsx";
+import NotFound from "../pages/NotFound.jsx";
 
 import RequireAuth from "../auth/RequireAuth.jsx";
 
@@ -25,6 +25,7 @@ import AdminUsers from "../admin/AdminUsers.jsx";
 import AdminPublisher from "../admin/AdminPublishers.jsx";
 import AdminBorrowTickets from "../admin/AdminBorrowTickets.jsx";
 import AdminFines from "../admin/AdminFines.jsx";
+import AdminStatistics from "../admin/AdminStatistics.jsx";
 
 import RequireLibrarian from "../librarian/RequireLibrarian.jsx";
 import LibrarianLayout from "../librarian/LibrarianLayout.jsx";
@@ -92,7 +93,7 @@ export default function AppRouter() {
         path="/fines"
         element={
           <RequireAuth>
-            <Fines />
+            <Navigate to="/account?tab=fines" replace />
           </RequireAuth>
         }
       />
@@ -122,6 +123,10 @@ export default function AppRouter() {
           path="books"
           element={<AdminBooks />}
         />
+        <Route path="statistics" element={<AdminStatistics />} />
+        <Route path="borrow" element={<LibrarianBorrow />} />
+        <Route path="circulation" element={<LibrarianTickets />} />
+        <Route path="fine-collection" element={<LibrarianFines />} />
 
         <Route
           path="copies"
@@ -195,6 +200,8 @@ export default function AppRouter() {
           element={<LibrarianFines />}
         />
       </Route>
+
+      <Route path="*" element={<NotFound />} />
 
     </Routes>
   );

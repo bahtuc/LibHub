@@ -7,9 +7,12 @@
 
 import { Link } from "react-router-dom";
 import Icon from "../components/Icon";
+import LanguageToggle from "../components/LanguageToggle";
+import { useLanguage } from "../i18n/LanguageContext";
 import "../styles/AuthLayout.css";
 
 export default function AuthLayout({ mode, title, subtitle, children, hideTabs = false }) {
+  const { t } = useLanguage();
   return (
     <div className="lh-auth lh-root">
       <div className="lh-auth__bg" aria-hidden="true" />
@@ -17,8 +20,9 @@ export default function AuthLayout({ mode, title, subtitle, children, hideTabs =
 
       <div className="lh-auth__stage">
         <Link to="/" className="lh-auth__home-link">
-          <span aria-hidden="true">←</span> Về trang chủ
+          <span aria-hidden="true">←</span> {t("auth.backHome")}
         </Link>
+        <LanguageToggle className="lh-language--auth" />
 
         <div className="lh-auth-card">
           <div className="lh-auth-card__tab">
@@ -27,14 +31,14 @@ export default function AuthLayout({ mode, title, subtitle, children, hideTabs =
           <div className="lh-auth-card__perforation" aria-hidden="true" />
 
           {!hideTabs && (
-            <div className="lh-auth-card__switch" role="tablist" aria-label="Chuyển đăng nhập / đăng ký">
+            <div className="lh-auth-card__switch" role="tablist" aria-label={t("auth.switchLabel")}>
               <Link
                 to="/login"
                 role="tab"
                 aria-selected={mode === "login"}
                 className={`lh-auth-card__switch-btn ${mode === "login" ? "is-active" : ""}`}
               >
-                Đăng nhập
+                {t("auth.login")}
               </Link>
               <Link
                 to="/register"
@@ -42,7 +46,7 @@ export default function AuthLayout({ mode, title, subtitle, children, hideTabs =
                 aria-selected={mode === "register"}
                 className={`lh-auth-card__switch-btn ${mode === "register" ? "is-active" : ""}`}
               >
-                Đăng ký
+                {t("auth.register")}
               </Link>
               <span
                 className="lh-auth-card__switch-highlight"
@@ -60,13 +64,13 @@ export default function AuthLayout({ mode, title, subtitle, children, hideTabs =
 
         <ul className="lh-auth__bullets">
           <li>
-            <Icon name="check-circle" size={15} /> Theo dõi phiếu mượn thời gian thực
+            <Icon name="check-circle" size={15} /> {t("auth.bullet1")}
           </li>
           <li>
-            <Icon name="check-circle" size={15} /> Hàng nghìn đầu sách
+            <Icon name="check-circle" size={15} /> {t("auth.bullet2")}
           </li>
           <li>
-            <Icon name="check-circle" size={15} /> Gia hạn trong vài giây
+            <Icon name="check-circle" size={15} /> {t("auth.bullet3")}
           </li>
         </ul>
       </div>

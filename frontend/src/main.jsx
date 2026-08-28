@@ -4,7 +4,11 @@ import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./auth/useAuth.jsx";
 import { CatalogProvider } from "./context/CatalogContext.jsx";
 import AppRouter from "./router/AppRouter.jsx";
+import ScrollToTop from "./components/ScrollToTop.jsx";
+import { LanguageProvider } from "./i18n/LanguageContext.jsx";
 import "./styles/theme.css";
+import "./styles/rebuild.css";
+import "./styles/reading-room.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -14,9 +18,14 @@ createRoot(document.getElementById("root")).render(
         v7_relativeSplatPath: true,
       }}
     >
-      <AuthProvider>
-        <CatalogProvider><AppRouter /></CatalogProvider>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <CatalogProvider>
+            <ScrollToTop />
+            <AppRouter />
+          </CatalogProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </BrowserRouter>
   </StrictMode>
 );

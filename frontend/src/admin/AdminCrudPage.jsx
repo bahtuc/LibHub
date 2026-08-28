@@ -20,6 +20,7 @@ export default function AdminCrudPage({
   hideDelete = false, // ẩn hẳn nút xóa (vd: trang Thủ thư chỉ được Ẩn/Hiện, không được xóa)
   rowActions, // (item) => JSX, render thêm nút riêng trước nút Sửa/Xóa
   headerActions,
+  hideAdd = false,
 }) {
   const items = store.useCollection();
   const [editing, setEditing] = useState(null);
@@ -87,9 +88,11 @@ export default function AdminCrudPage({
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "flex-start", flexWrap: "wrap", justifyContent: "flex-end" }}>
           {headerActions}
-          <button className="lh-btn lh-btn--primary" onClick={openAdd}>
-            <Icon name="plus" size={16} /> Thêm mới
-          </button>
+          {!hideAdd && (
+            <button className="lh-btn lh-btn--primary" onClick={openAdd}>
+              <Icon name="plus" size={16} /> Thêm mới
+            </button>
+          )}
         </div>
       </div>
 
@@ -140,11 +143,31 @@ export default function AdminCrudPage({
                   <input
                     type={f.type || "text"}
                     value={editing[f.name] ?? ""}
+                    placeholder={f.placeholder}
+                    maxLength={f.maxLength}
                     onChange={(e) =>
                       handleChange(f.name, f.type === "number" ? Number(e.target.value) : e.target.value)
                     }
                     required={f.required}
                   />
+                )}
+
+                {f.previewImage && editing[f.name] && (
+                  <span className="lh-admin-form__image-preview">
+                    <img
+                      src={editing[f.name]}
+                      alt="Xem trước ảnh bìa"
+                      onLoad={(event) => {
+                        event.currentTarget.style.display = "block";
+                        event.currentTarget.nextElementSibling.style.display = "none";
+                      }}
+                      onError={(event) => {
+                        event.currentTarget.style.display = "none";
+                        event.currentTarget.nextElementSibling.style.display = "block";
+                      }}
+                    />
+                    <small>Không tải được ảnh. Hãy kiểm tra lại đường dẫn URL.</small>
+                  </span>
                 )}
               </label>
             ))}

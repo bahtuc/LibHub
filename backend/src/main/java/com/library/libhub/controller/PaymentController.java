@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.library.libhub.config.VNPayConfig;
+import com.library.libhub.DTO.Request.BorrowBookRequest;
+import com.library.libhub.entity.BorrowTickets;
 import com.library.libhub.entity.Fines;
 import com.library.libhub.entity.Users;
 import com.library.libhub.service.IBorrowTicketService;
@@ -102,7 +104,56 @@ public class PaymentController {
                     .body(err("VNPay chưa được cấu hình. Vui lòng liên hệ quản trị viên."));
         }
 
-        String txnRef = fineId + "_" + VNPayUtil.randomTxnRef();
+        String txnRef = "F" + fineId + "_" + VNPayUtil.randomTxnRef();
+        return ResponseEntity.ok(buildPaymentResponse(
+                txnRef,
+                amount,
+                "Thanh toan phat thu vien #" + fineId,
+                request));
+    }
+
+    @PostMapping("/vnpay/borrow/create")
+    public ResponseEntity<?> createBorrowPayment(
+            @RequestBody BorrowBookRequest body,
+            HttpSession session,
+            HttpServletRequest request) {
+        Users user = (Users) session.getAttribute("USER_LOGIN");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(err("Chưa đăng nhập"));
+        }
+        if (body == null) {
+            return ResponseEntity.badRequest().body(err("Thiếu thông tin mượn sách"));
+        }
+        requireVnpayConfiguration();
+
+        List<Long> bookIds = body.getBookIds();
+        if (bookIds == null || bookIds.isEmpty()) {
+            if (body.getBookId() == null) {
+                return ResponseEntity.badRequest().body(err("Thiếu bookId"));
+            }
+            bookIds = List.of(body.getBookId());
+        }
+        int borrowDays = body.getBorrowDays() == null ? 14 : body.getBorrowDays();
+        BorrowTickets ticket = borrowTicketService.createOnlineBorrow(
+                user.getUserId(), bookIds, borrowDays);
+
+        String txnRef = "B" + ticket.getTicketId() + "_" + VNPayUtil.randomTxnRef();
+        Map<String, Object> out = buildPaymentResponse(
+                txnRef,
+                ticket.getDepositAmount(),
+                "Thanh toan phi muon sach #" + ticket.getTicketId(),
+                request);
+        out.put("ticketId", ticket.getTicketId());
+        out.put("dueDate", ticket.getDueDate());
+        return ResponseEntity.status(HttpStatus.CREATED).body(out);
+    }
+
+    private Map<String, Object> buildPaymentResponse(
+            String txnRef,
+            BigDecimal amount,
+            String orderInfo,
+            HttpServletRequest request) {
+        requireVnpayConfiguration();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
 
@@ -115,7 +166,7 @@ public class PaymentController {
                 String.valueOf(amount.multiply(BigDecimal.valueOf(100)).longValue()));
         params.put("vnp_CurrCode", "VND");
         params.put("vnp_TxnRef", txnRef);
-        params.put("vnp_OrderInfo", "Thanh toan phat thu vien #" + fineId);
+        params.put("vnp_OrderInfo", orderInfo);
         params.put("vnp_OrderType", "other");
         params.put("vnp_Locale", "vn");
         params.put("vnp_ReturnUrl", vnp.getReturnUrl());
@@ -131,7 +182,7 @@ public class PaymentController {
         Map<String, Object> out = new HashMap<>();
         out.put("payUrl", payUrl);
         out.put("txnRef", txnRef);
-        return ResponseEntity.ok(out);
+        return out;
     }
 
     @GetMapping("/vnpay/return")
@@ -152,29 +203,36 @@ public class PaymentController {
         boolean success = validSig && "00".equals(responseCode)
                 && (transactionStatus == null || "00".equals(transactionStatus))
                 && paymentAmountMatches(txnRef, returnedAmount);
+        boolean borrowPayment = txnRef.startsWith("B");
 
         String status;
         if (!validSig) {
             status = "invalid";
         } else if (success) {
-            status = "success";
-            markFinePaid(txnRef);
+            status = markPaymentPaid(txnRef) ? "success" : "failed";
         } else {
             status = "failed";
+            if (validSig && borrowPayment) {
+                cancelBorrowPayment(txnRef);
+            }
         }
 
         String redirect = vnp.getFrontendResultUrl()
                 + "?status=" + status
                 + "&code=" + enc(responseCode == null ? "" : responseCode)
                 + "&txnRef=" + enc(txnRef)
-                + "&amount=" + enc(fields.getOrDefault("vnp_Amount", ""));
+                + "&amount=" + enc(fields.getOrDefault("vnp_Amount", ""))
+                + "&paymentType=" + (borrowPayment ? "borrow" : "fine");
         response.sendRedirect(redirect);
     }
 
-    // Marks the fine referenced by the txnRef ("<fineId>_<rand>") as Paid.
-    private void markFinePaid(String txnRef) {
+    private boolean markPaymentPaid(String txnRef) {
         try {
-            long fineId = Long.parseLong(txnRef.split("_")[0]);
+            if (txnRef.startsWith("B")) {
+                borrowTicketService.completeOnlinePayment(parseTypedId(txnRef));
+                return true;
+            }
+            long fineId = parseFineId(txnRef);
             Optional<Fines> opt = fineService.getFineById(fineId);
             if (opt.isPresent()) {
                 Fines fine = opt.get();
@@ -182,16 +240,36 @@ public class PaymentController {
                     fine.setPaidStatus("Paid");
                     fineService.updateFine(fineId, fine);
                 }
+                return true;
             }
         } catch (Exception ignored) {
-            // Bad txnRef — nothing to update; the browser still lands on the result page.
+            return false;
+        }
+        return false;
+    }
+
+    private void cancelBorrowPayment(String txnRef) {
+        try {
+            borrowTicketService.cancelOnlinePayment(parseTypedId(txnRef));
+        } catch (RuntimeException ignored) {
+            // Callback can be retried; cancellation is idempotent.
         }
     }
 
     private boolean paymentAmountMatches(String txnRef, String returnedAmount) {
         try {
-            long fineId = Long.parseLong(txnRef.split("_")[0]);
             long amount = Long.parseLong(returnedAmount);
+
+            if (txnRef.startsWith("B")) {
+                return borrowTicketService.getBorrowTicketById(parseTypedId(txnRef))
+                        .map(ticket -> ticket.getDepositAmount() != null
+                                && ("PendingPayment".equalsIgnoreCase(ticket.getStatus())
+                                    || "Paid".equalsIgnoreCase(ticket.getDepositPaidStatus()))
+                                && ticket.getDepositAmount().multiply(BigDecimal.valueOf(100)).longValue() == amount)
+                        .orElse(false);
+            }
+
+            long fineId = parseFineId(txnRef);
 
             return fineService.getFineById(fineId)
                     .map(fine -> fine.getAmount() != null
@@ -202,6 +280,23 @@ public class PaymentController {
 
         } catch (RuntimeException ex) {
             return false;
+        }
+    }
+
+    private long parseTypedId(String txnRef) {
+        return Long.parseLong(txnRef.substring(1).split("_")[0]);
+    }
+
+    private long parseFineId(String txnRef) {
+        return txnRef.startsWith("F")
+                ? parseTypedId(txnRef)
+                : Long.parseLong(txnRef.split("_")[0]);
+    }
+
+    private void requireVnpayConfiguration() {
+        if (isBlank(vnp.getTmnCode()) || isBlank(vnp.getHashSecret()) || isBlank(vnp.getPayUrl())
+                || isBlank(vnp.getReturnUrl())) {
+            throw new IllegalArgumentException("VNPay chưa được cấu hình. Vui lòng liên hệ quản trị viên.");
         }
     }
 

@@ -12,6 +12,7 @@ public class BorrowTicketRequest {
     private Date dueDate;
     private String note;
     private List<Long> copyIds;
+    private Boolean paymentConfirmed;
     
     public Long getUserId() {
         return userId;
@@ -55,6 +56,8 @@ public class BorrowTicketRequest {
     public void setCopyIds(List<Long> copyIds) {
         this.copyIds = copyIds;
     }
+    public Boolean getPaymentConfirmed() { return paymentConfirmed; }
+    public void setPaymentConfirmed(Boolean paymentConfirmed) { this.paymentConfirmed = paymentConfirmed; }
 
     
 }

@@ -81,7 +81,35 @@
 .lh-book-detail__actions {
   display: flex;
   align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
   margin-top: 20px;
+}
+
+.lh-book-detail__duration {
+  display: grid;
+  gap: 4px;
+  color: var(--lh-ink-soft);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.lh-book-detail__duration-input {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.lh-book-detail__duration input {
+  width: 72px;
+  padding: 8px 10px;
+  border: 1px solid var(--lh-border);
+  border-radius: var(--lh-radius-sm);
+  font: inherit;
+}
+
+.lh-book-detail__duration small {
+  color: var(--lh-forest);
 }
 
 .lh-book-detail__actions .lh-btn {

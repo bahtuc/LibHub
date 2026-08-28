@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -212,6 +213,24 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
 
     @Override
     public BorrowTickets borrowBooks(long userId, List<Long> bookIds) {
+        return borrowBooks(userId, bookIds, 14);
+    }
+
+    @Override
+    public BorrowTickets borrowBooks(long userId, List<Long> bookIds, int borrowDays) {
+        return createBorrowFromBooks(userId, bookIds, borrowDays, true);
+    }
+
+    @Override
+    public BorrowTickets createOnlineBorrow(long userId, List<Long> bookIds, int borrowDays) {
+        expirePendingOnlinePayments();
+        return createBorrowFromBooks(userId, bookIds, borrowDays, false);
+    }
+
+    private BorrowTickets createBorrowFromBooks(long userId, List<Long> bookIds, int borrowDays, boolean paid) {
+        if (borrowDays < 1 || borrowDays > 30) {
+            throw new IllegalArgumentException("Số ngày mượn phải từ 1 đến 30 ngày");
+        }
         if (bookIds == null || bookIds.isEmpty()) {
             throw new IllegalArgumentException("Book list is required");
         }
@@ -241,9 +260,10 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
                 null,
                 null,
                 Date.valueOf(today),
-                Date.valueOf(today.plusDays(14)),
+                Date.valueOf(today.plusDays(borrowDays)),
                 null,
-                copyIds);
+                copyIds,
+                paid);
     }
 
     @Override
@@ -252,6 +272,9 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
                 || request.getDueDate() == null
                 || request.getCopyIds() == null || request.getCopyIds().isEmpty()) {
             throw new IllegalArgumentException("A member or guest, due date, and at least one copy are required");
+        }
+        if (!Boolean.TRUE.equals(request.getPaymentConfirmed())) {
+            throw new IllegalArgumentException("Phải xác nhận đã thu phí mượn trước khi tạo phiếu");
         }
         Set<Long> uniqueCopyIds = new LinkedHashSet<>(request.getCopyIds());
         if (uniqueCopyIds.size() != request.getCopyIds().size() || uniqueCopyIds.contains(null)) {
@@ -266,7 +289,30 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
                         : new Date(request.getBorrowDate().getTime()),
                 new Date(request.getDueDate().getTime()),
                 request.getNote(),
-                List.copyOf(uniqueCopyIds));
+                List.copyOf(uniqueCopyIds),
+                true);
+    }
+
+    @Override
+    public BorrowTickets completeOnlinePayment(long ticketId) {
+        BorrowTickets ticket = requirePendingOnlineTicket(ticketId);
+        ticket.setStatus("Borrowed");
+        ticket.setDepositPaidStatus("Paid");
+        updatePendingCopies(ticketId, "Borrowed", "Borrowed");
+        return borrowTicketRepo.save(ticket);
+    }
+
+    @Override
+    public BorrowTickets cancelOnlinePayment(long ticketId) {
+        BorrowTickets ticket = borrowTicketRepo.findByIdForUpdate(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu mượn #" + ticketId));
+        if (!"PendingPayment".equalsIgnoreCase(ticket.getStatus())) {
+            return ticket;
+        }
+        ticket.setStatus("Cancelled");
+        ticket.setDepositPaidStatus("Unpaid");
+        updatePendingCopies(ticketId, "Cancelled", "Available");
+        return borrowTicketRepo.save(ticket);
     }
 
     @Override
@@ -305,6 +351,18 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
             Date dueDate,
             String note,
             List<Long> copyIds) {
+        return createTicketWithCopies(userId, guestName, guestPhone, borrowDate, dueDate, note, copyIds, true);
+    }
+
+    private BorrowTickets createTicketWithCopies(
+            Long userId,
+            String guestName,
+            String guestPhone,
+            Date borrowDate,
+            Date dueDate,
+            String note,
+            List<Long> copyIds,
+            boolean paid) {
         if (!hasValidBorrower(userId, guestName)) {
             throw new IllegalArgumentException("Choose an active member or enter a guest name");
         }
@@ -315,8 +373,8 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
             requireActiveUser(userId);
             ensureWithinBorrowLimit(userId, copyIds.size());
         }
-        if (dueDate.before(borrowDate)) {
-            throw new IllegalArgumentException("Due date cannot be before borrow date");
+        if (!dueDate.after(borrowDate)) {
+            throw new IllegalArgumentException("Hạn trả phải sau ngày mượn ít nhất 1 ngày");
         }
 
         List<BookCopies> copies = copyIds.stream().map(copyId -> {
@@ -342,24 +400,58 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
         ticket.setGuestPhone(userId == null ? guestPhone : null);
         ticket.setBorrowDate(borrowDate);
         ticket.setDueDate(dueDate);
-        ticket.setStatus("Borrowed");
+        String loanStatus = paid ? "Borrowed" : "PendingPayment";
+        ticket.setStatus(loanStatus);
         ticket.setNote(note);
         ticket.setCreatedAt(new Timestamp(System.currentTimeMillis()));
         long borrowDays = ChronoUnit.DAYS.between(borrowDate.toLocalDate(), dueDate.toLocalDate());
         ticket.setDepositAmount(BigDecimal.valueOf(borrowDays).multiply(BigDecimal.valueOf(5_000)));
-        ticket.setDepositPaidStatus("Paid");
+        ticket.setDepositPaidStatus(paid ? "Paid" : "Unpaid");
         ticket = borrowTicketRepo.save(ticket);
 
         for (BookCopies copy : copies) {
             BorrowDetails detail = new BorrowDetails();
             detail.setTicketId(ticket.getTicketId());
             detail.setCopyId(copy.getCopyId());
-            detail.setBorrowStatus("Borrowed");
+            detail.setBorrowStatus(loanStatus);
             borrowDetailRepo.save(detail);
-            copy.setStatus("Borrowed");
+            copy.setStatus(loanStatus);
             bookCopyRepo.save(copy);
         }
         return ticket;
+    }
+
+    private BorrowTickets requirePendingOnlineTicket(long ticketId) {
+        BorrowTickets ticket = borrowTicketRepo.findByIdForUpdate(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu mượn #" + ticketId));
+        if ("Paid".equalsIgnoreCase(ticket.getDepositPaidStatus())) {
+            return ticket;
+        }
+        if (!"PendingPayment".equalsIgnoreCase(ticket.getStatus())) {
+            throw new IllegalArgumentException("Phiếu mượn không ở trạng thái chờ thanh toán");
+        }
+        return ticket;
+    }
+
+    private void updatePendingCopies(long ticketId, String detailStatus, String copyStatus) {
+        for (BorrowDetails detail : borrowDetailRepo.findByTicketId(ticketId)) {
+            detail.setBorrowStatus(detailStatus);
+            borrowDetailRepo.save(detail);
+            bookCopyRepo.findByIdForUpdate(detail.getCopyId()).ifPresent(copy -> {
+                copy.setStatus(copyStatus);
+                bookCopyRepo.save(copy);
+            });
+        }
+    }
+
+    private void expirePendingOnlinePayments() {
+        Timestamp cutoff = Timestamp.from(Instant.now().minusSeconds(20 * 60));
+        List<Long> expiredIds = borrowTicketRepo
+                .findByStatusIgnoreCaseAndCreatedAtBefore("PendingPayment", cutoff)
+                .stream()
+                .map(BorrowTickets::getTicketId)
+                .toList();
+        expiredIds.forEach(this::cancelOnlinePayment);
     }
 
     private void ensureWithinBorrowLimit(long userId, int requestedCopies) {

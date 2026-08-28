@@ -13,6 +13,7 @@ const STATUS_BADGE = {
   overdue: { tone: "danger", text: "Quá hạn" },
   returned: { tone: "neutral", text: "Đã trả" },
   cancelled: { tone: "neutral", text: "Đã hủy" },
+  payment_pending: { tone: "warning", text: "Chờ VNPay" },
 };
 
 const CONDITION_OPTIONS = [
@@ -22,7 +23,7 @@ const CONDITION_OPTIONS = [
 ];
 
 function pendingItems(ticket) {
-  if (["returned", "cancelled"].includes(getTicketStatus(ticket))) return [];
+  if (["returned", "cancelled", "payment_pending"].includes(getTicketStatus(ticket))) return [];
   return (ticket.items ?? []).filter((item) => {
     const status = String(item.borrowStatus || "").toLowerCase();
     return !item.returnedDate && !["returned", "lost", "cancelled"].includes(status);

@@ -288,14 +288,13 @@ class BorrowTicketServiceImplTest {
 
         request.setUserId(3L);
         request.setBorrowDate(
-                Date.valueOf("2026-08-08"));
-        request.setBorrowDate(
                 Date.valueOf("2026-08-01"));
 
         request.setDueDate(
                 Date.valueOf("2026-08-22"));
         request.setCopyIds(
                 List.of(12L));
+        request.setPaymentConfirmed(true);
 
         when(userRepo.findByIdForUpdate(3L))
                 .thenReturn(Optional.of(user));
@@ -357,6 +356,7 @@ class BorrowTicketServiceImplTest {
                 Date.valueOf("2026-08-22"));
         request.setCopyIds(
                 List.of(12L));
+        request.setPaymentConfirmed(true);
 
         when(copyRepo.findByIdForUpdate(12L))
                 .thenReturn(Optional.of(copy));
@@ -402,6 +402,7 @@ class BorrowTicketServiceImplTest {
         request.setGuestName("Guest");
         request.setDueDate(Date.valueOf("2026-08-22"));
         request.setCopyIds(List.of(1L, 2L, 3L, 4L, 5L, 6L));
+        request.setPaymentConfirmed(true);
 
         IllegalArgumentException error = assertThrows(
                 IllegalArgumentException.class,
@@ -410,6 +411,144 @@ class BorrowTicketServiceImplTest {
         assertTrue(error.getMessage().contains("tối đa 5 cuốn"));
         verifyNoInteractions(copyRepo);
         verifyNoInteractions(Repo);
+    }
+
+    @Test
+    void librarianCannotCreateTicketBeforeBorrowFeeIsConfirmed() {
+        BorrowTicketRequest request = new BorrowTicketRequest();
+        request.setUserId(3L);
+        request.setBorrowDate(Date.valueOf("2026-08-01"));
+        request.setDueDate(Date.valueOf("2026-08-15"));
+        request.setCopyIds(List.of(12L));
+
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.createBorrowTicketWithCopies(request));
+
+        assertTrue(error.getMessage().contains("xác nhận đã thu phí mượn"));
+        verifyNoInteractions(copyRepo);
+        verifyNoInteractions(Repo);
+    }
+
+    @Test
+    void memberCanChooseBorrowDaysAndFeeMatchesDuration() {
+        Users user = new Users();
+        user.setUserId(3L);
+        user.setStatus("ACTIVE");
+
+        Books book = new Books();
+        book.setBookId(9L);
+        book.setTitle("Dế Mèn phiêu lưu ký");
+
+        BookCopies copy = new BookCopies();
+        copy.setCopyId(12L);
+        copy.setBookId(9L);
+        copy.setStatus("Available");
+
+        when(userRepo.findByIdForUpdate(3L)).thenReturn(Optional.of(user));
+        when(bookRepo.findById(9L)).thenReturn(Optional.of(book));
+        when(detailRepo.existsActiveBorrow(3L, 9L)).thenReturn(false);
+        when(copyRepo.findFirstByBookIdAndStatusIgnoreCaseOrderByCopyIdAsc(9L, "Available"))
+                .thenReturn(Optional.of(copy));
+        when(copyRepo.findByIdForUpdate(12L)).thenReturn(Optional.of(copy));
+        when(Repo.save(any(BorrowTickets.class))).thenAnswer(invocation -> {
+            BorrowTickets ticket = invocation.getArgument(0);
+            ticket.setTicketId(20L);
+            return ticket;
+        });
+
+        BorrowTickets ticket = service.borrowBooks(3L, List.of(9L), 7);
+
+        assertEquals(Date.valueOf(LocalDate.now().plusDays(7)), ticket.getDueDate());
+        assertEquals(new BigDecimal("35000"), ticket.getDepositAmount());
+        assertEquals("Paid", ticket.getDepositPaidStatus());
+    }
+
+    @Test
+    void memberCannotChooseBorrowDurationOutsideAllowedRange() {
+        IllegalArgumentException tooShort = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.borrowBooks(3L, List.of(9L), 0));
+        IllegalArgumentException tooLong = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.borrowBooks(3L, List.of(9L), 31));
+
+        assertTrue(tooShort.getMessage().contains("1 đến 30"));
+        assertTrue(tooLong.getMessage().contains("1 đến 30"));
+        verifyNoInteractions(userRepo, bookRepo, copyRepo, Repo);
+    }
+
+    @Test
+    void onlineBorrowRemainsReservedUntilVnpayCompletes() {
+        Users user = new Users();
+        user.setUserId(3L);
+        user.setStatus("ACTIVE");
+        Books book = new Books();
+        book.setBookId(9L);
+        book.setTitle("Sách online");
+        BookCopies copy = new BookCopies();
+        copy.setCopyId(12L);
+        copy.setBookId(9L);
+        copy.setStatus("Available");
+
+        when(userRepo.findByIdForUpdate(3L)).thenReturn(Optional.of(user));
+        when(bookRepo.findById(9L)).thenReturn(Optional.of(book));
+        when(detailRepo.existsActiveBorrow(3L, 9L)).thenReturn(false);
+        when(copyRepo.findFirstByBookIdAndStatusIgnoreCaseOrderByCopyIdAsc(9L, "Available"))
+                .thenReturn(Optional.of(copy));
+        when(copyRepo.findByIdForUpdate(12L)).thenReturn(Optional.of(copy));
+        when(Repo.save(any(BorrowTickets.class))).thenAnswer(invocation -> {
+            BorrowTickets ticket = invocation.getArgument(0);
+            ticket.setTicketId(20L);
+            return ticket;
+        });
+
+        BorrowTickets ticket = service.createOnlineBorrow(3L, List.of(9L), 7);
+
+        assertEquals("PendingPayment", ticket.getStatus());
+        assertEquals("Unpaid", ticket.getDepositPaidStatus());
+        assertEquals(new BigDecimal("35000"), ticket.getDepositAmount());
+        assertEquals("PendingPayment", copy.getStatus());
+
+        BorrowDetails detail = new BorrowDetails();
+        detail.setTicketId(20L);
+        detail.setCopyId(12L);
+        detail.setBorrowStatus("PendingPayment");
+        when(Repo.findByIdForUpdate(20L)).thenReturn(Optional.of(ticket));
+        when(detailRepo.findByTicketId(20L)).thenReturn(List.of(detail));
+
+        BorrowTickets paidTicket = service.completeOnlinePayment(20L);
+
+        assertEquals("Borrowed", paidTicket.getStatus());
+        assertEquals("Paid", paidTicket.getDepositPaidStatus());
+        assertEquals("Borrowed", detail.getBorrowStatus());
+        assertEquals("Borrowed", copy.getStatus());
+    }
+
+    @Test
+    void failedOnlinePaymentCancelsTicketAndReleasesCopy() {
+        BorrowTickets ticket = ticket();
+        ticket.setTicketId(20L);
+        ticket.setStatus("PendingPayment");
+        ticket.setDepositPaidStatus("Unpaid");
+        BorrowDetails detail = new BorrowDetails();
+        detail.setTicketId(20L);
+        detail.setCopyId(12L);
+        detail.setBorrowStatus("PendingPayment");
+        BookCopies copy = new BookCopies();
+        copy.setCopyId(12L);
+        copy.setStatus("PendingPayment");
+
+        when(Repo.findByIdForUpdate(20L)).thenReturn(Optional.of(ticket));
+        when(detailRepo.findByTicketId(20L)).thenReturn(List.of(detail));
+        when(copyRepo.findByIdForUpdate(12L)).thenReturn(Optional.of(copy));
+        when(Repo.save(ticket)).thenReturn(ticket);
+
+        BorrowTickets cancelled = service.cancelOnlinePayment(20L);
+
+        assertEquals("Cancelled", cancelled.getStatus());
+        assertEquals("Cancelled", detail.getBorrowStatus());
+        assertEquals("Available", copy.getStatus());
     }
 
     @Test

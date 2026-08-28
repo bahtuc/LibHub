@@ -1,47 +1,27 @@
+import { Link } from "react-router-dom";
 import Icon from "./Icon";
+import { useLanguage } from "../i18n/LanguageContext";
 import "../styles/QuickAccess.css";
 
 const ITEMS = [
-  {
-    icon: "book-open",
-    title: "Sách nổi bật",
-    desc: "Được mượn nhiều nhất tháng này",
-    href: "#featured-books",
-  },
-  {
-    icon: "layers",
-    title: "Thể loại",
-    desc: "24 danh mục để khám phá",
-    href: "#categories",
-  },
-  {
-    icon: "users",
-    title: "Tác giả",
-    desc: "Tra theo tên tác giả yêu thích",
-    href: "#",
-  },
-  {
-    icon: "check-circle",
-    title: "Phiếu mượn của tôi",
-    desc: "Theo dõi hạn trả & gia hạn",
-    href: "#",
-  },
+  { index: "01", icon: "search", title: "quick.search.title", desc: "quick.search.desc", to: "/library" },
+  { index: "02", icon: "compass", title: "quick.genres.title", desc: "quick.genres.desc", to: "/genres" },
+  { index: "03", icon: "layers", title: "quick.loans.title", desc: "quick.loans.desc", to: "/account" },
+  { index: "04", icon: "landmark", title: "quick.fines.title", desc: "quick.fines.desc", to: "/fines" },
 ];
 
 export default function QuickAccess() {
+  const { t } = useLanguage();
   return (
-    <section className="lh-quick lh-section--tight">
+    <section className="lh-quick" aria-label={t("quick.label")}>
       <div className="lh-container lh-quick__grid">
         {ITEMS.map((item) => (
-          <a key={item.title} href={item.href} className="lh-quick__card">
-            <span className="lh-quick__icon">
-              <Icon name={item.icon} size={20} />
-            </span>
-            <span>
-              <span className="lh-quick__title">{item.title}</span>
-              <span className="lh-quick__desc">{item.desc}</span>
-            </span>
-          </a>
+          <Link key={item.title} to={item.to} className="lh-quick__card">
+            <span className="lh-quick__index">{item.index}</span>
+            <span className="lh-quick__icon"><Icon name={item.icon} size={20} /></span>
+            <span className="lh-quick__text"><strong>{t(item.title)}</strong><small>{t(item.desc)}</small></span>
+            <Icon name="arrow" size={16} className="lh-quick__arrow" />
+          </Link>
         ))}
       </div>
     </section>

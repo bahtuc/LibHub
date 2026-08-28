@@ -12,11 +12,11 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Autowired
     private LoginInterceptor loginInterceptor;
-    private final String[] allowedOrigins;
+    private final String[] allowedOriginPatterns;
 
-    public WebConfig(@Value("${library.cors.allowed-origins:http://localhost:5173,http://127.0.0.1:5173}")
-                     String allowedOrigins) {
-        this.allowedOrigins = allowedOrigins.split("\\s*,\\s*");
+    public WebConfig(@Value("${library.cors.allowed-origin-patterns:http://localhost:*,http://127.0.0.1:*}")
+                     String allowedOriginPatterns) {
+        this.allowedOriginPatterns = allowedOriginPatterns.split("\\s*,\\s*");
     }
 
     // Cho phép SPA (Vite) gọi API kèm cookie session.
@@ -24,7 +24,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-                .allowedOrigins(allowedOrigins)
+                .allowedOriginPatterns(allowedOriginPatterns)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true)
@@ -38,7 +38,9 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/api/**")   // chặn tất cả API
                 .excludePathPatterns(
                         "/api/auth/login",
-                        "/api/auth/register"
+                        "/api/auth/2fa/verify",
+                        "/api/auth/register",
+                        "/api/chat/recommendations"
                 );
     }
 }

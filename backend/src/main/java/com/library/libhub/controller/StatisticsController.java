@@ -39,6 +39,12 @@ public class StatisticsController {
         return ResponseEntity.ok(statisticsService.mostBorrowed(limit));
     }
 
+    @GetMapping("/least-borrowed")
+    public ResponseEntity<List<Map<String, Object>>> leastBorrowed(
+            @RequestParam(defaultValue = "10") int limit) {
+        return ResponseEntity.ok(statisticsService.leastBorrowed(limit));
+    }
+
     @GetMapping("/monthly-summary")
     public ResponseEntity<Map<String, Object>> monthlySummary(
             @RequestParam(required = false) String month) {

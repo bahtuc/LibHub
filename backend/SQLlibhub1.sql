@@ -216,10 +216,12 @@ CREATE TABLE BorrowTickets
     created_at DATETIME2
                                              DEFAULT GETDATE(),
 
-    -- Tiền cọc thu tại quầy: 5.000đ × số ngày mượn.
+    -- Online: PendingPayment/Unpaid cho tới khi VNPay callback thành công.
+    -- Tại quầy: chỉ thủ thư xác nhận tiền mặt và tạo phiếu Paid.
+    -- Phí mượn: 5.000đ × số ngày mượn.
     deposit_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
 
-    deposit_paid_status VARCHAR(30) NOT NULL DEFAULT 'Paid',
+    deposit_paid_status VARCHAR(30) NOT NULL DEFAULT 'Unpaid',
 
     CONSTRAINT FK_BorrowTickets_Users
         FOREIGN KEY(user_id)
@@ -658,10 +660,10 @@ GO
 -- BORROW TICKETS
 -- ============================================
 INSERT INTO BorrowTickets
-(user_id,borrow_date,due_date,status,note)
+(user_id,borrow_date,due_date,status,note,deposit_amount,deposit_paid_status)
 VALUES
-    (4,'2026-07-20','2026-08-03',N'Đang mượn',NULL),
-    (5,'2026-07-10','2026-07-24',N'Đã trả',NULL);
+    (4,'2026-07-20','2026-08-03','Borrowed',NULL,70000,'Paid'),
+    (5,'2026-07-10','2026-07-24','Returned',NULL,70000,'Paid');
 GO
 
 -- ============================================
@@ -670,8 +672,8 @@ GO
 INSERT INTO BorrowDetails
 (ticket_id,copy_id,borrow_status)
 VALUES
-    (1,2,N'Đang mượn'),
-    (2,3,N'Đã trả');
+    (1,2,'Borrowed'),
+    (2,3,'Returned');
 GO
 
 -- ============================================
@@ -689,7 +691,7 @@ GO
 INSERT INTO ReturnDetails
 (return_id,copy_id,condition_book)
 VALUES
-    (1,3,N'Tốt');
+(1,3,'Good');
 GO
 
 -- ============================================
@@ -698,7 +700,7 @@ GO
 INSERT INTO Fines
 (return_detail_id,amount,reason,paid_status)
 VALUES
-    (1,0,N'Không có',N'Đã thanh toán');
+(1,0,N'Không có','Paid');
 GO
 
 -- ================================================================
@@ -1099,6 +1101,297 @@ VALUES
     (N'Sức Mạnh Của Thói Quen', '9786040001993', 2024, N'Sức Mạnh Của Thói Quen là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 403 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 403, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Charles Duhigg'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
     (N'7 Nguyên Tắc Bất Biến Để Thành Công', '9786040002006', 2000, N'7 Nguyên Tắc Bất Biến Để Thành Công là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 440 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 440, (SELECT category_id FROM Categories WHERE category_name = N'Kinh doanh'), (SELECT author_id FROM Authors WHERE author_name = N'Napoleon Hill'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Alphabooks'), 0, 0);
 GO
+
+-- ============================================
+-- 10.1) VIET LAI TOAN BO MO TA SACH
+-- Mo ta duoc tao theo noi dung cua tung nhom sach, dong thoi dua vao
+-- ten sach, tac gia, nam xuat ban va so trang de moi ban ghi co thong tin rieng.
+-- ============================================
+UPDATE b
+SET b.description =
+    CASE c.category_name
+        WHEN N'Tiểu thuyết' THEN CONCAT(
+            N'“', b.title, N'” của ', COALESCE(a.author_name, N'tác giả khuyết danh'),
+            N' mở ra một thế giới hư cấu giàu hình ảnh, nơi số phận nhân vật, những lựa chọn khó khăn và các biến chuyển nội tâm cùng dẫn dắt câu chuyện. Tác phẩm phù hợp với độc giả muốn thưởng thức một hành trình dài, đồng thời suy ngẫm về con người và đời sống.'
+        )
+        WHEN N'Văn học Việt Nam' THEN CONCAT(
+            N'“', b.title, N'” là tác phẩm của ', COALESCE(a.author_name, N'một tác giả Việt Nam'),
+            N', tái hiện con người và đời sống Việt Nam qua giọng văn giàu cảm xúc. Những chi tiết gần gũi, bối cảnh đậm bản sắc và chiều sâu nhân văn giúp cuốn sách để lại dư âm về gia đình, quê hương và những đổi thay của thời đại.'
+        )
+        WHEN N'Văn học kinh điển' THEN CONCAT(
+            N'“', b.title, N'” của ', COALESCE(a.author_name, N'tác giả khuyết danh'),
+            N' là một tác phẩm đã vượt qua giới hạn của thời gian nhờ những nhân vật đáng nhớ và các vấn đề nhân sinh vẫn còn nguyên sức gợi. Cuốn sách mời người đọc bước vào bối cảnh văn hóa đặc trưng, đồng thời khám phá tình yêu, danh dự, tự do và phẩm giá con người.'
+        )
+        WHEN N'Fantasy' THEN CONCAT(
+            N'“', b.title, N'” đưa người đọc vào một thế giới kỳ ảo được xây dựng công phu, nơi phép thuật, truyền thuyết và những hiểm nguy chưa biết đan xen. Qua hành trình của các nhân vật, ', COALESCE(a.author_name, N'tác giả'),
+            N' kể một câu chuyện về lòng can đảm, tình bạn và cái giá của quyền lực.'
+        )
+        WHEN N'Trinh thám - Kinh dị' THEN CONCAT(
+            N'“', b.title, N'” là một câu chuyện trinh thám cuốn hút của ', COALESCE(a.author_name, N'tác giả khuyết danh'),
+            N'. Các dấu vết tưởng như rời rạc, động cơ bị che giấu và những cú chuyển hướng liên tục buộc người đọc phải quan sát kỹ, suy luận và đặt lại mọi giả thuyết cho đến trang cuối.'
+        )
+        WHEN N'Hồi ký' THEN CONCAT(
+            N'Trong “', b.title, N'”, ', COALESCE(a.author_name, N'tác giả'),
+            N' nhìn lại những trải nghiệm đã định hình cuộc đời mình bằng giọng kể chân thành và nhiều suy tư. Cuốn sách không chỉ ghi lại ký ức cá nhân mà còn mở ra một lát cắt về con người, hoàn cảnh lịch sử và sức mạnh giúp ta đi qua nghịch cảnh.'
+        )
+        WHEN N'Tâm lý học' THEN CONCAT(
+            N'“', b.title, N'” của ', COALESCE(a.author_name, N'tác giả'),
+            N' khám phá cách con người suy nghĩ, cảm nhận và đưa ra quyết định. Thông qua các khái niệm tâm lý cùng ví dụ gần gũi, cuốn sách giúp người đọc nhận diện những khuôn mẫu vô thức, hiểu rõ bản thân và xây dựng cách ứng xử tỉnh táo hơn.'
+        )
+        WHEN N'Kỹ năng sống' THEN CONCAT(
+            N'“', b.title, N'” của ', COALESCE(a.author_name, N'tác giả'),
+            N' cung cấp những góc nhìn và phương pháp có thể áp dụng vào học tập, công việc và đời sống hằng ngày. Nội dung hướng người đọc từ việc hiểu vấn đề đến hình thành thói quen hành động, quản lý thời gian và phát triển bản thân một cách bền vững.'
+        )
+        WHEN N'Kinh doanh' THEN CONCAT(
+            N'“', b.title, N'” trình bày tư duy kinh doanh của ', COALESCE(a.author_name, N'tác giả'),
+            N' qua các bài học về chiến lược, tài chính, lãnh đạo và xây dựng giá trị. Cuốn sách kết hợp nguyên tắc nền tảng với tình huống thực tế, phù hợp cho người khởi nghiệp, nhà quản lý và bất kỳ ai muốn hiểu cách một tổ chức phát triển.'
+        )
+        WHEN N'Công nghệ' THEN CONCAT(
+            N'“', b.title, N'” của ', COALESCE(a.author_name, N'tác giả'),
+            N' hệ thống hóa các nguyên lý và kỹ thuật quan trọng trong lĩnh vực công nghệ. Từ nền tảng lý thuyết đến cách giải quyết vấn đề thực tế, cuốn sách giúp người đọc xây dựng tư duy kỹ thuật, viết giải pháp rõ ràng và làm việc hiệu quả với các hệ thống hiện đại.'
+        )
+        WHEN N'Khoa học' THEN CONCAT(
+            N'“', b.title, N'” dẫn dắt người đọc khám phá các quy luật của tự nhiên bằng lối giải thích mạch lạc và giàu liên tưởng. ', COALESCE(a.author_name, N'Tác giả'),
+            N' kết nối những phát hiện khoa học với các câu hỏi lớn về sự sống, vũ trụ và vị trí của con người trong thế giới.'
+        )
+        WHEN N'Khoa học viễn tưởng' THEN CONCAT(
+            N'“', b.title, N'” của ', COALESCE(a.author_name, N'tác giả'),
+            N' dựng nên một tương lai nơi khoa học và công nghệ làm thay đổi sâu sắc xã hội loài người. Bên dưới những ý tưởng táo bạo là các câu hỏi về đạo đức, bản sắc, quyền lực và trách nhiệm của con người trước chính những thứ mình tạo ra.'
+        )
+        WHEN N'Triết học' THEN CONCAT(
+            N'“', b.title, N'” giới thiệu những suy tưởng của ', COALESCE(a.author_name, N'tác giả'),
+            N' về tri thức, đạo đức, tự do và ý nghĩa tồn tại. Cuốn sách khuyến khích người đọc chất vấn các giả định quen thuộc, nhìn một vấn đề từ nhiều phía và hình thành lập luận độc lập.'
+        )
+        WHEN N'Phật giáo' THEN CONCAT(
+            N'“', b.title, N'” tiếp cận đời sống tinh thần qua các câu chuyện, tư tưởng và thực hành có chiều sâu. Với sự dẫn dắt của ', COALESCE(a.author_name, N'tác giả'),
+            N', người đọc có dịp suy ngẫm về lòng từ bi, đức tin, sự bình an và cách sống có ý nghĩa giữa những biến động thường ngày.'
+        )
+        ELSE CONCAT(
+            N'“', b.title, N'” của ', COALESCE(a.author_name, N'tác giả khuyết danh'),
+            N' mang đến một góc nhìn có hệ thống về chủ đề mà tác phẩm theo đuổi. Nội dung được trình bày để người đọc vừa nắm được những ý chính, vừa có thêm chất liệu suy ngẫm và vận dụng trong học tập hoặc đời sống.'
+        )
+    END
+    + CONCAT(
+        N' Ấn bản ', COALESCE(CONVERT(NVARCHAR(4), b.publish_year), N'không ghi năm'),
+        N' gồm ', COALESCE(CONVERT(NVARCHAR(10), b.pages), N'nhiều'), N' trang',
+        CASE WHEN p.publisher_name IS NOT NULL THEN CONCAT(N', do ', p.publisher_name, N' phát hành.') ELSE N'.' END
+    )
+FROM Books b
+LEFT JOIN Categories c ON c.category_id = b.category_id
+LEFT JOIN Authors a ON a.author_id = b.author_id
+LEFT JOIN Publishers p ON p.publisher_id = b.publisher_id;
+GO
+
+-- Mo ta bien tap rieng cho tung tac pham; co y bo qua ISBN cua "Sach mau".
+DECLARE @BookDescriptions TABLE (isbn VARCHAR(20) PRIMARY KEY, description NVARCHAR(MAX));
+INSERT INTO @BookDescriptions (isbn, description) VALUES
+('9786040000019', N'Chàng chăn cừu Santiago rời quê nhà để theo đuổi kho báu trong giấc mơ, rồi nhận ra hành trình lắng nghe trái tim mới là phần thưởng lớn nhất.'),
+('9786040000026', N'Dale Carnegie chỉ ra nghệ thuật giao tiếp bằng sự chân thành: biết lắng nghe, tôn trọng người khác và khơi dậy thiện chí thay vì tranh thắng trong mọi cuộc đối thoại.'),
+('9786040000033', N'Rosie Nguyễn trò chuyện thẳng thắn với người trẻ về học, đi, đọc và trải nghiệm, nhắc rằng tuổi xuân chỉ có giá trị khi ta chủ động sống và tự chịu trách nhiệm.'),
+('9786040000040', N'Những tản văn dí dỏm của Tony Buổi Sáng khuyến khích người trẻ rèn kỷ luật, mở rộng tầm mắt và bước khỏi vùng an toàn để trưởng thành bằng hành động.'),
+('9786040000057', N'Từ trải nghiệm sống sót trong trại tập trung, Viktor Frankl lý giải vì sao con người vẫn có thể lựa chọn thái độ và tìm thấy ý nghĩa ngay giữa đau khổ cùng cực.'),
+('9786040000064', N'Stephen Covey xây dựng bảy nguyên tắc phát triển từ bên trong, giúp người đọc sống chủ động, ưu tiên điều quan trọng và tạo dựng những mối quan hệ cùng thắng.'),
+('9786040000071', N'Daniel Kahneman khám phá hai hệ thống chi phối tư duy, qua đó giải thích những thiên kiến khiến con người phán đoán nhanh, sai lệch và thường quá tự tin.'),
+('9786040000088', N'Qua câu chuyện về hai người cha với hai quan niệm tiền bạc đối lập, Robert Kiyosaki giới thiệu tư duy tài sản, dòng tiền và giáo dục tài chính cá nhân.'),
+('9786040000095', N'James Clear chứng minh thay đổi nhỏ nhưng đều đặn có thể tạo kết quả lớn, đồng thời đưa ra hệ thống thiết kế môi trường và bản sắc để duy trì thói quen tốt.'),
+('9786040000101', N'Cal Newport bảo vệ năng lực tập trung sâu giữa thời đại xao nhãng và hướng dẫn cách tổ chức công việc để tạo ra giá trị cao trong thời gian hữu hạn.'),
+('9786040000118', N'Carol Dweck phân biệt tư duy cố định với tư duy phát triển, cho thấy cách niềm tin về năng lực ảnh hưởng đến việc học, thành tích và khả năng đứng dậy sau thất bại.'),
+('9786040000125', N'Morgan Housel kể những câu chuyện ngắn về lòng tham, rủi ro và sự đủ đầy, nhấn mạnh rằng thành công tài chính phụ thuộc vào hành vi hơn là kiến thức tính toán.'),
+('9786040000132', N'Cuốn sách tìm hiểu ikigai của người Nhật—lý do khiến ta muốn thức dậy mỗi sáng—qua sự giao thoa giữa đam mê, năng lực, cộng đồng và nhịp sống bền vững.'),
+('9786040000149', N'Greg McKeown đề xuất lối sống ít nhưng tốt hơn: chủ động loại bỏ điều không thiết yếu để dành năng lượng cho những đóng góp thực sự quan trọng.'),
+('9786040000156', N'Eckhart Tolle dẫn người đọc trở về hiện tại, quan sát cái tôi và dòng suy nghĩ để thoát khỏi lo âu do quá khứ cùng tương lai tạo nên.'),
+('9786040000163', N'Napoleon Hill tổng hợp những nguyên tắc về mục tiêu, niềm tin, quyết tâm và sức mạnh cộng tác nhằm biến khát vọng thành một kế hoạch hành động rõ ràng.'),
+('9786040000170', N'Bản tiếng Anh của Đắc nhân tâm trình bày các nguyên tắc gây thiện cảm, thuyết phục và lãnh đạo bằng sự quan tâm chân thành đến nhu cầu của người khác.'),
+('9786040000187', N'Robin Sharma kể câu chuyện thay đổi đời sống nhờ thói quen dậy sớm, kết hợp vận động, suy ngẫm và học hỏi trong giờ đầu tiên của ngày mới.'),
+('9786040000194', N'Jake Knapp và John Zeratsky đưa ra các chiến thuật thực tế để chọn một ưu tiên mỗi ngày, giảm xao nhãng và tạo thêm thời gian cho điều đáng nhớ.'),
+('9786040000200', N'Simon Sinek cho rằng tổ chức truyền cảm hứng luôn bắt đầu từ lý do tồn tại, trước khi nói đến cách làm hay sản phẩm họ bán.'),
+('9786040000217', N'Peter Thiel bàn về những doanh nghiệp tạo bước nhảy từ không đến một bằng công nghệ độc quyền, tư duy khác biệt và khả năng xây dựng tương lai chưa từng có.'),
+('9786040000224', N'Jim Collins phân tích vì sao một số công ty vượt từ tốt đến xuất sắc nhờ lãnh đạo khiêm nhường, đúng người và kỷ luật nhất quán.'),
+('9786040000231', N'Eric Ries giới thiệu vòng lặp xây dựng–đo lường–học hỏi, giúp startup kiểm chứng giả định nhanh và tránh lãng phí nguồn lực vào sản phẩm không ai cần.'),
+('9786040000248', N'Jason Fried và David Heinemeier Hansson thách thức các giáo điều kinh doanh quen thuộc, cổ vũ đội ngũ nhỏ, làm ít hơn và đưa sản phẩm ra thị trường sớm.'),
+('9786040000255', N'Ben Horowitz kể thẳng về những quyết định cô độc của người điều hành khi công ty khủng hoảng, từ sa thải nhân sự đến giữ tổ chức sống sót.'),
+('9786040000262', N'Robert C. Martin trình bày các nguyên tắc viết mã dễ đọc, dễ kiểm thử và dễ bảo trì qua những ví dụ cải tiến cụ thể.'),
+('9786040000279', N'Cuốn sách xác định ranh giới và quy tắc phụ thuộc giúp kiến trúc phần mềm bảo vệ nghiệp vụ khỏi framework, giao diện và cơ sở dữ liệu.'),
+('9786040000286', N'Một cẩm nang nghề nghiệp vượt thời gian về tư duy lập trình thực dụng, tự động hóa, kiểm thử, giao tiếp và trách nhiệm với sản phẩm.'),
+('9786040000293', N'Bộ Gang of Four hệ thống hóa 23 mẫu thiết kế hướng đối tượng, cung cấp ngôn ngữ chung để giải quyết những cấu trúc phần mềm thường gặp.'),
+('9786040000309', N'Martin Fowler hướng dẫn cải thiện cấu trúc mã hiện có từng bước nhỏ mà không làm thay đổi hành vi quan sát được của chương trình.'),
+('9786040000316', N'Joshua Bloch cô đọng những thực hành Java hiệu quả về tạo đối tượng, generic, lambda, concurrency và thiết kế API an toàn.'),
+('9786040000323', N'Java được giảng giải bằng hình ảnh, câu đố và dự án sinh động, giúp người mới hiểu đối tượng, kế thừa, exception và luồng thực thi.'),
+('9786040000330', N'Tài liệu tham khảo toàn diện về ngôn ngữ Java, từ cú pháp nền tảng và thư viện chuẩn đến lập trình đa luồng, collections và tính năng hiện đại.'),
+('9786040000347', N'Craig Walls hướng dẫn xây dựng ứng dụng Java với Spring thông qua dependency injection, web MVC, dữ liệu, bảo mật và tích hợp hệ thống.'),
+('9786040000354', N'Cuốn sách tập trung vào cách Spring Boot đơn giản hóa cấu hình, đóng gói và triển khai các ứng dụng Spring sẵn sàng cho môi trường thực tế.'),
+('9786040000361', N'Hướng dẫn thực hành React từ component, state và props đến quản lý dữ liệu, routing và xây dựng giao diện có thể tái sử dụng.'),
+('9786040000378', N'React Quickly đưa người đọc đi nhanh từ JSX và component đến forms, lifecycle và kiến trúc ứng dụng phía khách qua các ví dụ trực tiếp.'),
+('9786040000385', N'Một lộ trình xây dựng ứng dụng React hoàn chỉnh, kết nối các kỹ thuật component, state, dữ liệu bất đồng bộ và tổ chức dự án thực tế.'),
+('9786040000392', N'Kyle Simpson đào sâu những cơ chế thường bị hiểu sai của JavaScript như scope, closure, this, prototype, kiểu dữ liệu và bất đồng bộ.'),
+('9786040000408', N'Marijn Haverbeke dạy JavaScript thông qua tư duy giải bài toán và các dự án, từ ngôn ngữ cốt lõi đến trình duyệt cùng Node.js.'),
+('9786040000415', N'Cẩm nang chuyên sâu bao quát JavaScript và nền tảng web, phù hợp để học có hệ thống lẫn tra cứu các API và đặc tính ngôn ngữ.'),
+('9786040000422', N'Jon Duckett dùng bố cục trực quan để giải thích cấu trúc HTML và cách CSS kiểm soát màu sắc, chữ, hộp, bố cục cùng responsive.'),
+('9786040000439', N'Lea Verou trình bày hàng chục kỹ thuật CSS thanh lịch cho nền, viền, hình dạng, typography và trải nghiệm người dùng mà không phụ thuộc plugin.'),
+('9786040000446', N'Steve Krug giải thích nguyên tắc khả dụng cốt lõi: giao diện tốt phải tự nhiên, giảm suy nghĩ không cần thiết và được kiểm thử sớm với người dùng.'),
+('9786040000453', N'The UX Book cung cấp quy trình thiết kế trải nghiệm từ nghiên cứu bối cảnh, mô hình hóa yêu cầu đến prototype, đánh giá và cải tiến sản phẩm.'),
+('9786040000460', N'Giáo trình kinh điển phân tích thuật toán bằng chứng minh và độ phức tạp, bao quát sắp xếp, đồ thị, quy hoạch động cùng nhiều cấu trúc dữ liệu.'),
+('9786040000477', N'Robert Sedgewick kết hợp lý thuyết với cài đặt thực tế để giải thích sắp xếp, tìm kiếm, cây, đồ thị và phân tích hiệu năng thuật toán.'),
+('9786040000484', N'Cuốn sách trình bày nền tảng hệ quản trị cơ sở dữ liệu: mô hình quan hệ, SQL, thiết kế lược đồ, giao dịch, chỉ mục và xử lý truy vấn.'),
+('9786040000491', N'Martin Kleppmann kết nối cơ sở dữ liệu, hệ phân tán và xử lý luồng để giải thích cách thiết kế hệ thống dữ liệu tin cậy, mở rộng được.'),
+('9786040000507', N'Mạng máy tính được tiếp cận theo hướng từ ứng dụng xuống, làm rõ HTTP, vận chuyển, định tuyến, liên kết và bảo mật Internet.'),
+('9786040000514', N'Giáo trình giải thích cách hệ điều hành quản lý tiến trình, bộ nhớ, lưu trữ, đồng bộ và bảo vệ tài nguyên phần cứng.'),
+('9786040000521', N'Cuốn sách nối mã nguồn với phần cứng, giúp lập trình viên hiểu biểu diễn dữ liệu, assembly, bộ nhớ, linking và hiệu năng chương trình.'),
+('9786040000538', N'Giáo trình AI toàn diện về tác tử thông minh, tìm kiếm, biểu diễn tri thức, xác suất, học máy, thị giác và xử lý ngôn ngữ.'),
+('9786040000545', N'Ian Goodfellow cùng cộng sự hệ thống hóa nền tảng toán học, mạng sâu, tối ưu và các hướng nghiên cứu quan trọng của deep learning.'),
+('9786040000552', N'Aurélien Géron hướng dẫn xây dựng mô hình học máy bằng Scikit-Learn, Keras và TensorFlow qua quy trình cùng dự án thực hành.'),
+('9786040000569', N'Lộ trình nhập môn Python rõ ràng với bài tập và dự án về trò chơi, trực quan hóa dữ liệu cùng ứng dụng web.'),
+('9786040000576', N'Al Sweigart dùng Python để tự động hóa các việc lặp lại như xử lý tệp, bảng tính, PDF, email và dữ liệu web.'),
+('9786040000583', N'Luciano Ramalho khai thác sức mạnh riêng của Python qua data model, iterator, decorator, typing, concurrency và metaprogramming.'),
+('9786040000590', N'Brett Slatkin trình bày các mục thực hành ngắn giúp viết Python rõ ràng, hiệu quả và đúng tinh thần của ngôn ngữ.'),
+('9786040000606', N'Mark Lutz cung cấp nền tảng Python chi tiết, từ kiểu dữ liệu và hàm đến module, lớp, exception cùng các công cụ nâng cao.'),
+('9786040000613', N'Qua phiên tòa của một người da đen bị vu oan, Harper Lee nhìn nạn phân biệt chủng tộc và lòng can đảm bằng đôi mắt trẻ thơ.'),
+('9786040000620', N'Winston Smith sống dưới chế độ toàn trị kiểm soát lịch sử, ngôn ngữ và cả suy nghĩ; cuộc phản kháng riêng tư của anh dần trở thành bi kịch.'),
+('9786040000637', N'Cuộc nổi dậy của đàn vật chống chủ trang trại biến thành một nền chuyên chế mới, phơi bày cách lý tưởng bị quyền lực bóp méo.'),
+('9786040000644', N'Giấc mơ giàu sang của Jay Gatsby xoay quanh tình yêu đã mất, phản chiếu vẻ hào nhoáng và khoảng trống của nước Mỹ thời Jazz.'),
+('9786040000651', N'Elizabeth Bennet và Mr. Darcy phải vượt qua thành kiến, kiêu hãnh cùng áp lực hôn nhân để nhận ra giá trị thật của nhau.'),
+('9786040000668', N'Holden Caulfield lang thang qua New York sau khi bị đuổi học, vừa chống lại sự giả tạo vừa che giấu nỗi cô độc của tuổi trưởng thành.'),
+('9786040000675', N'Bilbo Baggins rời căn nhà tiện nghi để cùng đoàn người lùn giành lại quê hương, đối mặt troll, goblin và rồng Smaug.'),
+('9786040000682', N'Frodo mang Chiếc Nhẫn Quyền Lực đến Núi Doom trong thiên sử thi về tình bạn, cám dỗ và cuộc chiến chống bóng tối Trung Địa.'),
+('9786040000699', N'Harry bước vào Hogwarts, khám phá phép thuật và tình bạn, đồng thời chạm trán bí mật về cha mẹ cùng kẻ đã để lại vết sẹo trên trán mình.'),
+('9786040000705', N'Một thế lực bí ẩn hóa đá học sinh Hogwarts, buộc Harry lần theo truyền thuyết Phòng chứa Bí mật và người thừa kế Slytherin.'),
+('9786040000712', N'Kẻ vượt ngục Sirius Black dường như đang săn Harry, nhưng sự thật về đêm cha mẹ cậu bị phản bội phức tạp hơn mọi lời đồn.'),
+('9786040000729', N'Harry bất ngờ bị chọn dự Tam Pháp Thuật, trải qua ba thử thách chết người trước khi chứng kiến Voldemort trở lại.'),
+('9786040000736', N'Bị Bộ Pháp thuật phủ nhận và Dolores Umbridge đàn áp, Harry lập Đội quân Dumbledore để chuẩn bị cho cuộc chiến đang đến.'),
+('9786040000743', N'Khi chiến tranh lan tới Hogwarts, Harry khám phá quá khứ Voldemort và nhận được sự giúp đỡ bí ẩn từ cuốn sách của Hoàng tử Lai.'),
+('9786040000750', N'Harry, Ron và Hermione rời trường để săn Trường Sinh Linh Giá, tiến tới cuộc đối đầu cuối cùng quyết định số phận thế giới phù thủy.'),
+('9786040000767', N'Hoàng tử bé rời tiểu hành tinh của mình, gặp những người lớn kỳ lạ và học từ cáo về tình bạn, trách nhiệm cùng điều mắt thường không thấy.'),
+('9786040000774', N'Ông lão Santiago một mình vật lộn với con cá kiếm khổng lồ giữa biển, giữ vững phẩm giá dù chiến thắng bị thiên nhiên lấy lại.'),
+('9786040000781', N'Phiên bản tiếng Anh kể hành trình Santiago theo đuổi kho báu và học cách đọc những dấu hiệu dẫn mình tới vận mệnh riêng.'),
+('9786040000798', N'Hai người phụ nữ trẻ gặp nhau sau mất mát, cùng tìm sự chữa lành trong căn bếp, tình bạn và những nhịp sống mong manh ở Tokyo.'),
+('9786040000804', N'Cậu thiếu niên Kafka bỏ nhà đi trong khi ông lão Nakata trò chuyện với mèo; hai hành trình siêu thực dần giao nhau qua định mệnh.'),
+('9786040000811', N'Bảy thế hệ nhà Buendía sống giữa phép màu, chiến tranh và cô độc ở Macondo, lặp lại những khát vọng cùng sai lầm của tổ tiên.'),
+('9786040000828', N'Florentino chờ hơn nửa thế kỷ để trở lại với Fermina, trong thiên tình sử về tuổi già, ký ức và nhiều hình dạng của tình yêu.'),
+('9786040000835', N'Amir trở về Afghanistan để chuộc lỗi vì đã phản bội Hassan thuở nhỏ, đối diện tình bạn, chiến tranh và bí mật gia đình.'),
+('9786040000842', N'Mariam và Laila, hai phụ nữ khác thế hệ, nương tựa nhau để sống sót qua bạo lực gia đình và chiến tranh tại Afghanistan.'),
+('9786040000859', N'Cô bé Liesel ăn cắp sách giữa nước Đức Quốc xã, tìm nơi trú ẩn trong ngôn từ khi Tử thần chứng kiến chiến tranh cướp đi mọi điều thân thuộc.'),
+('9786040000866', N'Pi Patel mắc kẹt trên xuồng cứu sinh với một con hổ Bengal, biến cuộc sinh tồn thành suy tưởng về đức tin và bản chất của sự thật.'),
+('9786040000873', N'Hai cha con đi qua nước Mỹ hậu tận thế, bảo vệ chút lòng nhân còn lại giữa đói rét, bạo lực và tro tàn.'),
+('9786040000880', N'Bị bỏ lại trên Sao Hỏa, phi hành gia Mark Watney dùng khoa học, óc hài hước và ý chí để sống sót cho tới ngày được giải cứu.'),
+('9786040000897', N'Ryland Grace tỉnh dậy một mình ngoài không gian và phải giải bài toán tuyệt chủng của Mặt Trời, với sự trợ giúp từ một người bạn ngoài hành tinh.'),
+('9786040000903', N'Paul Atreides bước vào cuộc tranh giành hành tinh sa mạc Arrakis, nơi gia vị, tôn giáo, sinh thái và quyền lực gắn chặt với nhau.'),
+('9786040000910', N'Trong xã hội nơi lính cứu hỏa đốt sách, Guy Montag bắt đầu nghi ngờ công việc của mình và tìm lại tự do trong tri thức bị cấm.'),
+('9786040000927', N'Một thế giới được ổn định bằng sinh sản công nghiệp, điều kiện hóa và khoái lạc hóa học bị thách thức bởi một người lớn lên ngoài hệ thống.'),
+('9786040000934', N'Offred bị biến thành công cụ sinh sản dưới chế độ Gilead, âm thầm giữ ký ức và ý chí sống trong một xã hội tước quyền phụ nữ.'),
+('9786040000941', N'Katniss Everdeen tình nguyện bước vào đấu trường sinh tử để cứu em gái và vô tình trở thành biểu tượng thách thức Capitol.'),
+('9786040000958', N'Sau chiến thắng, Katniss và Peeta bị kéo trở lại đấu trường trong khi các quận bắt đầu nổi dậy dưới biểu tượng Húng Nhại.'),
+('9786040000965', N'Katniss trở thành gương mặt của cuộc cách mạng nhưng phải đối diện tuyên truyền, tổn thất và tham vọng quyền lực từ cả hai phía.'),
+('9786040000972', N'Hazel và Augustus gặp nhau trong nhóm hỗ trợ bệnh nhân ung thư, cùng trải nghiệm một tình yêu ngắn ngủi nhưng làm thay đổi cách họ nhìn sự sống.'),
+('9786040000989', N'Louisa Clark chăm sóc Will Traynor sau tai nạn và dần yêu anh, nhưng phải tôn trọng lựa chọn khó khăn của một con người muốn tự quyết cuộc đời.'),
+('9786040000996', N'Noah và Allie yêu nhau bất chấp khác biệt giai cấp; nhiều thập kỷ sau, câu chuyện của họ được kể lại để chống chọi với sự phai mờ ký ức.'),
+('9786040001009', N'Ông Ove cáu kỉnh liên tục bị hàng xóm mới phá hỏng kế hoạch tự sát, rồi bất ngờ tìm lại cộng đồng và lý do để sống.'),
+('9786040001016', N'Tara Westover lớn lên trong gia đình biệt lập không trường học, tự mở đường vào đại học và trả giá cho quyền định nghĩa chính mình.'),
+('9786040001023', N'Michelle Obama kể hành trình từ khu South Side đến Nhà Trắng, suy ngẫm về gia đình, nghề nghiệp, chủng tộc và đời sống công chúng.'),
+('9786040001030', N'Walter Isaacson dựng chân dung Steve Jobs từ hàng chục cuộc phỏng vấn, cho thấy sự giao thoa giữa tầm nhìn sản phẩm, ám ảnh hoàn hảo và tính cách gai góc.'),
+('9786040001047', N'Tiểu sử theo dấu Elon Musk từ tuổi thơ đến SpaceX và Tesla, khám phá tham vọng công nghệ, khả năng chấp nhận rủi ro cùng phong cách lãnh đạo gây tranh cãi.'),
+('9786040001054', N'Yuval Noah Harari kể hành trình Homo sapiens từ loài động vật vô danh đến kẻ thống trị hành tinh nhờ ngôn ngữ, hợp tác và những trật tự tưởng tượng.'),
+('9786040001061', N'Harari suy đoán tương lai khi con người dùng công nghệ để theo đuổi bất tử, hạnh phúc và quyền năng gần như thần thánh.'),
+('9786040001078', N'Hai mươi mốt bài luận xem xét các thách thức hiện tại như AI, chủ nghĩa dân tộc, tin giả, giáo dục và khả năng giữ bình tâm.'),
+('9786040001085', N'Jared Diamond lý giải vì sao các xã hội phát triển khác nhau qua địa lý, cây trồng, vật nuôi, mầm bệnh và công nghệ thay vì khác biệt chủng tộc.'),
+('9786040001092', N'Stephen Hawking giải thích Big Bang, hố đen, thời gian và nỗ lực tìm một lý thuyết thống nhất bằng ngôn ngữ dành cho độc giả phổ thông.'),
+('9786040001108', N'Carl Sagan đưa người đọc du hành từ thế giới vi mô đến các thiên hà, kết nối lịch sử khoa học với vị trí nhỏ bé của nhân loại trong vũ trụ.'),
+('9786040001115', N'Neil deGrasse Tyson cô đọng các ý niệm lớn của vật lý thiên văn—vật chất tối, năng lượng tối và vũ trụ giãn nở—thành những chương ngắn dễ tiếp cận.'),
+('9786040001122', N'Richard Dawkins nhìn tiến hóa từ cấp độ gene, giải thích chọn lọc tự nhiên, cạnh tranh, hợp tác và nguồn gốc của hành vi vị tha.'),
+('9786040001139', N'Siddhartha Mukherjee kể lịch sử khoa học về gene từ Mendel đến kỹ thuật chỉnh sửa, đồng thời đặt câu hỏi về di truyền và bản sắc.'),
+('9786040001146', N'Rachel Carson phơi bày tác hại của thuốc trừ sâu đối với hệ sinh thái, khởi nguồn cho ý thức môi trường hiện đại và yêu cầu quản lý hóa chất có trách nhiệm.'),
+('9786040001153', N'Câu chuyện Henrietta Lacks nối những tế bào HeLa bất tử với đột phá y học, bất công chủng tộc và câu hỏi đạo đức về quyền sở hữu mô người.'),
+('9786040001160', N'Matthew Walker tổng hợp khoa học giấc ngủ để giải thích tác động của ngủ đủ lên trí nhớ, cảm xúc, miễn dịch và sức khỏe lâu dài.'),
+('9786040001177', N'Donella Meadows dạy cách nhìn vòng phản hồi, độ trễ và điểm đòn bẩy để hiểu vì sao các hệ thống phức tạp thường chống lại giải pháp đơn giản.'),
+('9786040001184', N'Hans Rosling dùng dữ liệu để sửa những ngộ nhận bi quan về thế giới và chỉ ra các bản năng khiến con người đánh giá sai tiến bộ toàn cầu.'),
+('9786040001191', N'Malcolm Gladwell nhìn thành công qua cơ hội, văn hóa, thời điểm và quá trình luyện tập, thay vì chỉ xem đó là kết quả của tài năng cá nhân.'),
+('9786040001207', N'Gladwell khám phá sức mạnh và giới hạn của phán đoán chớp nhoáng, khi kinh nghiệm vô thức có thể tạo trực giác xuất sắc hoặc thiên kiến nguy hiểm.'),
+('9786040001214', N'Cuốn sách phân tích khoảnh khắc một ý tưởng hay hành vi lan truyền như dịch bệnh, nhờ người kết nối, thông điệp dễ nhớ và bối cảnh phù hợp.'),
+('9786040001221', N'Qua những kẻ yếu thế chiến thắng nghịch cảnh, Gladwell đặt lại câu hỏi liệu bất lợi luôn là điểm yếu và quyền lực luôn mang lại ưu thế.'),
+('9786040001238', N'Angela Duckworth cho rằng thành tựu dài hạn đến từ sự kết hợp giữa đam mê bền bỉ và nỗ lực có định hướng, không chỉ từ năng khiếu.'),
+('9786040001245', N'Daniel Pink chỉ ra động lực tốt cho công việc sáng tạo nằm ở quyền tự chủ, mong muốn tinh thông và cảm giác đóng góp cho mục đích lớn hơn.'),
+('9786040001252', N'Simon Sinek lý giải vì sao lãnh đạo biết bảo vệ và đặt đội ngũ lên trước sẽ tạo niềm tin, hợp tác cùng hiệu suất bền vững.'),
+('9786040001269', N'Brené Brown biến lòng can đảm thành các kỹ năng lãnh đạo cụ thể: đối diện sự dễ tổn thương, trò chuyện khó và xây dựng văn hóa tin cậy.'),
+('9786040001276', N'Vex King kết hợp trải nghiệm cá nhân với thực hành yêu bản thân, đặt ranh giới và nuôi dưỡng suy nghĩ tích cực mà không phủ nhận khó khăn.'),
+('9786040001283', N'Mark Manson dùng giọng văn thẳng và hài hước để khuyên người đọc chọn điều đáng quan tâm, chấp nhận giới hạn và chịu trách nhiệm với lựa chọn.'),
+('9786040001290', N'Marie Forleo khuyến khích thay câu “tôi không biết” bằng tinh thần luôn tìm được cách, rồi chuyển nỗi sợ thành bước hành động cụ thể.'),
+('9786040001306', N'Brianna Wiest xem hành vi tự phá hoại như tín hiệu của nhu cầu chưa được giải quyết và hướng dẫn biến trở lực nội tâm thành sự trưởng thành.'),
+('9786040001313', N'Amir Levine và Rachel Heller giải thích các kiểu gắn bó an toàn, lo âu, né tránh cùng ảnh hưởng của chúng đến lựa chọn và xung đột tình cảm.'),
+('9786040001320', N'Brené Brown mời người đọc từ bỏ áp lực hoàn hảo, chấp nhận sự dễ tổn thương và sống toàn tâm bằng lòng can đảm cùng sự tự cảm thông.'),
+('9786040001337', N'Qua đối thoại giữa một triết gia và chàng thanh niên, cuốn sách diễn giải tâm lý học Adler về tự do, trách nhiệm và can đảm không sống theo kỳ vọng.'),
+('9786040001344', N'Bản tiếng Anh hồi ký của Viktor Frankl kết hợp trải nghiệm trại tập trung với liệu pháp ý nghĩa, khẳng định con người vẫn tự do lựa chọn thái độ.'),
+('9786040001351', N'Những ghi chép riêng của Marcus Aurelius về bổn phận, lý trí và sự vô thường trở thành cẩm nang thực hành chủ nghĩa Khắc kỷ.'),
+('9786040001368', N'Tôn Tử trình bày nghệ thuật chiến thắng bằng hiểu mình, hiểu đối phương, tính toán thế trận và hạn chế tổn thất không cần thiết.'),
+('9786040001375', N'Qua những bức thư gửi Lucilius, Seneca suy ngẫm về thời gian, cái chết, tình bạn, giàu nghèo và cách giữ tâm trí tự do.'),
+('9786040001382', N'Plato dùng cuộc đối thoại về công lý để xây dựng mô hình nhà nước lý tưởng, bàn về giáo dục, quyền lực và bản chất của tri thức.'),
+('9786040001399', N'Nietzsche chất vấn đạo đức truyền thống, tôn giáo và ảo tưởng về chân lý, mở đường cho một cách tự đánh giá giá trị táo bạo hơn.'),
+('9786040001405', N'Nhà tiên tri Zarathustra trở xuống núi để giảng về siêu nhân, ý chí quyền lực và hành trình vượt qua chính mình bằng văn phong thi ca.'),
+('9786040001412', N'Raskolnikov sát hại một bà cầm đồ để thử học thuyết của mình, rồi bị tội lỗi, tình thương và cuộc điều tra dồn tới ngưỡng sụp đổ.'),
+('9786040001429', N'Ba anh em Karamazov bị cuốn vào vụ sát hại người cha, mở ra cuộc tranh luận lớn về đức tin, tự do, tội lỗi và trách nhiệm.'),
+('9786040001436', N'Anna mắc kẹt giữa tình yêu với Vronsky và chuẩn mực quý tộc Nga, trong khi câu chuyện Levin tìm kiếm một đời sống có ý nghĩa song hành.'),
+('9786040001443', N'Giữa cuộc chiến Nga–Napoléon, số phận nhiều gia đình quý tộc đan xen trong thiên sử thi về lịch sử, tình yêu và ý chí cá nhân.'),
+('9786040001450', N'Jean Valjean tìm cách sống lương thiện nhưng luôn bị Javert truy đuổi, giữa bức tranh nước Pháp đầy nghèo đói, cách mạng và lòng bao dung.'),
+('9786040001467', N'Edmond Dantès bị vu oan và cầm tù, trở lại với thân phận Bá tước Monte Cristo để thực hiện kế hoạch báo thù tinh vi.'),
+('9786040001474', N'Dorian Gray giữ mãi vẻ trẻ trung trong khi bức chân dung gánh mọi dấu vết sa đọa, phơi bày cái giá của khoái lạc và phù phiếm.'),
+('9786040001481', N'Những thư từ và nhật ký ghép lại cuộc săn Bá tước Dracula, sinh vật gieo kinh hoàng từ Transylvania đến nước Anh.'),
+('9786040001498', N'Victor Frankenstein tạo ra sự sống rồi ruồng bỏ sinh vật của mình, dẫn tới chuỗi bi kịch về cô độc, định kiến và trách nhiệm khoa học.'),
+('9786040001504', N'Bác sĩ Jekyll tách phần bản năng thành nhân dạng Hyde, nhưng thí nghiệm dần giải phóng một cái ác không còn kiểm soát được.'),
+('9786040001511', N'Phileas Fogg đánh cược rằng có thể vòng quanh thế giới trong tám mươi ngày, lao vào cuộc đua đầy sự cố cùng người hầu Passepartout.'),
+('9786040001528', N'Giáo sư Aronnax lên tàu ngầm Nautilus của thuyền trưởng Nemo, khám phá kỳ quan đại dương và bí mật của con người chối bỏ đất liền.'),
+('9786040001535', N'Giáo sư Lidenbrock giải mã bản thảo cổ rồi dẫn đoàn thám hiểm xuyên lòng đất, gặp biển ngầm, sinh vật tiền sử và hiểm họa địa chất.'),
+('9786040001542', N'Mười hai vụ án giới thiệu tài quan sát của Sherlock Holmes và lối kể tỉnh táo của bác sĩ Watson tại London thời Victoria.'),
+('9786040001559', N'Một truyền thuyết chó săn ma ám gia tộc Baskerville, nhưng Holmes nghi ngờ phía sau nỗi sợ siêu nhiên là âm mưu của con người.'),
+('9786040001566', N'Hercule Poirot điều tra một vụ giết người trên chuyến tàu mắc kẹt trong tuyết, nơi mọi hành khách đều có bí mật và chứng cứ ngoại phạm.'),
+('9786040001573', N'Mười người lạ bị mời ra đảo rồi lần lượt chết theo một bài đồng dao, trong khi hung thủ dường như không thể là người ngoài.'),
+('9786040001580', N'Poirot điều tra cái chết của Roger Ackroyd qua lời kể của bác sĩ Sheppard, dẫn tới một trong những cú lật nổi tiếng nhất trinh thám.'),
+('9786040001597', N'Nhà báo Mikael Blomkvist và hacker Lisbeth Salander cùng điều tra vụ mất tích kéo dài nhiều thập kỷ trong một gia đình công nghiệp quyền lực.'),
+('9786040001603', N'Khi Amy biến mất đúng dịp kỷ niệm cưới, Nick trở thành nghi phạm và cuộc hôn nhân của họ lộ ra như một trò thao túng đầy độc hại.'),
+('9786040001610', N'Họa sĩ Alicia im lặng sau khi bắn chồng; nhà trị liệu Theo quyết giải mã sự câm lặng ấy và bước vào chiếc bẫy của chính mình.'),
+('9786040001627', N'Robert Langdon lần theo mật mã trong tác phẩm Leonardo da Vinci để khám phá bí mật tôn giáo mà một hội kín bảo vệ suốt nhiều thế kỷ.'),
+('9786040001634', N'Một biểu tượng học chạy đua khắp Rome để ngăn âm mưu Illuminati, lần theo bốn bàn thờ khoa học trước khi Vatican bị hủy diệt.'),
+('9786040001641', N'Robert Langdon tỉnh dậy mất trí nhớ tại Florence và lao vào cuộc truy tìm liên quan Dante, dịch bệnh cùng một kế hoạch kiểm soát dân số.'),
+('9786040001658', N'Nhà giải mã Susan Fletcher phát hiện siêu máy tính NSA bị một thuật toán bất khả phá đe dọa, kéo cô vào cuộc đấu về bí mật và quyền riêng tư.'),
+('9786040001665', N'Jack Torrance đưa gia đình đến trông khách sạn Overlook mùa đông, nơi sự cô lập và thế lực tà ác khai thác cơn nghiện cùng bạo lực trong anh.'),
+('9786040001672', N'Một nhóm bạn trở về Derry sau hai mươi bảy năm để đối mặt thực thể đội lốt chú hề và nỗi kinh hoàng từng ám tuổi thơ họ.'),
+('9786040001689', N'Nhà văn Paul Sheldon bị người hâm mộ Annie Wilkes giam giữ và ép viết lại nhân vật yêu thích, biến sáng tác thành cuộc đấu sinh tồn.'),
+('9786040001696', N'Louis Creed chôn con mèo rồi con trai tại nghĩa địa có quyền năng hồi sinh, để rồi nhận ra cái chết đôi khi là ranh giới không nên vượt qua.'),
+('9786040001702', N'Quản giáo Paul Edgecombe nhớ lại tử tù John Coffey, người có năng lực chữa lành kỳ lạ giữa sự tàn nhẫn của hành lang tử hình.'),
+('9786040001719', N'Bảy truyện ngắn của Haruki Murakami khắc họa những người đàn ông cô độc sau chia lìa, trôi giữa ký ức, âm nhạc và khoảng trống khó gọi tên.'),
+('9786040001726', N'Tsukuru bị nhóm bạn thân đột ngột ruồng bỏ; nhiều năm sau anh trở lại tìm nguyên nhân để hàn gắn phần bản sắc đã mất.'),
+('9786040001733', N'Toru Okada tìm con mèo rồi người vợ mất tích, bước qua giếng cạn, ký ức chiến tranh và những lớp hiện thực kỳ dị.'),
+('9786040001740', N'Dế Mèn kiêu căng gây nên cái chết của Dế Choắt rồi lên đường phiêu lưu, trưởng thành qua tình bạn, hiểm nguy và khát vọng hòa bình.'),
+('9786040001757', N'Nguyễn Nhật Ánh đưa người lớn trở lại thế giới trẻ thơ, nơi bốn đứa trẻ đặt lại tên cho vạn vật và nhìn cuộc sống bằng trí tưởng tượng trong veo.'),
+('9786040001764', N'Tình yêu đơn phương của Ngạn dành cho Hà Lan kéo dài từ làng Đo Đo đến thành phố, đẹp đẽ nhưng nhuốm nỗi buồn của những lựa chọn lệch nhau.'),
+('9786040001771', N'Tuổi thơ của Thiều và Tường hiện lên giữa làng quê nghèo, với tình anh em, ghen tị, lỗi lầm và những rung động đầu đời.'),
+('9786040001788', N'Anh chàng vụng về hồi tưởng mối tình học trò với cô bạn Tiểu Li, để rồi bất ngờ gặp lại “cô gái đến từ hôm qua” trong hiện tại.'),
+('9786040001795', N'Đông gặp Rùa trong một miền quê yên bình; tình cảm non trẻ của họ bị thử thách bởi bí mật gia đình và những định kiến của người lớn.'),
+('9786040001801', N'Tèo, một cậu bé chịu nhiều thiệt thòi nhưng luôn nhân hậu, khiến những người quanh mình học lại cách yêu thương và nhìn bầu trời bằng hy vọng.'),
+('9786040001818', N'Bản dịch Việt của The Catcher in the Rye theo chân Holden Caulfield chống lại sự giả tạo trong khi âm thầm vật lộn với mất mát và cô độc.'),
+('9786040001825', N'Một cậu bé học cách cảm nhận khu vườn bằng mùi hương, âm thanh và bàn tay, qua những bài học dịu dàng từ người cha cùng cô bé hàng xóm.'),
+('9786040001832', N'Vũ Bằng viết mười hai tháng Bắc Việt bằng nỗi nhớ của người xa xứ, gợi lại mùa màng, món ăn và phong vị Hà Nội cũ.'),
+('9786040001849', N'Mười một truyện của Nguyễn Tuân phục dựng vẻ đẹp tài hoa của những con người cuối thời Nho học, khi một nền văn hóa đang lui vào dĩ vãng.'),
+('9786040001856', N'Xuân Tóc Đỏ tình cờ leo lên thượng lưu Hà Nội thuộc địa, qua đó Vũ Trọng Phụng châm biếm phong trào Âu hóa và xã hội trưởng giả lố lăng.'),
+('9786040001863', N'Chí Phèo từ người nông dân lương thiện bị đẩy thành kẻ lưu manh, rồi khát khao làm người trở lại nhờ tình thương của Thị Nở.'),
+('9786040001870', N'Chị Dậu chạy vạy cứu chồng giữa sưu thuế hà khắc, phơi bày cảnh bần cùng và sức phản kháng của người phụ nữ nông dân.'),
+('9786040001887', N'Lão Hạc bán cậu Vàng rồi chọn cái chết để giữ mảnh vườn cho con, trong câu chuyện đau xót về nghèo đói và lòng tự trọng.'),
+('9786040001894', N'Nguyên Hồng kể tuổi thơ thiếu thốn tình cha, xa mẹ và chịu nhiều cay nghiệt, nhưng vẫn giữ một tình yêu mẹ mãnh liệt.'),
+('9786040001900', N'Những truyện ngắn Thạch Lam ghi lại rung động mong manh trước trẻ nghèo, người lao động và các khoảnh khắc giao mùa của đời sống bình dị.'),
+('9786040001917', N'Liên và An ngồi bên phố huyện nghèo chờ chuyến tàu đêm, mang theo ánh sáng thoáng qua giữa cuộc sống quẩn quanh, tĩnh lặng.'),
+('9786040001924', N'Giữa nạn đói, Tràng “nhặt” được vợ chỉ bằng vài bát bánh đúc; gia đình mới nhen lên hy vọng sống trong hoàn cảnh bi thảm.'),
+('9786040001931', N'Rừng xà nu và dân làng Xô Man chứng kiến hành trình Tnú từ đau thương riêng đến ý thức cầm vũ khí bảo vệ cộng đồng.'),
+('9786040001948', N'Cậu bé An lưu lạc khắp miền Tây Nam Bộ thời kháng chiến, kết bạn với những con người hào sảng giữa thiên nhiên sông nước phong phú.'),
+('9786040001955', N'Kiên trở về sau chiến tranh nhưng bị ký ức đồng đội và tình yêu ám ảnh, viết để đối diện những mất mát không thể khép lại.'),
+('9786040001962', N'Phần tiếp nối mở rộng những chuyến đi của Dế Mèn, tiếp tục bài học về đoàn kết, trách nhiệm và khát vọng chung sống hòa bình.'),
+('9786040001979', N'Bản tiếng Việt tác phẩm của Stephen Hawking dẫn nhập Big Bang, hố đen và bản chất thời gian bằng những câu hỏi lớn nhưng dễ tiếp cận.'),
+('9786040001986', N'Qua ghi chép về các bậc đạo sư Ấn Độ, cuốn sách dẫn người đọc khảo sát đời sống tinh thần, nghiệp quả và sự hòa hợp giữa Đông với Tây.'),
+('9786040001993', N'Charles Duhigg phân tích vòng lặp tín hiệu–thói quen–phần thưởng và cho thấy cá nhân lẫn tổ chức có thể thay đổi hành vi bằng cách tác động đúng mắt xích.'),
+('9786040002006', N'Napoleon Hill trình bày bảy nguyên tắc về mục tiêu, kỷ luật, hợp tác và tư duy tích cực nhằm xây dựng nền tảng thành công lâu dài.');
+
+UPDATE b
+SET b.description = d.description
+FROM Books b
+JOIN @BookDescriptions d ON d.isbn = b.isbn;
+GO
+
 -- ============================================
 -- 11) UPDATE shelf_location cho 29 ban sao GOC
 -- ============================================

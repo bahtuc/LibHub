@@ -35,6 +35,20 @@ class FineServiceImplTest {
         );
     }
 
+    @Test
+    void createRejectsUnknownReturnDetailBeforeDatabaseInsert() {
+        Fines fine = new Fines();
+        fine.setReturnDetailId(999L);
+        fine.setAmount(new BigDecimal("15000"));
+        when(returnDetailRepo.existsById(999L)).thenReturn(false);
+
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.createFine(fine));
+
+        assertEquals("Mã chi tiết trả #999 không tồn tại", error.getMessage());
+    }
+
 
     @Test
     void updatePaidStatusDoesNotEraseFineData() {

@@ -60,7 +60,7 @@ export default function LibrarianDashboard() {
 
       <div className="lh-admin-stats">
         {stats.map((stat) => (
-          <div className="lh-admin-stat-card" key={stat.label} style={{ "--accent": stat.accent }}>
+          <div className={`lh-admin-stat-card ${String(stat.value).length > 6 ? "has-long-value" : ""}`} key={stat.label} style={{ "--accent": stat.accent }}>
             <span className="lh-admin-stat-card__icon"><Icon name={stat.icon} size={18} /></span>
             <span className="lh-admin-stat-card__value">{loading ? "…" : stat.value}</span>
             <span className="lh-admin-stat-card__label">{stat.label}</span>

@@ -5,17 +5,17 @@ import Footer from "../components/Footer";
 import BookCard from "../components/BookCard";
 import { useCatalog } from "../context/CatalogContext";
 import { useAuth } from "../auth/useAuth";
-import { borrowBook } from "../services/BorrowTicketService";
-import { formatDate } from "../utils/format";
+import { createBorrowVnpayPayment } from "../services/PaymentService";
 import "../styles/BookDetail.css";
 
 export default function BookDetail() {
   const { bookId } = useParams();
-  const { books, categories, authors, loading, refresh } = useCatalog();
+  const { books, categories, authors, loading } = useCatalog();
   const { user } = useAuth();
   const [borrowing, setBorrowing] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [borrowDays, setBorrowDays] = useState(14);
 
   const book = books.find((item) => item.book_id === Number(bookId));
   const category = categories.find((item) => item.category_id === book?.category_id);
@@ -32,13 +32,15 @@ export default function BookDetail() {
     .slice(0, 4);
 
   async function handleBorrow() {
+    const fee = borrowDays * 5000;
+    if (!window.confirm(`Bạn sẽ được chuyển sang VNPay để thanh toán ${fee.toLocaleString("vi-VN")}đ cho ${borrowDays} ngày mượn. Tiếp tục?`)) return;
     setBorrowing(true);
     setMessage("");
     setError("");
     try {
-      const ticket = await borrowBook(book.book_id);
-      setMessage(`Mượn sách thành công. Hạn trả: ${formatDate(ticket.dueDate ?? ticket.due_date)}.`);
-      await refresh();
+      const payment = await createBorrowVnpayPayment(book.book_id, borrowDays);
+      if (!payment?.payUrl) throw new Error("Không nhận được đường dẫn thanh toán VNPay.");
+      window.location.assign(payment.payUrl);
     } catch (requestError) {
       setError(requestError.message || "Không thể mượn sách.");
     } finally {
@@ -71,13 +73,32 @@ export default function BookDetail() {
             </div>
 
             <div className="lh-book-detail__actions">
+              {user && available && !message && (
+                <label className="lh-book-detail__duration">
+                  <span>Thời hạn mượn</span>
+                  <span className="lh-book-detail__duration-input">
+                    <input
+                      type="number"
+                      min="1"
+                      max="30"
+                      value={borrowDays}
+                      onChange={(event) => {
+                        const days = Number(event.target.value);
+                        setBorrowDays(Math.min(30, Math.max(1, Number.isFinite(days) ? days : 1)));
+                      }}
+                    />
+                    ngày
+                  </span>
+                  <small>Phí: {(borrowDays * 5000).toLocaleString("vi-VN")}đ</small>
+                </label>
+              )}
               {!user ? (
                 <Link to="/login" state={{ from: `/books/${book.book_id}` }} className="lh-btn lh-btn--primary">
                   Đăng nhập để mượn
                 </Link>
               ) : (
                 <button type="button" className="lh-btn lh-btn--primary" disabled={!available || borrowing || Boolean(message)} onClick={handleBorrow}>
-                  {borrowing ? "Đang xử lý..." : message ? "Đã mượn thành công" : available ? "Mượn sách" : "Hiện đã hết sách"}
+                  {borrowing ? "Đang chuyển VNPay..." : message ? "Đã mượn thành công" : available ? "Mượn & thanh toán VNPay" : "Hiện đã hết sách"}
                 </button>
               )}
             </div>

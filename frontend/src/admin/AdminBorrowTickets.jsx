@@ -8,6 +8,7 @@ const STATUS = {
   Overdue: { tone: "danger", label: "Quá hạn" },
   Returned: { tone: "success", label: "Đã trả" },
   Cancelled: { tone: "neutral", label: "Đã hủy" },
+  PendingPayment: { tone: "warning", label: "Chờ thanh toán VNPay" },
 };
 
 export default function AdminBorrowTickets() {
@@ -23,6 +24,7 @@ export default function AdminBorrowTickets() {
       subtitle="Quản lý phiếu mượn và gán chính xác các bản sao bằng danh sách mã copy."
       store={borrowTicketsStore}
       idField="ticket_id"
+      hideAdd
       emptyItem={{
         borrower_type: "member",
         user_id: userOptions[0]?.value ?? "",
@@ -31,6 +33,7 @@ export default function AdminBorrowTickets() {
         borrow_date: todayISO(),
         due_date: addDaysISO(14),
         copy_ids: "",
+        payment_confirmed: false,
         status: "Borrowed",
         note: "",
       }}
@@ -100,6 +103,7 @@ export default function AdminBorrowTickets() {
           createOnly: true,
           required: true,
         },
+        { name: "payment_confirmed", label: "Đã thu đủ phí mượn", type: "checkbox", createOnly: true },
         {
           name: "status",
           label: "Trạng thái",

@@ -16,10 +16,10 @@ export function getBorrowTicketViews() {
     return apiRequest("/borrow-tickets/views", { method: "GET" });
 }
 
-export function borrowBook(bookId) {
+export function borrowBook(bookId, paymentConfirmed = false, borrowDays = 14) {
     return apiRequest("/borrow-tickets/borrow", {
         method: "POST",
-        body: { bookId },
+        body: { bookId, paymentConfirmed, borrowDays },
     });
 }
 

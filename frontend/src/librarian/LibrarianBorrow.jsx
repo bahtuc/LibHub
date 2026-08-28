@@ -10,7 +10,7 @@ function defaultDueDate() {
   return date.toISOString().slice(0, 10);
 }
 
-function depositForLoan(dueDate) {
+function feeForLoan(dueDate) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const due = new Date(`${dueDate}T00:00:00`);
@@ -34,6 +34,7 @@ export default function LibrarianBorrow() {
   const [bookId, setBookId] = useState("");
   const [selectedCopyIds, setSelectedCopyIds] = useState([]);
   const [note, setNote] = useState("");
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 
   const [success, setSuccess] = useState(null);
   const [error, setError] = useState("");
@@ -112,7 +113,7 @@ export default function LibrarianBorrow() {
       )
     )
     .filter(Boolean);
-  const depositAmount = depositForLoan(dueDate);
+  const borrowFee = feeForLoan(dueDate);
 
   // =========================
   // Thêm bản sao vào phiếu
@@ -208,6 +209,7 @@ export default function LibrarianBorrow() {
         dueDate,
 
         copyIds: selectedCopyIds,
+        paymentConfirmed,
 
         note: note.trim() || null,
       });
@@ -221,6 +223,7 @@ export default function LibrarianBorrow() {
       setGuestName("");
       setGuestPhone("");
       setDueDate(defaultDueDate());
+      setPaymentConfirmed(false);
 
       // Reload trạng thái bản sao
       await copiesStore.refresh();
@@ -408,11 +411,11 @@ export default function LibrarianBorrow() {
           </label>
 
           <div className="lh-field lh-admin-form__field">
-            <span>Tiền cọc cần thu</span>
+            <span>Phí mượn cần thu</span>
             <strong className="lh-borrow-deposit">
-              {depositAmount.toLocaleString("vi-VN")}đ
+              {borrowFee.toLocaleString("vi-VN")}đ
             </strong>
-            <small>5.000đ × {Math.round(depositAmount / 5000)} ngày mượn</small>
+            <small>5.000đ × {Math.round(borrowFee / 5000)} ngày mượn</small>
           </div>
 
           {/* Ghi chú */}
@@ -560,6 +563,15 @@ export default function LibrarianBorrow() {
           Đã chọn {selectedCopyIds.length}/5 cuốn.
         </p>
 
+        <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18, cursor: "pointer" }}>
+          <input
+            type="checkbox"
+            checked={paymentConfirmed}
+            onChange={(event) => setPaymentConfirmed(event.target.checked)}
+          />
+          Đã thu đủ {borrowFee.toLocaleString("vi-VN")}đ phí mượn
+        </label>
+
         {/* =====================
             Submit
         ====================== */}
@@ -575,6 +587,7 @@ export default function LibrarianBorrow() {
                   : !guestName.trim()
               ) ||
               cart.length === 0
+              || !paymentConfirmed
             }
           >
             {submitting

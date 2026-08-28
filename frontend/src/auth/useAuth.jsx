@@ -4,12 +4,16 @@ import * as authService from "../services/AuthService";
 const AuthContext = createContext(null);
 
 function normaliseUser(user) {
+  if (!user || typeof user !== "object") {
+    throw new Error("Server không trả về dữ liệu tài khoản hợp lệ.");
+  }
+
   return {
     ...user,
-    user_id: user.userId,
-    full_name: user.fullName,
-    role_name: user.role,
-    member_since: user.memberSince?.slice(0, 10),
+    user_id: user.userId ?? user.user_id,
+    full_name: user.fullName ?? user.full_name,
+    role_name: user.role ?? user.role_name,
+    member_since: (user.memberSince ?? user.member_since)?.slice?.(0, 10),
   };
 }
 
@@ -26,8 +30,20 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function login(usernameOrEmail, password) {
+    const result = await authService.login({ usernameOrEmail, password });
+    if (result.requiresTwoFactor) return result;
+
+    // New backend wraps a direct login in `user`; older running builds return
+    // AuthResponse directly. Supporting both prevents a stale backend process
+    // from crashing the UI while it is being restarted.
+    const authenticatedUser = normaliseUser(result?.user ?? result);
+    setUser(authenticatedUser);
+    return { ...(result ?? {}), requiresTwoFactor: false, user: authenticatedUser };
+  }
+
+  async function verifyLoginOtp(challengeId, code) {
     const authenticatedUser = normaliseUser(
-      await authService.login({ usernameOrEmail, password }),
+      await authService.verifyLoginOtp({ challengeId, code }),
     );
     setUser(authenticatedUser);
     return authenticatedUser;
@@ -95,6 +111,7 @@ export function AuthProvider({ children }) {
         user,
         loading,
         login,
+        verifyLoginOtp,
         register,
         logout,
         updateProfile,

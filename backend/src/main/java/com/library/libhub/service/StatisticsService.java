@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Comparator;
 
 import com.library.libhub.repository.BorrowDetailRepository;
 import com.library.libhub.repository.BorrowTicketRepository;
@@ -101,7 +102,12 @@ public class StatisticsService {
 
     public List<Map<String, Object>> mostBorrowed(int limit) {
         if (limit < 1 || limit > 100) throw new IllegalArgumentException("limit phải từ 1 đến 100");
-        return bookCounts(borrowDetailRepo.countAllLoansByBook()).stream().limit(limit).toList();
+        return rankedBorrowedBooks(limit, false);
+    }
+
+    public List<Map<String, Object>> leastBorrowed(int limit) {
+        if (limit < 1 || limit > 100) throw new IllegalArgumentException("limit phải từ 1 đến 100");
+        return rankedBorrowedBooks(limit, true);
     }
 
     public Map<String, Object> monthlySummary(LocalDate month) {
@@ -128,7 +134,7 @@ public class StatisticsService {
                         && isInMonth(new Date(fine.getCreatedAt().getTime()), start, end))
                 .map(fine -> fine.getAmount() == null ? BigDecimal.ZERO : fine.getAmount())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal paidDeposits = tickets.stream()
+        BigDecimal paidBorrowFees = tickets.stream()
                 .filter(ticket -> "paid".equalsIgnoreCase(ticket.getDepositPaidStatus()))
                 .filter(ticket -> isInMonth(ticket.getBorrowDate(), start, end))
                 .map(ticket -> ticket.getDepositAmount() == null ? BigDecimal.ZERO : ticket.getDepositAmount())
@@ -151,10 +157,41 @@ public class StatisticsService {
         summary.put("borrowedBookCount", borrowedBooks);
         summary.put("returnedBookCount", returnedBooks);
         summary.put("neverBorrowedBookCount", unreadBooks);
-        summary.put("depositRevenue", paidDeposits);
+        summary.put("borrowFeeRevenue", paidBorrowFees);
+        summary.put("depositRevenue", paidBorrowFees); // tương thích frontend cũ
         summary.put("fineRevenue", paidFines);
-        summary.put("totalRevenue", paidDeposits.add(paidFines));
+        summary.put("totalRevenue", paidBorrowFees.add(paidFines));
+        summary.put("mostBorrowedBooks", rankedBorrowedBooks(5, false));
+        summary.put("leastBorrowedBooks", rankedBorrowedBooks(5, true));
         return summary;
+    }
+
+    private List<Map<String, Object>> rankedBorrowedBooks(int limit, boolean ascending) {
+        Map<Long, Long> bookByCopy = bookCopyRepo.findAll().stream()
+                .collect(Collectors.toMap(BookCopies::getCopyId, BookCopies::getBookId));
+        Map<Long, Long> counts = borrowDetailRepo.findAll().stream()
+                .filter(detail -> !"cancelled".equalsIgnoreCase(detail.getBorrowStatus()))
+                .map(BorrowDetails::getCopyId)
+                .map(bookByCopy::get)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+        Comparator<Map<String, Object>> comparator = Comparator
+                .comparingLong(item -> ((Number) item.get("borrowCount")).longValue());
+        if (!ascending) comparator = comparator.reversed();
+        comparator = comparator.thenComparing(item -> String.valueOf(item.get("title")));
+
+        return bookRepo.findAll().stream()
+                .map(book -> {
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("bookId", book.getBookId());
+                    item.put("title", book.getTitle());
+                    item.put("borrowCount", counts.getOrDefault(book.getBookId(), 0L));
+                    return item;
+                })
+                .sorted(comparator)
+                .limit(limit)
+                .toList();
     }
 
     private boolean isInMonth(Date date, LocalDate start, LocalDate end) {

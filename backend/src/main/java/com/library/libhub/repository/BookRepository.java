@@ -36,6 +36,8 @@ public interface BookRepository extends JpaRepository<Books, Long> {
             WHERE b.hidden = false OR b.hidden IS NULL
             """)
     Page<Books> findByHiddenFalse(Pageable pageable);
+    @Query("SELECT b FROM Books b WHERE b.hidden = false OR b.hidden IS NULL ORDER BY b.title")
+    List<Books> findAllVisible();
 
     @Query("""
             SELECT b FROM Books b

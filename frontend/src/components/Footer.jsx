@@ -1,69 +1,22 @@
+import { Link } from "react-router-dom";
 import Icon from "./Icon";
+import { useLanguage } from "../i18n/LanguageContext";
 import "../styles/Footer.css";
 
 export default function Footer() {
+  const { t } = useLanguage();
   return (
     <footer className="lh-footer">
       <div className="lh-container lh-footer__top">
         <div className="lh-footer__brand">
-          <a href="#top" className="lh-brand lh-brand--on-dark">
-            <span className="lh-brand__mark lh-brand__mark--gold">
-              <Icon name="book-open" size={20} />
-            </span>
-            <span className="lh-brand__text">
-              Lib<strong>Hub</strong>
-            </span>
-          </a>
-          <p>
-            Hệ thống quản lý thư viện số — quản lý đầu sách, phiếu mượn và
-            thành viên trong một nền tảng duy nhất.
-          </p>
-          <div className="lh-footer__social">
-            <a href="#" aria-label="Facebook">
-              <Icon name="facebook" size={17} />
-            </a>
-            <a href="#" aria-label="Instagram">
-              <Icon name="instagram" size={17} />
-            </a>
-          </div>
+          <Link to="/" className="lh-brand lh-brand--on-dark"><span className="lh-brand__mark"><Icon name="book-open" size={19} /></span><span className="lh-brand__text">LIBHUB<small>{t("brand.subtitle")}</small></span></Link>
+          <p>{t("footer.description")}</p>
         </div>
-
-        <div className="lh-footer__col">
-          <h4>Truy cập nhanh</h4>
-          <a href="#featured-books">Sách nổi bật</a>
-          <a href="#categories">Thể loại</a>
-          <a href="#news">Tin tức</a>
-          <a href="#">Sơ đồ trang</a>
-        </div>
-
-        <div className="lh-footer__col">
-          <h4>Dịch vụ</h4>
-          <a href="#">Mượn / trả sách</a>
-          <a href="#">Gia hạn trực tuyến</a>
-          <a href="#">Tra cứu phiếu phạt</a>
-        </div>
-
-        <div className="lh-footer__col">
-          <h4>Liên hệ</h4>
-          <a href="#contact" className="lh-footer__contact-line">
-            <Icon name="map-pin" size={16} /> Nhà của Định:D
-          </a>
-          <a href="#contact" className="lh-footer__contact-line">
-            <Icon name="phone" size={16} /> 033 6037 773
-          </a>
-          <a href="#contact" className="lh-footer__contact-line">
-            <Icon name="mail" size={16} /> hotro@libhub.vn
-          </a>
-        </div>
+        <div className="lh-footer__col"><h4>{t("footer.explore")}</h4><Link to="/library">{t("nav.library")}</Link><Link to="/genres">{t("nav.genres")}</Link><Link to="/account">{t("nav.account")}</Link></div>
+        <div className="lh-footer__col"><h4>{t("footer.services")}</h4><Link to="/account">{t("footer.loans")}</Link><Link to="/fines">{t("footer.fines")}</Link><a href="/#contact">{t("footer.contact")}</a></div>
+        <div className="lh-footer__note"><span>LIBHUB</span><strong>READ<br />BEYOND<br />THE SHELF</strong></div>
       </div>
-
-      <div className="lh-container lh-footer__bottom">
-        <span>© 2026 LibHub. Bảo lưu mọi quyền.</span>
-        <div className="lh-footer__legal">
-          <a href="#">Điều khoản sử dụng</a>
-          <a href="#">Chính sách bảo mật</a>
-        </div>
-      </div>
+      <div className="lh-container lh-footer__bottom"><span>© 2026 LibHub</span><span>{t("footer.location")}</span></div>
     </footer>
   );
 }

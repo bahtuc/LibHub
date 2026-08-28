@@ -2,8 +2,6 @@
    LibHub design tokens.
    Move this @import into your root index.html <head> in production
    for better font-loading performance. */
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap");
-
 :root {
   /* Paper & ink — a reading-room palette, not a landing-page cliché */
   --lh-paper: #f7f2e6;

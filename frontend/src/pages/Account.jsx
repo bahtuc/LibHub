@@ -30,6 +30,7 @@ const TICKET_BADGE = {
   overdue: { tone: "danger", text: "Quá hạn" },
   returned: { tone: "neutral", text: "Đã trả" },
   cancelled: { tone: "neutral", text: "Đã hủy" },
+  payment_pending: { tone: "warning", text: "Chờ thanh toán VNPay" },
 };
 
 const ROLE_TONE = { Admin: "warning", User: "success", Librarian: "info" };

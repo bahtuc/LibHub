@@ -235,7 +235,7 @@ const toBorrowTicket = async (ticket, creating) => {
     note: ticket.note || null,
   };
   return creating
-    ? { ...borrower, copyIds: await resolveCopyIds(ticket.copy_ids) }
+    ? { ...borrower, copyIds: await resolveCopyIds(ticket.copy_ids), paymentConfirmed: Boolean(ticket.payment_confirmed) }
     : { ...borrower, status: ticket.status };
 };
 

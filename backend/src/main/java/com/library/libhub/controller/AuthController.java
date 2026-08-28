@@ -12,10 +12,14 @@ import com.library.libhub.DTO.Request.ChangePasswordRequest;
 import com.library.libhub.DTO.Request.LoginRequest;
 import com.library.libhub.DTO.Request.RegisterRequest;
 import com.library.libhub.DTO.Request.UpdateProfileRequest;
+import com.library.libhub.DTO.Request.VerifyOtpRequest;
 import com.library.libhub.DTO.Response.AuthResponse;
+import com.library.libhub.DTO.Response.LoginStartResponse;
 import com.library.libhub.entity.Users;
+import com.library.libhub.service.EmailTwoFactorService;
 import com.library.libhub.service.IAuthService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
 @RestController
@@ -23,9 +27,12 @@ import jakarta.servlet.http.HttpSession;
 public class AuthController {
 
     private final IAuthService authService;
+    private final EmailTwoFactorService twoFactorService;
 
-    public AuthController(IAuthService authService) {
+    public AuthController(IAuthService authService,
+            EmailTwoFactorService twoFactorService) {
         this.authService = authService;
+        this.twoFactorService = twoFactorService;
     }
 
     @PostMapping("/register")
@@ -34,8 +41,28 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<LoginStartResponse> login(
+            @RequestBody LoginRequest request,
+            HttpSession session,
+            HttpServletRequest servletRequest) {
+        Users user = authService.authenticate(request);
+        if (twoFactorService.isEnabled()) {
+            return ResponseEntity.ok(twoFactorService.beginChallenge(user, session));
+        }
+
+        servletRequest.changeSessionId();
+        return ResponseEntity.ok(LoginStartResponse.direct(
+                authService.completeLogin(user.getUserId(), session)));
+    }
+
+    @PostMapping("/2fa/verify")
+    public ResponseEntity<AuthResponse> verifyTwoFactor(
+            @RequestBody VerifyOtpRequest request,
+            HttpSession session,
+            HttpServletRequest servletRequest) {
+        long userId = twoFactorService.verify(request, session);
+        servletRequest.changeSessionId();
+        return ResponseEntity.ok(authService.completeLogin(userId, session));
     }
 
     @PostMapping("/logout")

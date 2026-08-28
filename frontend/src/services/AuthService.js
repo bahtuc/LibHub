@@ -4,6 +4,10 @@ export function login(payload) {
     return apiRequest("/auth/login", { method: "POST", body: payload });
 }
 
+export function verifyLoginOtp(payload) {
+    return apiRequest("/auth/2fa/verify", { method: "POST", body: payload });
+}
+
 export function register(payload) {
     return apiRequest("/auth/register", { method: "POST", body: payload });
 }

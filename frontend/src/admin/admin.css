@@ -53,6 +53,14 @@
   gap: 2px;
   flex: 1;
 }
+.lh-admin__nav-section { display: contents; }
+.lh-admin-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.lh-admin-action { min-height: 108px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 18px; border: 1px solid var(--lh-border); border-radius: var(--lh-radius-md); background: var(--lh-paper); transition: transform .18s ease, border-color .18s ease; }
+.lh-admin-action:hover { border-color: var(--lh-primary); transform: translateY(-2px); }
+.lh-admin-action > span { width: 42px; height: 42px; display: grid; place-items: center; border-radius: var(--lh-radius-sm); color: white; background: var(--lh-primary); }
+.lh-admin-action strong, .lh-admin-action small { display: block; }.lh-admin-action small { margin-top: 4px; color: var(--lh-text-muted); line-height: 1.35; }
+.lh-statistics-rankings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }.lh-statistics-rankings__title { padding: 14px 16px; font-weight: 700; }
+@media (max-width: 760px) { .lh-admin-actions, .lh-statistics-rankings { grid-template-columns: 1fr; } .lh-admin__nav-section { display: flex; } .lh-admin__nav-section .lh-admin__nav-label { display: none; } }
 
 .lh-admin__nav a {
   display: flex;
@@ -355,6 +363,28 @@
   box-shadow: 0 0 0 3px rgba(185, 131, 42, 0.15);
 }
 
+.lh-admin-form__image-preview {
+  display: block;
+  width: 96px;
+  margin-top: 8px;
+}
+
+.lh-admin-form__image-preview img {
+  width: 96px;
+  height: 132px;
+  border: 1px solid var(--lh-border);
+  border-radius: var(--lh-radius-sm);
+  object-fit: cover;
+  background: var(--lh-paper);
+}
+
+.lh-admin-form__image-preview small {
+  display: none;
+  color: #b42318;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
 .lh-admin-form__actions {
   display: flex;
   gap: 10px;
@@ -378,6 +408,16 @@
   border-collapse: collapse;
   font-size: 0.88rem;
   min-width: 640px;
+}
+
+.lh-admin-book-cover {
+  display: block;
+  width: 42px;
+  height: 58px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: var(--lh-paper);
+  border: 1px solid var(--lh-border);
 }
 
 .lh-admin-table thead tr {

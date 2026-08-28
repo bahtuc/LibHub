@@ -12,11 +12,13 @@ import static org.mockito.Mockito.when;
 
 import com.library.libhub.entity.Fines;
 import com.library.libhub.repository.FineRepository;
+import com.library.libhub.repository.ReturnDetailRepository;
 
 class FineServiceImplTest {
 
     private final FineRepository repo = mock(FineRepository.class);
-    private final FineServiceImpl service = new FineServiceImpl(repo);
+    private final ReturnDetailRepository returnDetailRepo = mock(ReturnDetailRepository.class);
+    private final FineServiceImpl service = new FineServiceImpl(repo, returnDetailRepo);
 
 
     @Test

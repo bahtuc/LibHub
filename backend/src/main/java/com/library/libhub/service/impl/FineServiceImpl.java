@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.library.libhub.entity.Fines;
 import com.library.libhub.exception.ResourceNotFoundException;
 import com.library.libhub.repository.FineRepository;
+import com.library.libhub.repository.ReturnDetailRepository;
 import com.library.libhub.service.IFineService;
 
 import jakarta.transaction.Transactional;
@@ -19,9 +20,11 @@ import jakarta.transaction.Transactional;
 public class  FineServiceImpl implements IFineService {
 
     private final FineRepository fineRepo;
+    private final ReturnDetailRepository returnDetailRepo;
 
-    public FineServiceImpl(FineRepository fineRepo) {
+    public FineServiceImpl(FineRepository fineRepo, ReturnDetailRepository returnDetailRepo) {
         this.fineRepo = fineRepo;
+        this.returnDetailRepo = returnDetailRepo;
     }
 
     @Override
@@ -38,6 +41,7 @@ public class  FineServiceImpl implements IFineService {
         if (fine.getPaidStatus() == null || fine.getPaidStatus().isBlank()) {
             fine.setPaidStatus("Unpaid");
         }
+        requireReturnDetail(fine.getReturnDetailId());
 
         if (fine.getCreatedAt() == null) {
             fine.setCreatedAt(new Timestamp(System.currentTimeMillis()));
@@ -60,8 +64,10 @@ public class  FineServiceImpl implements IFineService {
     public Fines updateFine(long fineId, Fines fine) {
         Fines existing = fineRepo.findById(fineId)
                 .orElseThrow(() -> new ResourceNotFoundException("Fine not found with id: " + fineId));
-        if (fine.getReturnDetailId() != null)
+        if (fine.getReturnDetailId() != null) {
+            requireReturnDetail(fine.getReturnDetailId());
             existing.setReturnDetailId(fine.getReturnDetailId());
+        }
         if (fine.getAmount() != null) {
 
             if (fine.getAmount().compareTo(java.math.BigDecimal.ZERO) <= 0) {
@@ -99,6 +105,12 @@ public class  FineServiceImpl implements IFineService {
     @Override
     public List<Fines> findByUser(long userId) {
         return fineRepo.findByUserId(userId);
+    }
+
+    private void requireReturnDetail(long returnDetailId) {
+        if (!returnDetailRepo.existsById(returnDetailId)) {
+            throw new IllegalArgumentException("Mã chi tiết trả #" + returnDetailId + " không tồn tại");
+        }
     }
 
 }

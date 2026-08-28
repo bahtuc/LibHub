@@ -1,6 +1,7 @@
 package com.library.libhub.DTO.Response;
 
 import java.sql.Date;
+import java.math.BigDecimal;
 import java.util.List;
 
 public class BorrowTicketResponse {
@@ -14,6 +15,8 @@ public class BorrowTicketResponse {
     private Date dueDate;
     private String status;
     private String note;
+    private BigDecimal depositAmount;
+    private String depositPaidStatus;
     private List<BorrowedItemResponse> items;
 
     public Long getTicketId() {
@@ -87,6 +90,11 @@ public class BorrowTicketResponse {
     public void setNote(String note) {
         this.note = note;
     }
+
+    public BigDecimal getDepositAmount() { return depositAmount; }
+    public void setDepositAmount(BigDecimal depositAmount) { this.depositAmount = depositAmount; }
+    public String getDepositPaidStatus() { return depositPaidStatus; }
+    public void setDepositPaidStatus(String depositPaidStatus) { this.depositPaidStatus = depositPaidStatus; }
 
     public List<BorrowedItemResponse> getItems() {
         return items;

@@ -57,7 +57,7 @@ function makeApiStore({ idField, loadAll, create, update, remove, fromApi, toApi
   }
 
   async function add(item) {
-    const saved = fromApi(await create(toApi(item, true)));
+    const saved = fromApi(await create(await toApi(item, true)));
     cache = [...cache, saved];
     notify();
     return saved;
@@ -65,7 +65,7 @@ function makeApiStore({ idField, loadAll, create, update, remove, fromApi, toApi
 
   async function updateItem(id, patch) {
     const current = getById(id) ?? {};
-    const saved = fromApi(await update(id, toApi({ ...current, ...patch }, false)));
+    const saved = fromApi(await update(id, await toApi({ ...current, ...patch }, false)));
     cache = cache.map((item) => Number(item[idField]) === Number(id) ? saved : item);
     notify();
     return saved;
@@ -191,6 +191,16 @@ const toFine = (fine) => ({
   paidStatus: fine.paid_status || "Unpaid",
 });
 
+function toDateInputValue(value) {
+  if (!value) return "";
+  const text = String(value);
+  if (/^\d{4}-\d{2}-\d{2}/.test(text)) return text.slice(0, 10);
+
+  const date = new Date(text);
+  if (Number.isNaN(date.getTime())) return "";
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+}
+
 const fromBorrowTicket = (ticket) => ({
   ...ticket,
   ticket_id: ticket.ticketId,
@@ -198,32 +208,36 @@ const fromBorrowTicket = (ticket) => ({
   borrower_type: ticket.userId == null ? "guest" : "member",
   guest_name: ticket.guestName || "",
   guest_phone: ticket.guestPhone || "",
-  borrow_date: ticket.borrowDate,
-  due_date: ticket.dueDate,
+  // Native date controls only accept yyyy-MM-dd. API responses may include a timestamp.
+  borrow_date: toDateInputValue(ticket.borrowDate),
+  due_date: toDateInputValue(ticket.dueDate),
   created_at: ticket.createdAt,
   copy_ids: "",
 });
 
-const toBorrowTicket = (ticket, creating) => creating ? ({
-  userId: ticket.borrower_type === "guest" ? null : Number(ticket.user_id),
-  guestName: ticket.borrower_type === "guest" ? ticket.guest_name?.trim() : null,
-  guestPhone: ticket.borrower_type === "guest" ? ticket.guest_phone?.trim() || null : null,
-  borrowDate: ticket.borrow_date,
-  dueDate: ticket.due_date,
-  note: ticket.note || null,
-  copyIds: String(ticket.copy_ids || "")
-    .split(",")
-    .map((value) => Number(value.trim()))
-    .filter((value) => Number.isFinite(value) && value > 0),
-}) : ({
-  userId: ticket.borrower_type === "guest" ? null : Number(ticket.user_id),
-  guestName: ticket.borrower_type === "guest" ? ticket.guest_name?.trim() : null,
-  guestPhone: ticket.borrower_type === "guest" ? ticket.guest_phone?.trim() || null : null,
-  borrowDate: ticket.borrow_date,
-  dueDate: ticket.due_date,
-  status: ticket.status,
-  note: ticket.note || null,
-});
+async function resolveCopyIds(value) {
+  const entries = String(value || "").split(",").map((item) => item.trim()).filter(Boolean);
+  return Promise.all(entries.map(async (entry) => {
+    if (/^\d+$/.test(entry)) return Number(entry);
+    const copy = await copyApi.findBookCopyByBarcode(encodeURIComponent(entry));
+    if (!copy?.copyId) throw new Error(`Không tìm thấy bản sao có mã vạch "${entry}".`);
+    return copy.copyId;
+  }));
+}
+
+const toBorrowTicket = async (ticket, creating) => {
+  const borrower = {
+    userId: ticket.borrower_type === "guest" ? null : Number(ticket.user_id),
+    guestName: ticket.borrower_type === "guest" ? ticket.guest_name?.trim() : null,
+    guestPhone: ticket.borrower_type === "guest" ? ticket.guest_phone?.trim() || null : null,
+    borrowDate: ticket.borrow_date,
+    dueDate: ticket.due_date,
+    note: ticket.note || null,
+  };
+  return creating
+    ? { ...borrower, copyIds: await resolveCopyIds(ticket.copy_ids) }
+    : { ...borrower, status: ticket.status };
+};
 
 
 export const booksStore = makeApiStore({

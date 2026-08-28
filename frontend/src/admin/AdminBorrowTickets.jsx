@@ -96,7 +96,7 @@ export default function AdminBorrowTickets() {
         { name: "due_date", label: "Hạn trả", type: "date", required: true },
         {
           name: "copy_ids",
-          label: "Mã bản sao khi tạo mới (cách nhau bằng dấu phẩy)",
+          label: "Mã vạch hoặc ID bản sao khi tạo mới (cách nhau bằng dấu phẩy)",
           createOnly: true,
           required: true,
         },

@@ -1,8 +1,10 @@
 package com.library.libhub.service.impl;
 
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -343,6 +345,9 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
         ticket.setStatus("Borrowed");
         ticket.setNote(note);
         ticket.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+        long borrowDays = ChronoUnit.DAYS.between(borrowDate.toLocalDate(), dueDate.toLocalDate());
+        ticket.setDepositAmount(BigDecimal.valueOf(borrowDays).multiply(BigDecimal.valueOf(5_000)));
+        ticket.setDepositPaidStatus("Paid");
         ticket = borrowTicketRepo.save(ticket);
 
         for (BookCopies copy : copies) {

@@ -3,6 +3,7 @@ package com.library.libhub.entity;
 import jakarta.persistence.*;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "BorrowTickets")
@@ -36,6 +37,12 @@ public class BorrowTickets {
 
   @Column(name = "created_at")
   private Timestamp createdAt;
+
+  @Column(name = "deposit_amount", precision = 18, scale = 2)
+  private BigDecimal depositAmount;
+
+  @Column(name = "deposit_paid_status")
+  private String depositPaidStatus;
 
 
   public Long getTicketId() {
@@ -115,5 +122,10 @@ public class BorrowTickets {
   public void setCreatedAt(java.sql.Timestamp createdAt) {
     this.createdAt = createdAt;
   }
+
+  public BigDecimal getDepositAmount() { return depositAmount; }
+  public void setDepositAmount(BigDecimal depositAmount) { this.depositAmount = depositAmount; }
+  public String getDepositPaidStatus() { return depositPaidStatus; }
+  public void setDepositPaidStatus(String depositPaidStatus) { this.depositPaidStatus = depositPaidStatus; }
 
 }

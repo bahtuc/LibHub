@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/statistics")
@@ -36,5 +37,14 @@ public class StatisticsController {
     public ResponseEntity<List<Map<String, Object>>> mostBorrowed(
             @RequestParam(defaultValue = "10") int limit) {
         return ResponseEntity.ok(statisticsService.mostBorrowed(limit));
+    }
+
+    @GetMapping("/monthly-summary")
+    public ResponseEntity<Map<String, Object>> monthlySummary(
+            @RequestParam(required = false) String month) {
+        LocalDate selected = month == null || month.isBlank()
+                ? LocalDate.now()
+                : LocalDate.parse(month + "-01");
+        return ResponseEntity.ok(statisticsService.monthlySummary(selected));
     }
 }

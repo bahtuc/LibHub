@@ -10,6 +10,14 @@ function defaultDueDate() {
   return date.toISOString().slice(0, 10);
 }
 
+function depositForLoan(dueDate) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(`${dueDate}T00:00:00`);
+  if (Number.isNaN(due.getTime())) return 0;
+  return Math.max(0, Math.round((due - today) / 86400000)) * 5000;
+}
+
 export default function LibrarianBorrow() {
   const books = booksStore.useCollection();
   const copies = copiesStore.useCollection();
@@ -104,6 +112,7 @@ export default function LibrarianBorrow() {
       )
     )
     .filter(Boolean);
+  const depositAmount = depositForLoan(dueDate);
 
   // =========================
   // Thêm bản sao vào phiếu
@@ -397,6 +406,14 @@ export default function LibrarianBorrow() {
               required
             />
           </label>
+
+          <div className="lh-field lh-admin-form__field">
+            <span>Tiền cọc cần thu</span>
+            <strong className="lh-borrow-deposit">
+              {depositAmount.toLocaleString("vi-VN")}đ
+            </strong>
+            <small>5.000đ × {Math.round(depositAmount / 5000)} ngày mượn</small>
+          </div>
 
           {/* Ghi chú */}
           <label className="lh-field lh-admin-form__field">

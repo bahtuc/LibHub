@@ -2,10 +2,10 @@
 -- DROP DATABASE CŨ
 -- ============================================
 IF DB_ID('LibHub') IS NOT NULL
-BEGIN
-    ALTER DATABASE LibHub SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-    DROP DATABASE LibHub;
-END
+    BEGIN
+        ALTER DATABASE LibHub SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+        DROP DATABASE LibHub;
+    END
 GO
 
 -- ============================================
@@ -63,7 +63,7 @@ CREATE TABLE Users
 
     CONSTRAINT FK_Users_Roles
         FOREIGN KEY(role_id)
-        REFERENCES Roles(role_id)
+            REFERENCES Roles(role_id)
 );
 GO
 
@@ -119,17 +119,17 @@ CREATE TABLE Books
     book_id BIGINT IDENTITY(1,1) PRIMARY KEY,
 
     title NVARCHAR(255)
-        NOT NULL,
+                        NOT NULL,
 
     isbn VARCHAR(20)
         UNIQUE,
 
     publish_year INT
         CHECK
-        (
+            (
             publish_year BETWEEN 1000
-            AND YEAR(GETDATE())
-        ),
+                AND YEAR(GETDATE())
+            ),
 
     description NVARCHAR(MAX),
 
@@ -147,23 +147,23 @@ CREATE TABLE Books
     publisher_id BIGINT NOT NULL,
 
     created_at DATETIME2
-        DEFAULT GETDATE(),
+                             DEFAULT GETDATE(),
 
-	is_featured BIT NOT NULL DEFAULT 0,
+    is_featured BIT NOT NULL DEFAULT 0,
 
-	is_hidden BIT NOT NULL DEFAULT 0,
+    is_hidden BIT NOT NULL DEFAULT 0,
 
     CONSTRAINT FK_Books_Categories
         FOREIGN KEY(category_id)
-        REFERENCES Categories(category_id),
+            REFERENCES Categories(category_id),
 
     CONSTRAINT FK_Books_Authors
         FOREIGN KEY(author_id)
-        REFERENCES Authors(author_id),
+            REFERENCES Authors(author_id),
 
     CONSTRAINT FK_Books_Publishers
         FOREIGN KEY(publisher_id)
-        REFERENCES Publishers(publisher_id)
+            REFERENCES Publishers(publisher_id)
 );
 GO-- ============================================
 -- BOOK COPIES
@@ -185,7 +185,7 @@ CREATE TABLE BookCopies
 
     CONSTRAINT FK_BookCopies_Books
         FOREIGN KEY(book_id)
-        REFERENCES Books(book_id)
+            REFERENCES Books(book_id)
 );
 GO
 
@@ -196,24 +196,34 @@ CREATE TABLE BorrowTickets
 (
     ticket_id BIGINT IDENTITY(1,1) PRIMARY KEY,
 
-    user_id BIGINT NOT NULL,
+    -- Nullable để hỗ trợ khách vãng lai; thành viên vẫn được ràng buộc FK.
+    user_id BIGINT NULL,
+
+    guest_name NVARCHAR(100) NULL,
+
+    guest_phone VARCHAR(20) NULL,
 
     borrow_date DATE
-        DEFAULT GETDATE(),
+                                             DEFAULT GETDATE(),
 
     due_date DATE NOT NULL,
 
-    status NVARCHAR(30)
-        DEFAULT N'Đang mượn',
+    status VARCHAR(30)
+                                             DEFAULT 'Borrowed',
 
     note NVARCHAR(MAX),
 
     created_at DATETIME2
-        DEFAULT GETDATE(),
+                                             DEFAULT GETDATE(),
+
+    -- Tiền cọc thu tại quầy: 5.000đ × số ngày mượn.
+    deposit_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+
+    deposit_paid_status VARCHAR(30) NOT NULL DEFAULT 'Paid',
 
     CONSTRAINT FK_BorrowTickets_Users
         FOREIGN KEY(user_id)
-        REFERENCES Users(user_id)
+            REFERENCES Users(user_id)
 );
 GO
 
@@ -228,16 +238,16 @@ CREATE TABLE BorrowDetails
 
     copy_id BIGINT NOT NULL,
 
-    borrow_status NVARCHAR(30)
-        DEFAULT N'Đang mượn',
+    borrow_status VARCHAR(30)
+        DEFAULT 'Borrowed',
 
     CONSTRAINT FK_BorrowDetails_Tickets
         FOREIGN KEY(ticket_id)
-        REFERENCES BorrowTickets(ticket_id),
+            REFERENCES BorrowTickets(ticket_id),
 
     CONSTRAINT FK_BorrowDetails_Copies
         FOREIGN KEY(copy_id)
-        REFERENCES BookCopies(copy_id)
+            REFERENCES BookCopies(copy_id)
 );
 GO
 
@@ -259,11 +269,11 @@ CREATE TABLE Returns
 
     CONSTRAINT FK_Returns_Tickets
         FOREIGN KEY(ticket_id)
-        REFERENCES BorrowTickets(ticket_id),
+            REFERENCES BorrowTickets(ticket_id),
 
     CONSTRAINT FK_Returns_Users
         FOREIGN KEY(received_by)
-        REFERENCES Users(user_id)
+            REFERENCES Users(user_id)
 );
 GO
 
@@ -278,16 +288,16 @@ CREATE TABLE ReturnDetails
 
     copy_id BIGINT NOT NULL,
 
-    condition_book NVARCHAR(50)
-        DEFAULT N'Tốt',
+    condition_book VARCHAR(50)
+        DEFAULT 'Good',
 
     CONSTRAINT FK_ReturnDetails_Returns
         FOREIGN KEY(return_id)
-        REFERENCES Returns(return_id),
+            REFERENCES Returns(return_id),
 
     CONSTRAINT FK_ReturnDetails_Copies
         FOREIGN KEY(copy_id)
-        REFERENCES BookCopies(copy_id)
+            REFERENCES BookCopies(copy_id)
 );
 GO
 
@@ -306,15 +316,15 @@ CREATE TABLE Fines
 
     reason NVARCHAR(255),
 
-    paid_status NVARCHAR(30)
-        DEFAULT N'Chưa thanh toán',
+    paid_status VARCHAR(30)
+        DEFAULT 'Unpaid',
 
     created_at DATETIME2
         DEFAULT GETDATE(),
 
     CONSTRAINT FK_Fines_ReturnDetails
         FOREIGN KEY(return_detail_id)
-        REFERENCES ReturnDetails(return_detail_id)
+            REFERENCES ReturnDetails(return_detail_id)
 );
 
 -- ============================================
@@ -322,32 +332,32 @@ CREATE TABLE Fines
 -- ============================================
 
 CREATE TABLE PaymentTransactions (
-    payment_id BIGINT IDENTITY(1,1) PRIMARY KEY,
+                                     payment_id BIGINT IDENTITY(1,1) PRIMARY KEY,
 
-    fine_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
+                                     fine_id BIGINT NOT NULL,
+                                     user_id BIGINT NOT NULL,
 
-    txn_ref NVARCHAR(100) NOT NULL,
+                                     txn_ref NVARCHAR(100) NOT NULL,
 
-    amount BIGINT NOT NULL,
+                                     amount BIGINT NOT NULL,
 
-    status NVARCHAR(30) NOT NULL,
+                                     status NVARCHAR(30) NOT NULL,
 
-    bank_transaction_no NVARCHAR(100) NULL,
+                                     bank_transaction_no NVARCHAR(100) NULL,
 
-    created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
+                                     created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
 
-    updated_at DATETIME2 NULL,
+                                     updated_at DATETIME2 NULL,
 
-    CONSTRAINT uk_payment_txn_ref UNIQUE (txn_ref),
+                                     CONSTRAINT uk_payment_txn_ref UNIQUE (txn_ref),
 
-    CONSTRAINT FK_PaymentTransactions_Fines
-        FOREIGN KEY (fine_id)
-        REFERENCES Fines(fine_id),
+                                     CONSTRAINT FK_PaymentTransactions_Fines
+                                         FOREIGN KEY (fine_id)
+                                             REFERENCES Fines(fine_id),
 
-    CONSTRAINT FK_PaymentTransactions_Users
-        FOREIGN KEY (user_id)
-        REFERENCES Users(user_id)
+                                     CONSTRAINT FK_PaymentTransactions_Users
+                                         FOREIGN KEY (user_id)
+                                             REFERENCES Users(user_id)
 );
 
 -- ============================================
@@ -359,18 +369,18 @@ INSERT INTO Roles
     description
 )
 VALUES
-(
-    N'Admin',
-    N'Quản trị hệ thống'
-),
-(
-    N'Staff',
-    N'Nhân viên thư viện'
-),
-(
-    N'Member',
-    N'Bạn đọc'
-);
+    (
+        N'Admin',
+        N'Quản trị hệ thống'
+    ),
+    (
+        N'Librarian',
+        N'Nhân viên thư viện'
+    ),
+    (
+        N'Member',
+        N'Bạn đọc'
+    );
 GO
 -- ============================================
 -- INITIAL DATA USERS
@@ -395,65 +405,65 @@ INSERT INTO Users
 )
 VALUES
 
-(
-'admin',
-'$2a$10$lj3NoLAdr7Ay/ZocmfxLOONR3kD/.xqqCTPduBaUTXHWA9y47laQS',
-N'Quản trị viên',
-'admin@libhub.com',
-'0900000001',
-N'TP. Hồ Chí Minh',
-NULL,
-N'ACTIVE',
-1
-),
+    (
+        'admin',
+        '$2a$10$lj3NoLAdr7Ay/ZocmfxLOONR3kD/.xqqCTPduBaUTXHWA9y47laQS',
+        N'Quản trị viên',
+        'admin@libhub.com',
+        '0900000001',
+        N'TP. Hồ Chí Minh',
+        NULL,
+        N'ACTIVE',
+        1
+    ),
 
-(
-'staff01',
-'$2a$10$lj3NoLAdr7Ay/ZocmfxLOONR3kD/.xqqCTPduBaUTXHWA9y47laQS',
-N'Nguyễn Văn An',
-'staff01@libhub.com',
-'0900000002',
-N'TP. Hồ Chí Minh',
-NULL,
-N'ACTIVE',
-2
-),
+    (
+        'staff01',
+        '$2a$10$lj3NoLAdr7Ay/ZocmfxLOONR3kD/.xqqCTPduBaUTXHWA9y47laQS',
+        N'Nguyễn Văn An',
+        'staff01@libhub.com',
+        '0900000002',
+        N'TP. Hồ Chí Minh',
+        NULL,
+        N'ACTIVE',
+        2
+    ),
 
-(
-'staff02',
-'$2a$10$lj3NoLAdr7Ay/ZocmfxLOONR3kD/.xqqCTPduBaUTXHWA9y47laQS',
-N'Trần Minh Khôi',
-'staff02@libhub.com',
-'0900000003',
-N'Hà Nội',
-NULL,
-N'ACTIVE',
-2
-),
+    (
+        'staff02',
+        '$2a$10$lj3NoLAdr7Ay/ZocmfxLOONR3kD/.xqqCTPduBaUTXHWA9y47laQS',
+        N'Trần Minh Khôi',
+        'staff02@libhub.com',
+        '0900000003',
+        N'Hà Nội',
+        NULL,
+        N'ACTIVE',
+        2
+    ),
 
-(
-'member01',
-'$2a$10$lj3NoLAdr7Ay/ZocmfxLOONR3kD/.xqqCTPduBaUTXHWA9y47laQS',
-N'Lê Thị Mai',
-'member01@gmail.com',
-'0900000004',
-N'Đà Nẵng',
-NULL,
-N'ACTIVE',
-3
-),
+    (
+        'member01',
+        '$2a$10$lj3NoLAdr7Ay/ZocmfxLOONR3kD/.xqqCTPduBaUTXHWA9y47laQS',
+        N'Lê Thị Mai',
+        'member01@gmail.com',
+        '0900000004',
+        N'Đà Nẵng',
+        NULL,
+        N'ACTIVE',
+        3
+    ),
 
-(
-'member02',
-'$2a$10$lj3NoLAdr7Ay/ZocmfxLOONR3kD/.xqqCTPduBaUTXHWA9y47laQS',
-N'Phạm Quốc Bảo',
-'member02@gmail.com',
-'0900000005',
-N'Cần Thơ',
-NULL,
-N'ACTIVE',
-3
-);
+    (
+        'member02',
+        '$2a$10$lj3NoLAdr7Ay/ZocmfxLOONR3kD/.xqqCTPduBaUTXHWA9y47laQS',
+        N'Phạm Quốc Bảo',
+        'member02@gmail.com',
+        '0900000005',
+        N'Cần Thơ',
+        NULL,
+        N'ACTIVE',
+        3
+    );
 
 GO
 
@@ -462,13 +472,13 @@ GO
 -- ============================================
 INSERT INTO Categories(category_name, description)
 VALUES
-(N'Kỹ năng sống',N'Phát triển bản thân'),
-(N'Tiểu thuyết',N'Văn học'),
-(N'Hồi ký',N'Tự truyện'),
-(N'Phật giáo',N'Thiền và chánh niệm'),
-(N'Fantasy',N'Giả tưởng'),
-(N'Công nghệ',N'Công nghệ thông tin'),
-(N'Kinh doanh',N'Quản trị doanh nghiệp');
+    (N'Kỹ năng sống',N'Phát triển bản thân'),
+    (N'Tiểu thuyết',N'Văn học'),
+    (N'Hồi ký',N'Tự truyện'),
+    (N'Phật giáo',N'Thiền và chánh niệm'),
+    (N'Fantasy',N'Giả tưởng'),
+    (N'Công nghệ',N'Công nghệ thông tin'),
+    (N'Kinh doanh',N'Quản trị doanh nghiệp');
 GO
 
 -- ============================================
@@ -476,15 +486,15 @@ GO
 -- ============================================
 INSERT INTO Authors(author_name, biography)
 VALUES
-(N'Napoleon Hill',N'Tác giả Think and Grow Rich'),
-(N'Dale Carnegie',N'Tác giả Đắc Nhân Tâm'),
-(N'James Clear',N'Tác giả Atomic Habits'),
-(N'Thích Nhất Hạnh',N'Thiền sư Việt Nam'),
-(N'Chu Lai',N'Nhà văn Việt Nam'),
-(N'Paul Kalanithi',N'Bác sĩ và nhà văn'),
-(N'Shinkai Makoto',N'Tác giả Nhật Bản'),
-(N'J.R.R. Tolkien',N'Tác giả Lord of the Rings'),
-(N'Robert C. Martin',N'Uncle Bob');
+    (N'Napoleon Hill',N'Tác giả Think and Grow Rich'),
+    (N'Dale Carnegie',N'Tác giả Đắc Nhân Tâm'),
+    (N'James Clear',N'Tác giả Atomic Habits'),
+    (N'Thích Nhất Hạnh',N'Thiền sư Việt Nam'),
+    (N'Chu Lai',N'Nhà văn Việt Nam'),
+    (N'Paul Kalanithi',N'Bác sĩ và nhà văn'),
+    (N'Shinkai Makoto',N'Tác giả Nhật Bản'),
+    (N'J.R.R. Tolkien',N'Tác giả Lord of the Rings'),
+    (N'Robert C. Martin',N'Uncle Bob');
 GO
 
 -- ============================================
@@ -492,12 +502,12 @@ GO
 -- ============================================
 INSERT INTO Publishers(publisher_name,address,phone)
 VALUES
-(N'First News',N'Việt Nam','0281111111'),
-(N'NXB Trẻ',N'TP. Hồ Chí Minh','0282222222'),
-(N'NXB Lao Động',N'Hà Nội','0243333333'),
-(N'NXB Văn Học',N'Hà Nội','0244444444'),
-(N'Pearson',N'USA','111111111'),
-(N'Addison Wesley',N'USA','222222222');
+    (N'First News',N'Việt Nam','0281111111'),
+    (N'NXB Trẻ',N'TP. Hồ Chí Minh','0282222222'),
+    (N'NXB Lao Động',N'Hà Nội','0243333333'),
+    (N'NXB Văn Học',N'Hà Nội','0244444444'),
+    (N'Pearson',N'USA','111111111'),
+    (N'Addison Wesley',N'USA','222222222');
 GO
 
 -- ============================================
@@ -507,104 +517,104 @@ INSERT INTO Books
 (title,isbn,publish_year,description,cover_image,language,pages,category_id,author_id,publisher_id)
 VALUES
 
-(N'Nghĩ giàu làm giàu',
-'9786049221234',
-2018,
-N'Sách tư duy thành công',
-'nghigiaulamgiau.jpg',
-'vi',
-320,
-7,
-1,
-1),
+    (N'Nghĩ giàu làm giàu',
+     '9786049221234',
+     2018,
+     N'Sách tư duy thành công',
+     'nghigiaulamgiau.jpg',
+     'vi',
+     320,
+     7,
+     1,
+     1),
 
-(N'Đắc nhân tâm',
-'9786041112233',
-2019,
-N'Kỹ năng giao tiếp',
-'dacnhantam.jpg',
-'vi',
-320,
-1,
-2,
-1),
+    (N'Đắc nhân tâm',
+     '9786041112233',
+     2019,
+     N'Kỹ năng giao tiếp',
+     'dacnhantam.jpg',
+     'vi',
+     320,
+     1,
+     2,
+     1),
 
-(N'Atomic Habits',
-'9781524763138',
-2018,
-N'Thói quen nguyên tử',
-'atomichabits.jpg',
-'en',
-320,
-1,
-3,
-5),
+    (N'Atomic Habits',
+     '9781524763138',
+     2018,
+     N'Thói quen nguyên tử',
+     'atomichabits.jpg',
+     'en',
+     320,
+     1,
+     3,
+     5),
 
-(N'Không diệt không sinh đừng sợ hãi',
-'9786043398765',
-2021,
-N'Triết lý Phật giáo',
-'khongdiet.jpg',
-'vi',
-180,
-4,
-4,
-2),
+    (N'Không diệt không sinh đừng sợ hãi',
+     '9786043398765',
+     2021,
+     N'Triết lý Phật giáo',
+     'khongdiet.jpg',
+     'vi',
+     180,
+     4,
+     4,
+     2),
 
-(N'Mưa đỏ',
-'9786041237890',
-2024,
-N'Tiểu thuyết chiến tranh',
-'muado.jpg',
-'vi',
-300,
-2,
-5,
-4),
+    (N'Mưa đỏ',
+     '9786041237890',
+     2024,
+     N'Tiểu thuyết chiến tranh',
+     'muado.jpg',
+     'vi',
+     300,
+     2,
+     5,
+     4),
 
-(N'Khi hơi thở hóa thinh không',
-'9786045678901',
-2020,
-N'Hồi ký nổi tiếng',
-'breath.jpg',
-'vi',
-240,
-3,
-6,
-3),
+    (N'Khi hơi thở hóa thinh không',
+     '9786045678901',
+     2020,
+     N'Hồi ký nổi tiếng',
+     'breath.jpg',
+     'vi',
+     240,
+     3,
+     6,
+     3),
 
-(N'Đứa con của thời tiết',
-'9786044567890',
-2020,
-N'Tiểu thuyết chuyển thể anime',
-'weathering.jpg',
-'vi',
-250,
-2,
-7,
-2),
+    (N'Đứa con của thời tiết',
+     '9786044567890',
+     2020,
+     N'Tiểu thuyết chuyển thể anime',
+     'weathering.jpg',
+     'vi',
+     250,
+     2,
+     7,
+     2),
 
-(N'The Fellowship of the Ring',
-'9780261103573',
-2022,
-N'Lord of the Rings',
-'lotr1.jpg',
-'en',
-480,
-5,
-8,
-5),
+    (N'The Fellowship of the Ring',
+     '9780261103573',
+     2022,
+     N'Lord of the Rings',
+     'lotr1.jpg',
+     'en',
+     480,
+     5,
+     8,
+     5),
 
-(N'Clean Code',
-'9780132350884',
-2008,
-N'Best practices lập trình',
-'cleancode.jpg',
-'en',
-464,
-6,
-9,
-6);
+    (N'Clean Code',
+     '9780132350884',
+     2008,
+     N'Best practices lập trình',
+     'cleancode.jpg',
+     'en',
+     464,
+     6,
+     9,
+     6);
 GO
 
 -- ============================================
@@ -613,35 +623,35 @@ GO
 INSERT INTO BookCopies
 (book_id,barcode,shelf_location,status,acquired_date)
 VALUES
-(1,'BC000001',N'A1','Available','2025-01-01'),
-(1,'BC000002',N'A1','Borrowed','2025-01-01'),
-(2,'BC000003',N'A2','Available','2025-01-05'),
-(2,'BC000004',N'A2','Available','2025-01-05'),
-(3,'BC000005',N'B1','Available','2025-02-01'),
-(4,'BC000006',N'B2','Available','2025-02-05'),
-(5,'BC000007',N'C1','Available','2025-03-01'),
-(6,'BC000008',N'C2','Available','2025-03-01'),
-(7,'BC000009',N'D1','Available','2025-03-10'),
-(8,'BC000010',N'D2','Available','2025-04-01'),
-(9,'BC000011',N'E1','Available','2025-04-05'),
-(1,'BC000012',N'A1','Available','2026-08-01'),
-(1,'BC000013',N'A1','Available','2026-08-01'),
-(2,'BC000014',N'A2','Available','2026-08-01'),
-(2,'BC000015',N'A2','Available','2026-08-01'),
-(3,'BC000016',N'B1','Available','2026-08-02'),
-(3,'BC000017',N'B1','Available','2026-08-02'),
-(4,'BC000018',N'B2','Available','2026-08-02'),
-(4,'BC000019',N'B2','Available','2026-08-02'),
-(5,'BC000020',N'C1','Available','2026-08-03'),
-(5,'BC000021',N'C1','Available','2026-08-03'),
-(6,'BC000022',N'C2','Available','2026-08-03'),
-(6,'BC000023',N'C2','Available','2026-08-03'),
-(7,'BC000024',N'D1','Available','2026-08-04'),
-(7,'BC000025',N'D1','Available','2026-08-04'),
-(8,'BC000026',N'D2','Available','2026-08-04'),
-(8,'BC000027',N'D2','Available','2026-08-04'),
-(9,'BC000028',N'E1','Available','2026-08-05'),
-(9,'BC000029',N'E1','Available','2026-08-05');
+    (1,'BC000001',N'A1','Available','2025-01-01'),
+    (1,'BC000002',N'A1','Borrowed','2025-01-01'),
+    (2,'BC000003',N'A2','Available','2025-01-05'),
+    (2,'BC000004',N'A2','Available','2025-01-05'),
+    (3,'BC000005',N'B1','Available','2025-02-01'),
+    (4,'BC000006',N'B2','Available','2025-02-05'),
+    (5,'BC000007',N'C1','Available','2025-03-01'),
+    (6,'BC000008',N'C2','Available','2025-03-01'),
+    (7,'BC000009',N'D1','Available','2025-03-10'),
+    (8,'BC000010',N'D2','Available','2025-04-01'),
+    (9,'BC000011',N'E1','Available','2025-04-05'),
+    (1,'BC000012',N'A1','Available','2026-08-01'),
+    (1,'BC000013',N'A1','Available','2026-08-01'),
+    (2,'BC000014',N'A2','Available','2026-08-01'),
+    (2,'BC000015',N'A2','Available','2026-08-01'),
+    (3,'BC000016',N'B1','Available','2026-08-02'),
+    (3,'BC000017',N'B1','Available','2026-08-02'),
+    (4,'BC000018',N'B2','Available','2026-08-02'),
+    (4,'BC000019',N'B2','Available','2026-08-02'),
+    (5,'BC000020',N'C1','Available','2026-08-03'),
+    (5,'BC000021',N'C1','Available','2026-08-03'),
+    (6,'BC000022',N'C2','Available','2026-08-03'),
+    (6,'BC000023',N'C2','Available','2026-08-03'),
+    (7,'BC000024',N'D1','Available','2026-08-04'),
+    (7,'BC000025',N'D1','Available','2026-08-04'),
+    (8,'BC000026',N'D2','Available','2026-08-04'),
+    (8,'BC000027',N'D2','Available','2026-08-04'),
+    (9,'BC000028',N'E1','Available','2026-08-05'),
+    (9,'BC000029',N'E1','Available','2026-08-05');
 GO
 
 -- ============================================
@@ -650,8 +660,8 @@ GO
 INSERT INTO BorrowTickets
 (user_id,borrow_date,due_date,status,note)
 VALUES
-(4,'2026-07-20','2026-08-03',N'Đang mượn',NULL),
-(5,'2026-07-10','2026-07-24',N'Đã trả',NULL);
+    (4,'2026-07-20','2026-08-03',N'Đang mượn',NULL),
+    (5,'2026-07-10','2026-07-24',N'Đã trả',NULL);
 GO
 
 -- ============================================
@@ -660,8 +670,8 @@ GO
 INSERT INTO BorrowDetails
 (ticket_id,copy_id,borrow_status)
 VALUES
-(1,2,N'Đang mượn'),
-(2,3,N'Đã trả');
+    (1,2,N'Đang mượn'),
+    (2,3,N'Đã trả');
 GO
 
 -- ============================================
@@ -670,7 +680,7 @@ GO
 INSERT INTO Returns
 (ticket_id,return_date,received_by,note)
 VALUES
-(2,'2026-07-23',2,N'Trả đúng hạn');
+    (2,'2026-07-23',2,N'Trả đúng hạn');
 GO
 
 -- ============================================
@@ -679,7 +689,7 @@ GO
 INSERT INTO ReturnDetails
 (return_id,copy_id,condition_book)
 VALUES
-(1,3,N'Tốt');
+    (1,3,N'Tốt');
 GO
 
 -- ============================================
@@ -688,5 +698,846 @@ GO
 INSERT INTO Fines
 (return_detail_id,amount,reason,paid_status)
 VALUES
-(1,0,N'Không có',N'Đã thanh toán');
+    (1,0,N'Không có',N'Đã thanh toán');
+GO
+
+-- ================================================================
+-- BO SUNG DU LIEU: 201 SACH TU EXCEL + BAN SAO SACH
+-- Cac buoc tiep theo:
+--   7) Categories moi
+--   8) Publishers moi
+--   9) Authors moi
+--   10) INSERT 201 sach (Books)
+--   11) UPDATE shelf_location cho 29 ban sao GOC (dong bo quy uoc ke)
+--   12) INSERT 402 ban sao (BookCopies) cho 201 sach moi
+-- ================================================================
+
+USE LibHub;
+GO
+
+
+-- ============================================
+-- 7) THEM CATEGORIES MOI (bo sung the loai con thieu)
+-- ============================================
+INSERT INTO Categories(category_name, description) VALUES
+                                                       (N'Khoa học', N'Khoa học phổ thông'),
+                                                       (N'Khoa học viễn tưởng', N'Sci-fi'),
+                                                       (N'Trinh thám - Kinh dị', N'Mystery, Thriller, Horror'),
+                                                       (N'Triết học', N'Triết học - Tư tưởng'),
+                                                       (N'Tâm lý học', N'Tâm lý học ứng dụng'),
+                                                       (N'Văn học Việt Nam', N'Văn học trong nước'),
+                                                       (N'Văn học kinh điển', N'Classic literature');
+GO
+
+-- ============================================
+-- 8) THEM PUBLISHERS MOI
+-- ============================================
+INSERT INTO Publishers(publisher_name, address, phone) VALUES
+                                                           (N'Alphabooks', N'Hà Nội', '0246666666'),
+                                                           (N'MIT Press', N'USA', '666666666'),
+                                                           (N'Manning Publications', N'USA', '444444444'),
+                                                           (N'NXB Hội Nhà Văn', N'Hà Nội', '0249999999'),
+                                                           (N'NXB Kim Đồng', N'Hà Nội', '0248888888'),
+                                                           (N'Nhã Nam', N'Hà Nội', '0245555555'),
+                                                           (N'No Starch Press', N'USA', '555555555'),
+                                                           (N'O''Reilly Media', N'USA', '333333333'),
+                                                           (N'Thái Hà Books', N'Hà Nội', '0247777777');
+GO
+
+-- ============================================
+-- 9) THEM AUTHORS MOI
+-- ============================================
+INSERT INTO Authors(author_name, biography) VALUES
+                                                (N'Abraham Silberschatz', NULL),
+                                                (N'Agatha Christie', NULL),
+                                                (N'Al Sweigart', NULL),
+                                                (N'Aldous Huxley', NULL),
+                                                (N'Alex Banks', NULL),
+                                                (N'Alex Michaelides', NULL),
+                                                (N'Alexandre Dumas', NULL),
+                                                (N'Amir Levine', NULL),
+                                                (N'Andrew Hunt', NULL),
+                                                (N'Andy Weir', NULL),
+                                                (N'Angela Duckworth', NULL),
+                                                (N'Anthony Accomazzo', NULL),
+                                                (N'Antoine de Saint-Exupéry', NULL),
+                                                (N'Arthur Conan Doyle', NULL),
+                                                (N'Aurélien Géron', NULL),
+                                                (N'Azat Mardan', NULL),
+                                                (N'Banana Yoshimoto', NULL),
+                                                (N'Ben Horowitz', NULL),
+                                                (N'Bram Stoker', NULL),
+                                                (N'Brené Brown', NULL),
+                                                (N'Brett Slatkin', NULL),
+                                                (N'Brianna Wiest', NULL),
+                                                (N'Bảo Ninh', NULL),
+                                                (N'Cal Newport', NULL),
+                                                (N'Carl Sagan', NULL),
+                                                (N'Carol S. Dweck', NULL),
+                                                (N'Charles Duhigg', NULL),
+                                                (N'Cormac McCarthy', NULL),
+                                                (N'Craig Walls', NULL),
+                                                (N'Dan Brown', NULL),
+                                                (N'Daniel H. Pink', NULL),
+                                                (N'Daniel Kahneman', NULL),
+                                                (N'David Flanagan', NULL),
+                                                (N'Donella H. Meadows', NULL),
+                                                (N'Eckhart Tolle', NULL),
+                                                (N'Eric Matthes', NULL),
+                                                (N'Eric Ries', NULL),
+                                                (N'Erich Gamma', NULL),
+                                                (N'Ernest Hemingway', NULL),
+                                                (N'F. Scott Fitzgerald', NULL),
+                                                (N'Frank Herbert', NULL),
+                                                (N'Fredrik Backman', NULL),
+                                                (N'Friedrich Nietzsche', NULL),
+                                                (N'Fyodor Dostoevsky', NULL),
+                                                (N'Gabriel García Márquez', NULL),
+                                                (N'George Orwell', NULL),
+                                                (N'Gillian Flynn', NULL),
+                                                (N'Greg McKeown', NULL),
+                                                (N'Hans Rosling', NULL),
+                                                (N'Harper Lee', NULL),
+                                                (N'Haruki Murakami', NULL),
+                                                (N'Herbert Schildt', NULL),
+                                                (N'Héctor García', NULL),
+                                                (N'Ian Goodfellow', NULL),
+                                                (N'Ichiro Kishimi', NULL),
+                                                (N'J.D. Salinger', NULL),
+                                                (N'J.K. Rowling', NULL),
+                                                (N'Jake Knapp', NULL),
+                                                (N'James F. Kurose', NULL),
+                                                (N'Jane Austen', NULL),
+                                                (N'Jared Diamond', NULL),
+                                                (N'Jason Fried', NULL),
+                                                (N'Jim Collins', NULL),
+                                                (N'John Green', NULL),
+                                                (N'Jojo Moyes', NULL),
+                                                (N'Jon Duckett', NULL),
+                                                (N'Joshua Bloch', NULL),
+                                                (N'Jules Verne', NULL),
+                                                (N'Kathy Sierra', NULL),
+                                                (N'Khaled Hosseini', NULL),
+                                                (N'Kim Lân', NULL),
+                                                (N'Kyle Simpson', NULL),
+                                                (N'Lea Verou', NULL),
+                                                (N'Leo Tolstoy', NULL),
+                                                (N'Luciano Ramalho', NULL),
+                                                (N'Malcolm Gladwell', NULL),
+                                                (N'Marcus Aurelius', NULL),
+                                                (N'Margaret Atwood', NULL),
+                                                (N'Marie Forleo', NULL),
+                                                (N'Marijn Haverbeke', NULL),
+                                                (N'Mark Lutz', NULL),
+                                                (N'Mark Manson', NULL),
+                                                (N'Markus Zusak', NULL),
+                                                (N'Martin Fowler', NULL),
+                                                (N'Martin Kleppmann', NULL),
+                                                (N'Mary Shelley', NULL),
+                                                (N'Matthew Walker', NULL),
+                                                (N'Michelle Obama', NULL),
+                                                (N'Morgan Housel', NULL),
+                                                (N'Nam Cao', NULL),
+                                                (N'Neil deGrasse Tyson', NULL),
+                                                (N'Nguyên Hồng', NULL),
+                                                (N'Nguyên Phong', NULL),
+                                                (N'Nguyễn Ngọc Thuần', NULL),
+                                                (N'Nguyễn Nhật Ánh', NULL),
+                                                (N'Nguyễn Trung Thành', NULL),
+                                                (N'Nguyễn Tuân', NULL),
+                                                (N'Ngô Tất Tố', NULL),
+                                                (N'Nicholas Sparks', NULL),
+                                                (N'Oscar Wilde', NULL),
+                                                (N'Paulo Coelho', NULL),
+                                                (N'Peter Thiel', NULL),
+                                                (N'Plato', NULL),
+                                                (N'Rachel Carson', NULL),
+                                                (N'Randal E. Bryant', NULL),
+                                                (N'Ray Bradbury', NULL),
+                                                (N'Rebecca Skloot', NULL),
+                                                (N'Rex Hartson', NULL),
+                                                (N'Richard Dawkins', NULL),
+                                                (N'Robert Louis Stevenson', NULL),
+                                                (N'Robert Sedgewick', NULL),
+                                                (N'Robert T. Kiyosaki', NULL),
+                                                (N'Robin Sharma', NULL),
+                                                (N'Rosie Nguyễn', NULL),
+                                                (N'Seneca', NULL),
+                                                (N'Siddhartha Mukherjee', NULL),
+                                                (N'Simon Sinek', NULL),
+                                                (N'Stephen Hawking', NULL),
+                                                (N'Stephen King', NULL),
+                                                (N'Stephen R. Covey', NULL),
+                                                (N'Steve Krug', NULL),
+                                                (N'Stieg Larsson', NULL),
+                                                (N'Stuart Russell', NULL),
+                                                (N'Sun Tzu', NULL),
+                                                (N'Suzanne Collins', NULL),
+                                                (N'Tara Westover', NULL),
+                                                (N'Thomas H. Cormen', NULL),
+                                                (N'Thạch Lam', NULL),
+                                                (N'Tony Buổi Sáng', NULL),
+                                                (N'Tác giả mẫu', NULL),
+                                                (N'Tô Hoài', NULL),
+                                                (N'Vex King', NULL),
+                                                (N'Victor Hugo', NULL),
+                                                (N'Viktor E. Frankl', NULL),
+                                                (N'Vũ Bằng', NULL),
+                                                (N'Vũ Trọng Phụng', NULL),
+                                                (N'Walter Isaacson', NULL),
+                                                (N'Yann Martel', NULL),
+                                                (N'Yuval Noah Harari', NULL),
+                                                (N'Đoàn Giỏi', NULL);
+GO
+
+-- ============================================
+-- 10) INSERT 201 SACH TU FILE EXCEL, category_id/author_id/publisher_id
+--    duoc tra dung qua subquery theo ten (khong phu thuoc thu tu ID)
+-- ============================================
+INSERT INTO Books
+(title,isbn,publish_year,description,cover_image,language,pages,category_id,author_id,publisher_id,is_featured,is_hidden)
+VALUES
+    (N'Sách mẫu', '9786040000001', 2026, N'Mô tả', NULL, N'Tiếng Việt', 200, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Tác giả mẫu'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'Nhà giả kim', '9786040000019', 2001, N'Nhà giả kim là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 217 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 217, (SELECT category_id FROM Categories WHERE category_name = N'Tiểu thuyết'), (SELECT author_id FROM Authors WHERE author_name = N'Paulo Coelho'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Đắc nhân tâm', '9786040000026', 2002, N'Đắc nhân tâm là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 254 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 254, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Dale Carnegie'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'Tuổi trẻ đáng giá bao nhiêu?', '9786040000033', 2003, N'Tuổi trẻ đáng giá bao nhiêu? là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 291 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 291, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Rosie Nguyễn'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'Cà phê cùng Tony', '9786040000040', 2004, N'Cà phê cùng Tony là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 328 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 328, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Tony Buổi Sáng'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'Đi tìm lẽ sống', '9786040000057', 2005, N'Đi tìm lẽ sống là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 365 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 365, (SELECT category_id FROM Categories WHERE category_name = N'Hồi ký'), (SELECT author_id FROM Authors WHERE author_name = N'Viktor E. Frankl'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Trẻ'), 0, 0),
+    (N'7 thói quen của người thành đạt', '9786040000064', 2006, N'7 thói quen của người thành đạt là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 402 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 402, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Stephen R. Covey'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'Tư duy nhanh và chậm', '9786040000071', 2007, N'Tư duy nhanh và chậm là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 439 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 439, (SELECT category_id FROM Categories WHERE category_name = N'Tâm lý học'), (SELECT author_id FROM Authors WHERE author_name = N'Daniel Kahneman'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Thái Hà Books'), 0, 0),
+    (N'Cha giàu cha nghèo', '9786040000088', 2008, N'Cha giàu cha nghèo là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 476 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 476, (SELECT category_id FROM Categories WHERE category_name = N'Kinh doanh'), (SELECT author_id FROM Authors WHERE author_name = N'Robert T. Kiyosaki'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Alphabooks'), 0, 0),
+    (N'Atomic Habits', '9786040000095', 2009, N'Atomic Habits là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 513 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 513, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'James Clear'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'Deep Work', '9786040000101', 2010, N'Deep Work là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 550 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 550, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Cal Newport'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'Mindset', '9786040000118', 2011, N'Mindset là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 587 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 587, (SELECT category_id FROM Categories WHERE category_name = N'Tâm lý học'), (SELECT author_id FROM Authors WHERE author_name = N'Carol S. Dweck'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Thái Hà Books'), 0, 0),
+    (N'The Psychology of Money', '9786040000125', 2012, N'The Psychology of Money là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 204 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 204, (SELECT category_id FROM Categories WHERE category_name = N'Kinh doanh'), (SELECT author_id FROM Authors WHERE author_name = N'Morgan Housel'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Alphabooks'), 0, 0),
+    (N'Ikigai', '9786040000132', 2013, N'Ikigai là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 241 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 241, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Héctor García'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'Essentialism', '9786040000149', 2014, N'Essentialism là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 278 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 278, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Greg McKeown'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'The Power of Now', '9786040000156', 2015, N'The Power of Now là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 315 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 315, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Eckhart Tolle'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'Think and Grow Rich', '9786040000163', 2016, N'Think and Grow Rich là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 352 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 352, (SELECT category_id FROM Categories WHERE category_name = N'Kinh doanh'), (SELECT author_id FROM Authors WHERE author_name = N'Napoleon Hill'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Alphabooks'), 0, 0),
+    (N'How to Win Friends and Influence People', '9786040000170', 2017, N'How to Win Friends and Influence People là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 389 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 389, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Dale Carnegie'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'The 5 AM Club', '9786040000187', 2018, N'The 5 AM Club là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 426 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 426, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Robin Sharma'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'Make Time', '9786040000194', 2019, N'Make Time là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 463 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 463, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Jake Knapp'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'Start With Why', '9786040000200', 2020, N'Start With Why là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 500 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 500, (SELECT category_id FROM Categories WHERE category_name = N'Kinh doanh'), (SELECT author_id FROM Authors WHERE author_name = N'Simon Sinek'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Alphabooks'), 0, 0),
+    (N'Zero to One', '9786040000217', 2021, N'Zero to One là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 537 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 537, (SELECT category_id FROM Categories WHERE category_name = N'Kinh doanh'), (SELECT author_id FROM Authors WHERE author_name = N'Peter Thiel'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Alphabooks'), 0, 0),
+    (N'Good to Great', '9786040000224', 2022, N'Good to Great là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 574 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 574, (SELECT category_id FROM Categories WHERE category_name = N'Kinh doanh'), (SELECT author_id FROM Authors WHERE author_name = N'Jim Collins'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Alphabooks'), 0, 0),
+    (N'The Lean Startup', '9786040000231', 2023, N'The Lean Startup là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 191 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 191, (SELECT category_id FROM Categories WHERE category_name = N'Kinh doanh'), (SELECT author_id FROM Authors WHERE author_name = N'Eric Ries'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Alphabooks'), 0, 0),
+    (N'Rework', '9786040000248', 2024, N'Rework là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 228 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 228, (SELECT category_id FROM Categories WHERE category_name = N'Kinh doanh'), (SELECT author_id FROM Authors WHERE author_name = N'Jason Fried'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Alphabooks'), 0, 0),
+    (N'The Hard Thing About Hard Things', '9786040000255', 2000, N'The Hard Thing About Hard Things là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 265 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 265, (SELECT category_id FROM Categories WHERE category_name = N'Kinh doanh'), (SELECT author_id FROM Authors WHERE author_name = N'Ben Horowitz'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Alphabooks'), 0, 0),
+    (N'Clean Code', '9786040000262', 2001, N'Clean Code là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 302 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 302, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Robert C. Martin'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Addison Wesley'), 0, 0),
+    (N'Clean Architecture', '9786040000279', 2002, N'Clean Architecture là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 339 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 339, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Robert C. Martin'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Pearson'), 0, 0),
+    (N'The Pragmatic Programmer', '9786040000286', 2003, N'The Pragmatic Programmer là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 376 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 376, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Andrew Hunt'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Addison Wesley'), 0, 0),
+    (N'Design Patterns', '9786040000293', 2004, N'Design Patterns là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 413 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 413, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Erich Gamma'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Addison Wesley'), 0, 0),
+    (N'Refactoring', '9786040000309', 2005, N'Refactoring là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 450 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 450, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Martin Fowler'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Addison Wesley'), 0, 0),
+    (N'Effective Java', '9786040000316', 2006, N'Effective Java là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 487 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 487, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Joshua Bloch'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Addison Wesley'), 0, 0),
+    (N'Head First Java', '9786040000323', 2007, N'Head First Java là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 524 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 524, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Kathy Sierra'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'O''Reilly Media'), 0, 0),
+    (N'Java: The Complete Reference', '9786040000330', 2008, N'Java: The Complete Reference là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 561 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 561, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Herbert Schildt'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Pearson'), 0, 0),
+    (N'Spring in Action', '9786040000347', 2009, N'Spring in Action là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 598 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 598, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Craig Walls'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Manning Publications'), 0, 0),
+    (N'Spring Boot in Action', '9786040000354', 2010, N'Spring Boot in Action là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 215 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 215, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Craig Walls'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Manning Publications'), 0, 0),
+    (N'Learning React', '9786040000361', 2011, N'Learning React là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 252 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 252, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Alex Banks'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'O''Reilly Media'), 0, 0),
+    (N'React Quickly', '9786040000378', 2012, N'React Quickly là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 289 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 289, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Azat Mardan'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Manning Publications'), 0, 0),
+    (N'Fullstack React', '9786040000385', 2013, N'Fullstack React là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 326 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 326, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Anthony Accomazzo'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'O''Reilly Media'), 0, 0),
+    (N'You Don''t Know JS', '9786040000392', 2014, N'You Don''t Know JS là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 363 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 363, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Kyle Simpson'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'O''Reilly Media'), 0, 0),
+    (N'Eloquent JavaScript', '9786040000408', 2015, N'Eloquent JavaScript là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 400 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 400, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Marijn Haverbeke'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'No Starch Press'), 0, 0),
+    (N'JavaScript: The Definitive Guide', '9786040000415', 2016, N'JavaScript: The Definitive Guide là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 437 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 437, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'David Flanagan'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'O''Reilly Media'), 0, 0),
+    (N'HTML and CSS', '9786040000422', 2017, N'HTML and CSS là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 474 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 474, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Jon Duckett'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Pearson'), 0, 0),
+    (N'CSS Secrets', '9786040000439', 2018, N'CSS Secrets là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 511 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 511, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Lea Verou'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'O''Reilly Media'), 0, 0),
+    (N'Don''t Make Me Think', '9786040000446', 2019, N'Don''t Make Me Think là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 548 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 548, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Steve Krug'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Pearson'), 0, 0),
+    (N'The UX Book', '9786040000453', 2020, N'The UX Book là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 585 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 585, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Rex Hartson'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Pearson'), 0, 0),
+    (N'Introduction to Algorithms', '9786040000460', 2021, N'Introduction to Algorithms là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 202 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 202, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Thomas H. Cormen'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Pearson'), 0, 0),
+    (N'Algorithms', '9786040000477', 2022, N'Algorithms là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 239 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 239, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Robert Sedgewick'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Addison Wesley'), 0, 0),
+    (N'Database System Concepts', '9786040000484', 2023, N'Database System Concepts là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 276 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 276, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Abraham Silberschatz'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Pearson'), 0, 0),
+    (N'Designing Data-Intensive Applications', '9786040000491', 2024, N'Designing Data-Intensive Applications là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 313 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 313, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Martin Kleppmann'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'O''Reilly Media'), 0, 0),
+    (N'Computer Networking', '9786040000507', 2000, N'Computer Networking là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 350 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 350, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'James F. Kurose'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Pearson'), 0, 0),
+    (N'Operating System Concepts', '9786040000514', 2001, N'Operating System Concepts là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 387 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 387, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Abraham Silberschatz'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Pearson'), 0, 0),
+    (N'Computer Systems: A Programmer''s Perspective', '9786040000521', 2002, N'Computer Systems: A Programmer''s Perspective là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 424 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 424, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Randal E. Bryant'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Pearson'), 0, 0),
+    (N'Artificial Intelligence: A Modern Approach', '9786040000538', 2003, N'Artificial Intelligence: A Modern Approach là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 461 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 461, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Stuart Russell'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Pearson'), 0, 0),
+    (N'Deep Learning', '9786040000545', 2004, N'Deep Learning là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 498 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 498, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Ian Goodfellow'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'MIT Press'), 0, 0),
+    (N'Hands-On Machine Learning', '9786040000552', 2005, N'Hands-On Machine Learning là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 535 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 535, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Aurélien Géron'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'O''Reilly Media'), 0, 0),
+    (N'Python Crash Course', '9786040000569', 2006, N'Python Crash Course là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 572 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 572, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Eric Matthes'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'No Starch Press'), 0, 0),
+    (N'Automate the Boring Stuff with Python', '9786040000576', 2007, N'Automate the Boring Stuff with Python là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 189 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 189, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Al Sweigart'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'No Starch Press'), 0, 0),
+    (N'Fluent Python', '9786040000583', 2008, N'Fluent Python là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 226 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 226, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Luciano Ramalho'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'O''Reilly Media'), 0, 0),
+    (N'Effective Python', '9786040000590', 2009, N'Effective Python là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 263 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 263, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Brett Slatkin'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Addison Wesley'), 0, 0),
+    (N'Learning Python', '9786040000606', 2010, N'Learning Python là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 300 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 300, (SELECT category_id FROM Categories WHERE category_name = N'Công nghệ'), (SELECT author_id FROM Authors WHERE author_name = N'Mark Lutz'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'O''Reilly Media'), 0, 0),
+    (N'To Kill a Mockingbird', '9786040000613', 2011, N'To Kill a Mockingbird là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 337 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 337, (SELECT category_id FROM Categories WHERE category_name = N'Văn học kinh điển'), (SELECT author_id FROM Authors WHERE author_name = N'Harper Lee'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'1984', '9786040000620', 2012, N'1984 là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 374 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 374, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học viễn tưởng'), (SELECT author_id FROM Authors WHERE author_name = N'George Orwell'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Animal Farm', '9786040000637', 2013, N'Animal Farm là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 411 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 411, (SELECT category_id FROM Categories WHERE category_name = N'Văn học kinh điển'), (SELECT author_id FROM Authors WHERE author_name = N'George Orwell'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'The Great Gatsby', '9786040000644', 2014, N'The Great Gatsby là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 448 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 448, (SELECT category_id FROM Categories WHERE category_name = N'Văn học kinh điển'), (SELECT author_id FROM Authors WHERE author_name = N'F. Scott Fitzgerald'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'Pride and Prejudice', '9786040000651', 2015, N'Pride and Prejudice là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 485 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 485, (SELECT category_id FROM Categories WHERE category_name = N'Văn học kinh điển'), (SELECT author_id FROM Authors WHERE author_name = N'Jane Austen'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'The Catcher in the Rye', '9786040000668', 2016, N'The Catcher in the Rye là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 522 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 522, (SELECT category_id FROM Categories WHERE category_name = N'Văn học kinh điển'), (SELECT author_id FROM Authors WHERE author_name = N'J.D. Salinger'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'The Hobbit', '9786040000675', 2017, N'The Hobbit là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 559 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 559, (SELECT category_id FROM Categories WHERE category_name = N'Fantasy'), (SELECT author_id FROM Authors WHERE author_name = N'J.R.R. Tolkien'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Lord of the Rings', '9786040000682', 2018, N'The Lord of the Rings là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 596 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 596, (SELECT category_id FROM Categories WHERE category_name = N'Fantasy'), (SELECT author_id FROM Authors WHERE author_name = N'J.R.R. Tolkien'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Harry Potter and the Sorcerer''s Stone', '9786040000699', 2019, N'Harry Potter and the Sorcerer''s Stone là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 213 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 213, (SELECT category_id FROM Categories WHERE category_name = N'Fantasy'), (SELECT author_id FROM Authors WHERE author_name = N'J.K. Rowling'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Harry Potter and the Chamber of Secrets', '9786040000705', 2020, N'Harry Potter and the Chamber of Secrets là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 250 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 250, (SELECT category_id FROM Categories WHERE category_name = N'Fantasy'), (SELECT author_id FROM Authors WHERE author_name = N'J.K. Rowling'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Harry Potter and the Prisoner of Azkaban', '9786040000712', 2021, N'Harry Potter and the Prisoner of Azkaban là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 287 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 287, (SELECT category_id FROM Categories WHERE category_name = N'Fantasy'), (SELECT author_id FROM Authors WHERE author_name = N'J.K. Rowling'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Harry Potter and the Goblet of Fire', '9786040000729', 2022, N'Harry Potter and the Goblet of Fire là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 324 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 324, (SELECT category_id FROM Categories WHERE category_name = N'Fantasy'), (SELECT author_id FROM Authors WHERE author_name = N'J.K. Rowling'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Harry Potter and the Order of the Phoenix', '9786040000736', 2023, N'Harry Potter and the Order of the Phoenix là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 361 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 361, (SELECT category_id FROM Categories WHERE category_name = N'Fantasy'), (SELECT author_id FROM Authors WHERE author_name = N'J.K. Rowling'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Harry Potter and the Half-Blood Prince', '9786040000743', 2024, N'Harry Potter and the Half-Blood Prince là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 398 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 398, (SELECT category_id FROM Categories WHERE category_name = N'Fantasy'), (SELECT author_id FROM Authors WHERE author_name = N'J.K. Rowling'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Harry Potter and the Deathly Hallows', '9786040000750', 2000, N'Harry Potter and the Deathly Hallows là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 435 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 435, (SELECT category_id FROM Categories WHERE category_name = N'Fantasy'), (SELECT author_id FROM Authors WHERE author_name = N'J.K. Rowling'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Little Prince', '9786040000767', 2001, N'The Little Prince là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 472 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 472, (SELECT category_id FROM Categories WHERE category_name = N'Văn học kinh điển'), (SELECT author_id FROM Authors WHERE author_name = N'Antoine de Saint-Exupéry'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'The Old Man and the Sea', '9786040000774', 2002, N'The Old Man and the Sea là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 509 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 509, (SELECT category_id FROM Categories WHERE category_name = N'Văn học kinh điển'), (SELECT author_id FROM Authors WHERE author_name = N'Ernest Hemingway'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'The Alchemist', '9786040000781', 2003, N'The Alchemist là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 546 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 546, (SELECT category_id FROM Categories WHERE category_name = N'Tiểu thuyết'), (SELECT author_id FROM Authors WHERE author_name = N'Paulo Coelho'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Kitchen', '9786040000798', 2004, N'Kitchen là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 583 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 583, (SELECT category_id FROM Categories WHERE category_name = N'Tiểu thuyết'), (SELECT author_id FROM Authors WHERE author_name = N'Banana Yoshimoto'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Kafka on the Shore', '9786040000804', 2005, N'Kafka on the Shore là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 200 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 200, (SELECT category_id FROM Categories WHERE category_name = N'Tiểu thuyết'), (SELECT author_id FROM Authors WHERE author_name = N'Haruki Murakami'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'One Hundred Years of Solitude', '9786040000811', 2006, N'One Hundred Years of Solitude là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 237 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 237, (SELECT category_id FROM Categories WHERE category_name = N'Văn học kinh điển'), (SELECT author_id FROM Authors WHERE author_name = N'Gabriel García Márquez'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'Love in the Time of Cholera', '9786040000828', 2007, N'Love in the Time of Cholera là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 274 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 274, (SELECT category_id FROM Categories WHERE category_name = N'Tiểu thuyết'), (SELECT author_id FROM Authors WHERE author_name = N'Gabriel García Márquez'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Kite Runner', '9786040000835', 2008, N'The Kite Runner là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 311 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 311, (SELECT category_id FROM Categories WHERE category_name = N'Tiểu thuyết'), (SELECT author_id FROM Authors WHERE author_name = N'Khaled Hosseini'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'A Thousand Splendid Suns', '9786040000842', 2009, N'A Thousand Splendid Suns là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 348 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 348, (SELECT category_id FROM Categories WHERE category_name = N'Tiểu thuyết'), (SELECT author_id FROM Authors WHERE author_name = N'Khaled Hosseini'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Book Thief', '9786040000859', 2010, N'The Book Thief là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 385 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 385, (SELECT category_id FROM Categories WHERE category_name = N'Tiểu thuyết'), (SELECT author_id FROM Authors WHERE author_name = N'Markus Zusak'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Life of Pi', '9786040000866', 2011, N'Life of Pi là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 422 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 422, (SELECT category_id FROM Categories WHERE category_name = N'Tiểu thuyết'), (SELECT author_id FROM Authors WHERE author_name = N'Yann Martel'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Road', '9786040000873', 2012, N'The Road là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 459 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 459, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học viễn tưởng'), (SELECT author_id FROM Authors WHERE author_name = N'Cormac McCarthy'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Martian', '9786040000880', 2013, N'The Martian là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 496 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 496, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học viễn tưởng'), (SELECT author_id FROM Authors WHERE author_name = N'Andy Weir'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Project Hail Mary', '9786040000897', 2014, N'Project Hail Mary là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 533 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 533, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học viễn tưởng'), (SELECT author_id FROM Authors WHERE author_name = N'Andy Weir'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Dune', '9786040000903', 2015, N'Dune là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 570 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 570, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học viễn tưởng'), (SELECT author_id FROM Authors WHERE author_name = N'Frank Herbert'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Fahrenheit 451', '9786040000910', 2016, N'Fahrenheit 451 là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 187 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 187, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học viễn tưởng'), (SELECT author_id FROM Authors WHERE author_name = N'Ray Bradbury'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Brave New World', '9786040000927', 2017, N'Brave New World là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 224 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 224, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học viễn tưởng'), (SELECT author_id FROM Authors WHERE author_name = N'Aldous Huxley'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Handmaid''s Tale', '9786040000934', 2018, N'The Handmaid''s Tale là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 261 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 261, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học viễn tưởng'), (SELECT author_id FROM Authors WHERE author_name = N'Margaret Atwood'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Hunger Games', '9786040000941', 2019, N'The Hunger Games là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 298 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 298, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học viễn tưởng'), (SELECT author_id FROM Authors WHERE author_name = N'Suzanne Collins'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Catching Fire', '9786040000958', 2020, N'Catching Fire là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 335 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 335, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học viễn tưởng'), (SELECT author_id FROM Authors WHERE author_name = N'Suzanne Collins'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Mockingjay', '9786040000965', 2021, N'Mockingjay là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 372 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 372, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học viễn tưởng'), (SELECT author_id FROM Authors WHERE author_name = N'Suzanne Collins'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Fault in Our Stars', '9786040000972', 2022, N'The Fault in Our Stars là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 409 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 409, (SELECT category_id FROM Categories WHERE category_name = N'Tiểu thuyết'), (SELECT author_id FROM Authors WHERE author_name = N'John Green'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Me Before You', '9786040000989', 2023, N'Me Before You là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 446 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 446, (SELECT category_id FROM Categories WHERE category_name = N'Tiểu thuyết'), (SELECT author_id FROM Authors WHERE author_name = N'Jojo Moyes'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Notebook', '9786040000996', 2024, N'The Notebook là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 483 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 483, (SELECT category_id FROM Categories WHERE category_name = N'Tiểu thuyết'), (SELECT author_id FROM Authors WHERE author_name = N'Nicholas Sparks'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'A Man Called Ove', '9786040001009', 2000, N'A Man Called Ove là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 520 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 520, (SELECT category_id FROM Categories WHERE category_name = N'Tiểu thuyết'), (SELECT author_id FROM Authors WHERE author_name = N'Fredrik Backman'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Educated', '9786040001016', 2001, N'Educated là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 557 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 557, (SELECT category_id FROM Categories WHERE category_name = N'Hồi ký'), (SELECT author_id FROM Authors WHERE author_name = N'Tara Westover'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Trẻ'), 0, 0),
+    (N'Becoming', '9786040001023', 2002, N'Becoming là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 594 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 594, (SELECT category_id FROM Categories WHERE category_name = N'Hồi ký'), (SELECT author_id FROM Authors WHERE author_name = N'Michelle Obama'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Trẻ'), 0, 0),
+    (N'Steve Jobs', '9786040001030', 2003, N'Steve Jobs là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 211 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 211, (SELECT category_id FROM Categories WHERE category_name = N'Hồi ký'), (SELECT author_id FROM Authors WHERE author_name = N'Walter Isaacson'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Trẻ'), 0, 0),
+    (N'Elon Musk', '9786040001047', 2004, N'Elon Musk là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 248 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 248, (SELECT category_id FROM Categories WHERE category_name = N'Hồi ký'), (SELECT author_id FROM Authors WHERE author_name = N'Walter Isaacson'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Trẻ'), 0, 0),
+    (N'Sapiens', '9786040001054', 2005, N'Sapiens là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 285 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 285, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học'), (SELECT author_id FROM Authors WHERE author_name = N'Yuval Noah Harari'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Homo Deus', '9786040001061', 2006, N'Homo Deus là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 322 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 322, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học'), (SELECT author_id FROM Authors WHERE author_name = N'Yuval Noah Harari'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'21 Lessons for the 21st Century', '9786040001078', 2007, N'21 Lessons for the 21st Century là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 359 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 359, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học'), (SELECT author_id FROM Authors WHERE author_name = N'Yuval Noah Harari'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Guns, Germs, and Steel', '9786040001085', 2008, N'Guns, Germs, and Steel là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 396 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 396, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học'), (SELECT author_id FROM Authors WHERE author_name = N'Jared Diamond'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'A Brief History of Time', '9786040001092', 2009, N'A Brief History of Time là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 433 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 433, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học'), (SELECT author_id FROM Authors WHERE author_name = N'Stephen Hawking'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Cosmos', '9786040001108', 2010, N'Cosmos là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 470 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 470, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học'), (SELECT author_id FROM Authors WHERE author_name = N'Carl Sagan'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Astrophysics for People in a Hurry', '9786040001115', 2011, N'Astrophysics for People in a Hurry là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 507 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 507, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học'), (SELECT author_id FROM Authors WHERE author_name = N'Neil deGrasse Tyson'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Selfish Gene', '9786040001122', 2012, N'The Selfish Gene là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 544 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 544, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học'), (SELECT author_id FROM Authors WHERE author_name = N'Richard Dawkins'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Gene', '9786040001139', 2013, N'The Gene là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 581 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 581, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học'), (SELECT author_id FROM Authors WHERE author_name = N'Siddhartha Mukherjee'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Silent Spring', '9786040001146', 2014, N'Silent Spring là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 198 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 198, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học'), (SELECT author_id FROM Authors WHERE author_name = N'Rachel Carson'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Immortal Life of Henrietta Lacks', '9786040001153', 2015, N'The Immortal Life of Henrietta Lacks là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 235 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 235, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học'), (SELECT author_id FROM Authors WHERE author_name = N'Rebecca Skloot'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Why We Sleep', '9786040001160', 2016, N'Why We Sleep là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 272 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 272, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học'), (SELECT author_id FROM Authors WHERE author_name = N'Matthew Walker'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Thinking in Systems', '9786040001177', 2017, N'Thinking in Systems là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 309 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 309, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học'), (SELECT author_id FROM Authors WHERE author_name = N'Donella H. Meadows'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Factfulness', '9786040001184', 2018, N'Factfulness là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 346 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 346, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học'), (SELECT author_id FROM Authors WHERE author_name = N'Hans Rosling'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Outliers', '9786040001191', 2019, N'Outliers là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 383 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 383, (SELECT category_id FROM Categories WHERE category_name = N'Tâm lý học'), (SELECT author_id FROM Authors WHERE author_name = N'Malcolm Gladwell'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Thái Hà Books'), 0, 0),
+    (N'Blink', '9786040001207', 2020, N'Blink là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 420 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 420, (SELECT category_id FROM Categories WHERE category_name = N'Tâm lý học'), (SELECT author_id FROM Authors WHERE author_name = N'Malcolm Gladwell'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Thái Hà Books'), 0, 0),
+    (N'The Tipping Point', '9786040001214', 2021, N'The Tipping Point là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 457 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 457, (SELECT category_id FROM Categories WHERE category_name = N'Tâm lý học'), (SELECT author_id FROM Authors WHERE author_name = N'Malcolm Gladwell'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Thái Hà Books'), 0, 0),
+    (N'David and Goliath', '9786040001221', 2022, N'David and Goliath là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 494 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 494, (SELECT category_id FROM Categories WHERE category_name = N'Tâm lý học'), (SELECT author_id FROM Authors WHERE author_name = N'Malcolm Gladwell'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Thái Hà Books'), 0, 0),
+    (N'Grit', '9786040001238', 2023, N'Grit là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 531 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 531, (SELECT category_id FROM Categories WHERE category_name = N'Tâm lý học'), (SELECT author_id FROM Authors WHERE author_name = N'Angela Duckworth'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Thái Hà Books'), 0, 0),
+    (N'Drive', '9786040001245', 2024, N'Drive là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 568 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 568, (SELECT category_id FROM Categories WHERE category_name = N'Tâm lý học'), (SELECT author_id FROM Authors WHERE author_name = N'Daniel H. Pink'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Thái Hà Books'), 0, 0),
+    (N'Leaders Eat Last', '9786040001252', 2000, N'Leaders Eat Last là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 185 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 185, (SELECT category_id FROM Categories WHERE category_name = N'Kinh doanh'), (SELECT author_id FROM Authors WHERE author_name = N'Simon Sinek'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Alphabooks'), 0, 0),
+    (N'Dare to Lead', '9786040001269', 2001, N'Dare to Lead là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 222 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 222, (SELECT category_id FROM Categories WHERE category_name = N'Kinh doanh'), (SELECT author_id FROM Authors WHERE author_name = N'Brené Brown'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Alphabooks'), 0, 0),
+    (N'Good Vibes, Good Life', '9786040001276', 2002, N'Good Vibes, Good Life là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 259 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 259, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Vex King'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'The Subtle Art of Not Giving a F*ck', '9786040001283', 2003, N'The Subtle Art of Not Giving a F*ck là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 296 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 296, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Mark Manson'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'Everything Is Figureoutable', '9786040001290', 2004, N'Everything Is Figureoutable là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 333 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 333, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Marie Forleo'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'The Mountain Is You', '9786040001306', 2005, N'The Mountain Is You là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 370 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 370, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Brianna Wiest'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'Attached', '9786040001313', 2006, N'Attached là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 407 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 407, (SELECT category_id FROM Categories WHERE category_name = N'Tâm lý học'), (SELECT author_id FROM Authors WHERE author_name = N'Amir Levine'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Thái Hà Books'), 0, 0),
+    (N'The Gifts of Imperfection', '9786040001320', 2007, N'The Gifts of Imperfection là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 444 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 444, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Brené Brown'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'The Courage to Be Disliked', '9786040001337', 2008, N'The Courage to Be Disliked là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 481 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 481, (SELECT category_id FROM Categories WHERE category_name = N'Triết học'), (SELECT author_id FROM Authors WHERE author_name = N'Ichiro Kishimi'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Hội Nhà Văn'), 0, 0),
+    (N'Man''s Search for Meaning', '9786040001344', 2009, N'Man''s Search for Meaning là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 518 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 518, (SELECT category_id FROM Categories WHERE category_name = N'Hồi ký'), (SELECT author_id FROM Authors WHERE author_name = N'Viktor E. Frankl'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Trẻ'), 0, 0),
+    (N'Meditations', '9786040001351', 2010, N'Meditations là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 555 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 555, (SELECT category_id FROM Categories WHERE category_name = N'Triết học'), (SELECT author_id FROM Authors WHERE author_name = N'Marcus Aurelius'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Hội Nhà Văn'), 0, 0),
+    (N'The Art of War', '9786040001368', 2011, N'The Art of War là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 592 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 592, (SELECT category_id FROM Categories WHERE category_name = N'Triết học'), (SELECT author_id FROM Authors WHERE author_name = N'Sun Tzu'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Hội Nhà Văn'), 0, 0),
+    (N'Letters from a Stoic', '9786040001375', 2012, N'Letters from a Stoic là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 209 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 209, (SELECT category_id FROM Categories WHERE category_name = N'Triết học'), (SELECT author_id FROM Authors WHERE author_name = N'Seneca'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Hội Nhà Văn'), 0, 0),
+    (N'The Republic', '9786040001382', 2013, N'The Republic là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 246 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 246, (SELECT category_id FROM Categories WHERE category_name = N'Triết học'), (SELECT author_id FROM Authors WHERE author_name = N'Plato'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Hội Nhà Văn'), 0, 0),
+    (N'Beyond Good and Evil', '9786040001399', 2014, N'Beyond Good and Evil là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 283 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 283, (SELECT category_id FROM Categories WHERE category_name = N'Triết học'), (SELECT author_id FROM Authors WHERE author_name = N'Friedrich Nietzsche'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Hội Nhà Văn'), 0, 0),
+    (N'Thus Spoke Zarathustra', '9786040001405', 2015, N'Thus Spoke Zarathustra là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 320 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 320, (SELECT category_id FROM Categories WHERE category_name = N'Triết học'), (SELECT author_id FROM Authors WHERE author_name = N'Friedrich Nietzsche'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Hội Nhà Văn'), 0, 0),
+    (N'Crime and Punishment', '9786040001412', 2016, N'Crime and Punishment là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 357 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 357, (SELECT category_id FROM Categories WHERE category_name = N'Văn học kinh điển'), (SELECT author_id FROM Authors WHERE author_name = N'Fyodor Dostoevsky'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'The Brothers Karamazov', '9786040001429', 2017, N'The Brothers Karamazov là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 394 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 394, (SELECT category_id FROM Categories WHERE category_name = N'Văn học kinh điển'), (SELECT author_id FROM Authors WHERE author_name = N'Fyodor Dostoevsky'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'Anna Karenina', '9786040001436', 2018, N'Anna Karenina là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 431 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 431, (SELECT category_id FROM Categories WHERE category_name = N'Văn học kinh điển'), (SELECT author_id FROM Authors WHERE author_name = N'Leo Tolstoy'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'War and Peace', '9786040001443', 2019, N'War and Peace là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 468 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 468, (SELECT category_id FROM Categories WHERE category_name = N'Văn học kinh điển'), (SELECT author_id FROM Authors WHERE author_name = N'Leo Tolstoy'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'Les Misérables', '9786040001450', 2020, N'Les Misérables là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 505 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 505, (SELECT category_id FROM Categories WHERE category_name = N'Văn học kinh điển'), (SELECT author_id FROM Authors WHERE author_name = N'Victor Hugo'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'The Count of Monte Cristo', '9786040001467', 2021, N'The Count of Monte Cristo là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 542 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 542, (SELECT category_id FROM Categories WHERE category_name = N'Văn học kinh điển'), (SELECT author_id FROM Authors WHERE author_name = N'Alexandre Dumas'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'The Picture of Dorian Gray', '9786040001474', 2022, N'The Picture of Dorian Gray là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 579 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 579, (SELECT category_id FROM Categories WHERE category_name = N'Văn học kinh điển'), (SELECT author_id FROM Authors WHERE author_name = N'Oscar Wilde'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'Dracula', '9786040001481', 2023, N'Dracula là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 196 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 196, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Bram Stoker'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Frankenstein', '9786040001498', 2024, N'Frankenstein là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 233 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 233, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Mary Shelley'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Strange Case of Dr Jekyll and Mr Hyde', '9786040001504', 2000, N'The Strange Case of Dr Jekyll and Mr Hyde là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 270 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 270, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Robert Louis Stevenson'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Around the World in Eighty Days', '9786040001511', 2001, N'Around the World in Eighty Days là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 307 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 307, (SELECT category_id FROM Categories WHERE category_name = N'Văn học kinh điển'), (SELECT author_id FROM Authors WHERE author_name = N'Jules Verne'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'Twenty Thousand Leagues Under the Sea', '9786040001528', 2002, N'Twenty Thousand Leagues Under the Sea là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 344 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 344, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học viễn tưởng'), (SELECT author_id FROM Authors WHERE author_name = N'Jules Verne'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Journey to the Center of the Earth', '9786040001535', 2003, N'Journey to the Center of the Earth là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 381 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 381, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học viễn tưởng'), (SELECT author_id FROM Authors WHERE author_name = N'Jules Verne'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Adventures of Sherlock Holmes', '9786040001542', 2004, N'The Adventures of Sherlock Holmes là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 418 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 418, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Arthur Conan Doyle'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Hound of the Baskervilles', '9786040001559', 2005, N'The Hound of the Baskervilles là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 455 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 455, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Arthur Conan Doyle'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Murder on the Orient Express', '9786040001566', 2006, N'Murder on the Orient Express là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 492 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 492, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Agatha Christie'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'And Then There Were None', '9786040001573', 2007, N'And Then There Were None là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 529 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 529, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Agatha Christie'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Murder of Roger Ackroyd', '9786040001580', 2008, N'The Murder of Roger Ackroyd là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 566 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 566, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Agatha Christie'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Girl with the Dragon Tattoo', '9786040001597', 2009, N'The Girl with the Dragon Tattoo là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 183 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 183, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Stieg Larsson'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Gone Girl', '9786040001603', 2010, N'Gone Girl là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 220 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 220, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Gillian Flynn'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Silent Patient', '9786040001610', 2011, N'The Silent Patient là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 257 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 257, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Alex Michaelides'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Da Vinci Code', '9786040001627', 2012, N'The Da Vinci Code là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 294 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 294, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Dan Brown'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Angels & Demons', '9786040001634', 2013, N'Angels & Demons là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 331 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 331, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Dan Brown'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Inferno', '9786040001641', 2014, N'Inferno là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 368 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 368, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Dan Brown'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Digital Fortress', '9786040001658', 2015, N'Digital Fortress là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 405 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 405, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Dan Brown'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Shining', '9786040001665', 2016, N'The Shining là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 442 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 442, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Stephen King'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'It', '9786040001672', 2017, N'It là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 479 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 479, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Stephen King'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Misery', '9786040001689', 2018, N'Misery là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 516 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 516, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Stephen King'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Pet Sematary', '9786040001696', 2019, N'Pet Sematary là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 553 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 553, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Stephen King'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Green Mile', '9786040001702', 2020, N'The Green Mile là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 590 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 590, (SELECT category_id FROM Categories WHERE category_name = N'Trinh thám - Kinh dị'), (SELECT author_id FROM Authors WHERE author_name = N'Stephen King'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Men Without Women', '9786040001719', 2021, N'Men Without Women là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 207 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 207, (SELECT category_id FROM Categories WHERE category_name = N'Tiểu thuyết'), (SELECT author_id FROM Authors WHERE author_name = N'Haruki Murakami'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Colorless Tsukuru Tazaki', '9786040001726', 2022, N'Colorless Tsukuru Tazaki là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 244 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 244, (SELECT category_id FROM Categories WHERE category_name = N'Tiểu thuyết'), (SELECT author_id FROM Authors WHERE author_name = N'Haruki Murakami'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'The Wind-Up Bird Chronicle', '9786040001733', 2023, N'The Wind-Up Bird Chronicle là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 281 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 281, (SELECT category_id FROM Categories WHERE category_name = N'Tiểu thuyết'), (SELECT author_id FROM Authors WHERE author_name = N'Haruki Murakami'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Dế Mèn Phiêu Lưu Ký', '9786040001740', 2024, N'Dế Mèn Phiêu Lưu Ký là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 318 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 318, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Tô Hoài'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Kim Đồng'), 0, 0),
+    (N'Cho Tôi Xin Một Vé Đi Tuổi Thơ', '9786040001757', 2000, N'Cho Tôi Xin Một Vé Đi Tuổi Thơ là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 355 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 355, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Nguyễn Nhật Ánh'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Trẻ'), 0, 0),
+    (N'Mắt Biếc', '9786040001764', 2001, N'Mắt Biếc là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 392 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 392, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Nguyễn Nhật Ánh'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Trẻ'), 0, 0),
+    (N'Tôi Thấy Hoa Vàng Trên Cỏ Xanh', '9786040001771', 2002, N'Tôi Thấy Hoa Vàng Trên Cỏ Xanh là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 429 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 429, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Nguyễn Nhật Ánh'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Trẻ'), 0, 0),
+    (N'Cô Gái Đến Từ Hôm Qua', '9786040001788', 2003, N'Cô Gái Đến Từ Hôm Qua là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 466 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 466, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Nguyễn Nhật Ánh'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Trẻ'), 0, 0),
+    (N'Ngồi Khóc Trên Cây', '9786040001795', 2004, N'Ngồi Khóc Trên Cây là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 503 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 503, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Nguyễn Nhật Ánh'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Trẻ'), 0, 0),
+    (N'Làm Bạn Với Bầu Trời', '9786040001801', 2005, N'Làm Bạn Với Bầu Trời là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 540 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 540, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Nguyễn Nhật Ánh'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Trẻ'), 0, 0),
+    (N'Bắt Trẻ Đồng Xanh', '9786040001818', 2006, N'Bắt Trẻ Đồng Xanh là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 577 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 577, (SELECT category_id FROM Categories WHERE category_name = N'Văn học kinh điển'), (SELECT author_id FROM Authors WHERE author_name = N'J.D. Salinger'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'Vừa Nhắm Mắt Vừa Mở Cửa Sổ', '9786040001825', 2007, N'Vừa Nhắm Mắt Vừa Mở Cửa Sổ là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 194 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Anh', 194, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Nguyễn Ngọc Thuần'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Trẻ'), 0, 0),
+    (N'Thương Nhớ Mười Hai', '9786040001832', 2008, N'Thương Nhớ Mười Hai là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 231 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 231, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Vũ Bằng'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'Vang Bóng Một Thời', '9786040001849', 2009, N'Vang Bóng Một Thời là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 268 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 268, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Nguyễn Tuân'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'Số Đỏ', '9786040001856', 2010, N'Số Đỏ là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 305 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 305, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Vũ Trọng Phụng'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'Chí Phèo', '9786040001863', 2011, N'Chí Phèo là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 342 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 342, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Nam Cao'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'Tắt Đèn', '9786040001870', 2012, N'Tắt Đèn là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 379 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 379, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Ngô Tất Tố'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'Lão Hạc', '9786040001887', 2013, N'Lão Hạc là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 416 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 416, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Nam Cao'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'Những Ngày Thơ Ấu', '9786040001894', 2014, N'Những Ngày Thơ Ấu là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 453 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 453, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Nguyên Hồng'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'Gió Lạnh Đầu Mùa', '9786040001900', 2015, N'Gió Lạnh Đầu Mùa là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 490 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 490, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Thạch Lam'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'Hai Đứa Trẻ', '9786040001917', 2016, N'Hai Đứa Trẻ là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 527 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 527, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Thạch Lam'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'Vợ Nhặt', '9786040001924', 2017, N'Vợ Nhặt là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 564 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 564, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Kim Lân'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'Rừng Xà Nu', '9786040001931', 2018, N'Rừng Xà Nu là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 181 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 181, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Nguyễn Trung Thành'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'Đất Rừng Phương Nam', '9786040001948', 2019, N'Đất Rừng Phương Nam là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 218 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 218, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Đoàn Giỏi'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Văn Học'), 0, 0),
+    (N'Nỗi Buồn Chiến Tranh', '9786040001955', 2020, N'Nỗi Buồn Chiến Tranh là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 255 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 255, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Bảo Ninh'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Trẻ'), 0, 0),
+    (N'Dế Mèn Phiêu Lưu Ký - Tập 2', '9786040001962', 2021, N'Dế Mèn Phiêu Lưu Ký - Tập 2 là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 292 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 292, (SELECT category_id FROM Categories WHERE category_name = N'Văn học Việt Nam'), (SELECT author_id FROM Authors WHERE author_name = N'Tô Hoài'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'NXB Kim Đồng'), 0, 0),
+    (N'Lược Sử Thời Gian', '9786040001979', 2022, N'Lược Sử Thời Gian là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 329 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 329, (SELECT category_id FROM Categories WHERE category_name = N'Khoa học'), (SELECT author_id FROM Authors WHERE author_name = N'Stephen Hawking'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Nhã Nam'), 0, 0),
+    (N'Hành Trình Về Phương Đông', '9786040001986', 2023, N'Hành Trình Về Phương Đông là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 366 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 366, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Nguyên Phong'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'Sức Mạnh Của Thói Quen', '9786040001993', 2024, N'Sức Mạnh Của Thói Quen là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 403 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 403, (SELECT category_id FROM Categories WHERE category_name = N'Kỹ năng sống'), (SELECT author_id FROM Authors WHERE author_name = N'Charles Duhigg'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'First News'), 0, 0),
+    (N'7 Nguyên Tắc Bất Biến Để Thành Công', '9786040002006', 2000, N'7 Nguyên Tắc Bất Biến Để Thành Công là một đầu sách phù hợp cho thư viện, tập trung vào kiến thức, phát triển bản thân, văn học hoặc công nghệ tùy theo chủ đề. Ấn phẩm có khoảng 440 trang và được bổ sung vào dữ liệu mẫu của LibHub.', NULL, N'Tiếng Việt', 440, (SELECT category_id FROM Categories WHERE category_name = N'Kinh doanh'), (SELECT author_id FROM Authors WHERE author_name = N'Napoleon Hill'), (SELECT publisher_id FROM Publishers WHERE publisher_name = N'Alphabooks'), 0, 0);
+GO
+-- ============================================
+-- 11) UPDATE shelf_location cho 29 ban sao GOC
+-- ============================================
+-- ============================================
+UPDATE BookCopies SET shelf_location = N'KD-01' WHERE barcode = 'BC000001';
+UPDATE BookCopies SET shelf_location = N'KD-02' WHERE barcode = 'BC000002';
+UPDATE BookCopies SET shelf_location = N'KNS-01' WHERE barcode = 'BC000003';
+UPDATE BookCopies SET shelf_location = N'KNS-02' WHERE barcode = 'BC000004';
+UPDATE BookCopies SET shelf_location = N'KNS-03' WHERE barcode = 'BC000005';
+UPDATE BookCopies SET shelf_location = N'PG-01' WHERE barcode = 'BC000006';
+UPDATE BookCopies SET shelf_location = N'TTH-01' WHERE barcode = 'BC000007';
+UPDATE BookCopies SET shelf_location = N'HK-01' WHERE barcode = 'BC000008';
+UPDATE BookCopies SET shelf_location = N'TTH-02' WHERE barcode = 'BC000009';
+UPDATE BookCopies SET shelf_location = N'FT-01' WHERE barcode = 'BC000010';
+UPDATE BookCopies SET shelf_location = N'CN-01' WHERE barcode = 'BC000011';
+UPDATE BookCopies SET shelf_location = N'KD-03' WHERE barcode = 'BC000012';
+UPDATE BookCopies SET shelf_location = N'KD-04' WHERE barcode = 'BC000013';
+UPDATE BookCopies SET shelf_location = N'KNS-04' WHERE barcode = 'BC000014';
+UPDATE BookCopies SET shelf_location = N'KNS-05' WHERE barcode = 'BC000015';
+UPDATE BookCopies SET shelf_location = N'KNS-06' WHERE barcode = 'BC000016';
+UPDATE BookCopies SET shelf_location = N'KNS-07' WHERE barcode = 'BC000017';
+UPDATE BookCopies SET shelf_location = N'PG-02' WHERE barcode = 'BC000018';
+UPDATE BookCopies SET shelf_location = N'PG-03' WHERE barcode = 'BC000019';
+UPDATE BookCopies SET shelf_location = N'TTH-03' WHERE barcode = 'BC000020';
+UPDATE BookCopies SET shelf_location = N'TTH-04' WHERE barcode = 'BC000021';
+UPDATE BookCopies SET shelf_location = N'HK-02' WHERE barcode = 'BC000022';
+UPDATE BookCopies SET shelf_location = N'HK-03' WHERE barcode = 'BC000023';
+UPDATE BookCopies SET shelf_location = N'TTH-05' WHERE barcode = 'BC000024';
+UPDATE BookCopies SET shelf_location = N'TTH-06' WHERE barcode = 'BC000025';
+UPDATE BookCopies SET shelf_location = N'FT-02' WHERE barcode = 'BC000026';
+UPDATE BookCopies SET shelf_location = N'FT-03' WHERE barcode = 'BC000027';
+UPDATE BookCopies SET shelf_location = N'CN-02' WHERE barcode = 'BC000028';
+UPDATE BookCopies SET shelf_location = N'CN-03' WHERE barcode = 'BC000029';
+GO
+-- ============================================
+-- 12) INSERT 402 ban sao cho 201 sach moi
+-- ============================================
+INSERT INTO BookCopies (book_id, barcode, shelf_location, status, acquired_date)
+VALUES
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000001'), 'BC000030', N'KNS-08', 'Available', '2026-08-07'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000001'), 'BC000031', N'KNS-08', 'Available', '2026-08-07'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000019'), 'BC000032', N'TTH-07', 'Available', '2026-08-07'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000019'), 'BC000033', N'TTH-07', 'Available', '2026-08-07'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000026'), 'BC000034', N'KNS-09', 'Available', '2026-08-07'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000026'), 'BC000035', N'KNS-09', 'Available', '2026-08-07'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000033'), 'BC000036', N'KNS-10', 'Available', '2026-08-07'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000033'), 'BC000037', N'KNS-10', 'Available', '2026-08-07'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000040'), 'BC000038', N'KNS-11', 'Available', '2026-08-07'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000040'), 'BC000039', N'KNS-11', 'Available', '2026-08-07'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000057'), 'BC000040', N'HK-04', 'Available', '2026-08-07'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000057'), 'BC000041', N'HK-04', 'Available', '2026-08-07'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000064'), 'BC000042', N'KNS-12', 'Available', '2026-08-07'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000064'), 'BC000043', N'KNS-12', 'Available', '2026-08-07'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000071'), 'BC000044', N'TL-01', 'Available', '2026-08-07'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000071'), 'BC000045', N'TL-01', 'Available', '2026-08-07'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000088'), 'BC000046', N'KD-05', 'Available', '2026-08-08'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000088'), 'BC000047', N'KD-05', 'Available', '2026-08-08'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000095'), 'BC000048', N'KNS-13', 'Available', '2026-08-08'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000095'), 'BC000049', N'KNS-13', 'Available', '2026-08-08'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000101'), 'BC000050', N'KNS-14', 'Available', '2026-08-08'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000101'), 'BC000051', N'KNS-14', 'Available', '2026-08-08'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000118'), 'BC000052', N'TL-02', 'Available', '2026-08-08'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000118'), 'BC000053', N'TL-02', 'Available', '2026-08-08'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000125'), 'BC000054', N'KD-06', 'Available', '2026-08-08'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000125'), 'BC000055', N'KD-06', 'Available', '2026-08-08'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000132'), 'BC000056', N'KNS-15', 'Available', '2026-08-08'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000132'), 'BC000057', N'KNS-15', 'Available', '2026-08-08'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000149'), 'BC000058', N'KNS-16', 'Available', '2026-08-08'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000149'), 'BC000059', N'KNS-16', 'Available', '2026-08-08'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000156'), 'BC000060', N'KNS-17', 'Available', '2026-08-08'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000156'), 'BC000061', N'KNS-17', 'Available', '2026-08-08'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000163'), 'BC000062', N'KD-07', 'Available', '2026-08-09'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000163'), 'BC000063', N'KD-07', 'Available', '2026-08-09'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000170'), 'BC000064', N'KNS-18', 'Available', '2026-08-09'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000170'), 'BC000065', N'KNS-18', 'Available', '2026-08-09'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000187'), 'BC000066', N'KNS-19', 'Available', '2026-08-09'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000187'), 'BC000067', N'KNS-19', 'Available', '2026-08-09'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000194'), 'BC000068', N'KNS-20', 'Available', '2026-08-09'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000194'), 'BC000069', N'KNS-20', 'Available', '2026-08-09'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000200'), 'BC000070', N'KD-08', 'Available', '2026-08-09'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000200'), 'BC000071', N'KD-08', 'Available', '2026-08-09'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000217'), 'BC000072', N'KD-09', 'Available', '2026-08-09'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000217'), 'BC000073', N'KD-09', 'Available', '2026-08-09'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000224'), 'BC000074', N'KD-10', 'Available', '2026-08-09'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000224'), 'BC000075', N'KD-10', 'Available', '2026-08-09'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000231'), 'BC000076', N'KD-11', 'Available', '2026-08-09'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000231'), 'BC000077', N'KD-11', 'Available', '2026-08-09'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000248'), 'BC000078', N'KD-12', 'Available', '2026-08-10'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000248'), 'BC000079', N'KD-12', 'Available', '2026-08-10'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000255'), 'BC000080', N'KD-13', 'Available', '2026-08-10'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000255'), 'BC000081', N'KD-13', 'Available', '2026-08-10'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000262'), 'BC000082', N'CN-04', 'Available', '2026-08-10'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000262'), 'BC000083', N'CN-04', 'Available', '2026-08-10'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000279'), 'BC000084', N'CN-05', 'Available', '2026-08-10'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000279'), 'BC000085', N'CN-05', 'Available', '2026-08-10'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000286'), 'BC000086', N'CN-06', 'Available', '2026-08-10'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000286'), 'BC000087', N'CN-06', 'Available', '2026-08-10'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000293'), 'BC000088', N'CN-07', 'Available', '2026-08-10'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000293'), 'BC000089', N'CN-07', 'Available', '2026-08-10'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000309'), 'BC000090', N'CN-08', 'Available', '2026-08-10'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000309'), 'BC000091', N'CN-08', 'Available', '2026-08-10'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000316'), 'BC000092', N'CN-09', 'Available', '2026-08-10'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000316'), 'BC000093', N'CN-09', 'Available', '2026-08-10'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000323'), 'BC000094', N'CN-10', 'Available', '2026-08-11'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000323'), 'BC000095', N'CN-10', 'Available', '2026-08-11'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000330'), 'BC000096', N'CN-11', 'Available', '2026-08-11'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000330'), 'BC000097', N'CN-11', 'Available', '2026-08-11'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000347'), 'BC000098', N'CN-12', 'Available', '2026-08-11'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000347'), 'BC000099', N'CN-12', 'Available', '2026-08-11'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000354'), 'BC000100', N'CN-13', 'Available', '2026-08-11'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000354'), 'BC000101', N'CN-13', 'Available', '2026-08-11'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000361'), 'BC000102', N'CN-14', 'Available', '2026-08-11'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000361'), 'BC000103', N'CN-14', 'Available', '2026-08-11'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000378'), 'BC000104', N'CN-15', 'Available', '2026-08-11'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000378'), 'BC000105', N'CN-15', 'Available', '2026-08-11'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000385'), 'BC000106', N'CN-16', 'Available', '2026-08-11'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000385'), 'BC000107', N'CN-16', 'Available', '2026-08-11'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000392'), 'BC000108', N'CN-17', 'Available', '2026-08-11'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000392'), 'BC000109', N'CN-17', 'Available', '2026-08-11'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000408'), 'BC000110', N'CN-18', 'Available', '2026-08-12'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000408'), 'BC000111', N'CN-18', 'Available', '2026-08-12'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000415'), 'BC000112', N'CN-19', 'Available', '2026-08-12'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000415'), 'BC000113', N'CN-19', 'Available', '2026-08-12'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000422'), 'BC000114', N'CN-20', 'Available', '2026-08-12'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000422'), 'BC000115', N'CN-20', 'Available', '2026-08-12'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000439'), 'BC000116', N'CN-21', 'Available', '2026-08-12'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000439'), 'BC000117', N'CN-21', 'Available', '2026-08-12'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000446'), 'BC000118', N'CN-22', 'Available', '2026-08-12'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000446'), 'BC000119', N'CN-22', 'Available', '2026-08-12'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000453'), 'BC000120', N'CN-23', 'Available', '2026-08-12'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000453'), 'BC000121', N'CN-23', 'Available', '2026-08-12'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000460'), 'BC000122', N'CN-24', 'Available', '2026-08-12'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000460'), 'BC000123', N'CN-24', 'Available', '2026-08-12'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000477'), 'BC000124', N'CN-25', 'Available', '2026-08-12'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000477'), 'BC000125', N'CN-25', 'Available', '2026-08-12'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000484'), 'BC000126', N'CN-26', 'Available', '2026-08-13'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000484'), 'BC000127', N'CN-26', 'Available', '2026-08-13'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000491'), 'BC000128', N'CN-27', 'Available', '2026-08-13'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000491'), 'BC000129', N'CN-27', 'Available', '2026-08-13'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000507'), 'BC000130', N'CN-28', 'Available', '2026-08-13'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000507'), 'BC000131', N'CN-28', 'Available', '2026-08-13'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000514'), 'BC000132', N'CN-29', 'Available', '2026-08-13'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000514'), 'BC000133', N'CN-29', 'Available', '2026-08-13'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000521'), 'BC000134', N'CN-30', 'Available', '2026-08-13'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000521'), 'BC000135', N'CN-30', 'Available', '2026-08-13'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000538'), 'BC000136', N'CN-31', 'Available', '2026-08-13'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000538'), 'BC000137', N'CN-31', 'Available', '2026-08-13'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000545'), 'BC000138', N'CN-32', 'Available', '2026-08-13'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000545'), 'BC000139', N'CN-32', 'Available', '2026-08-13'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000552'), 'BC000140', N'CN-33', 'Available', '2026-08-13'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000552'), 'BC000141', N'CN-33', 'Available', '2026-08-13'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000569'), 'BC000142', N'CN-34', 'Available', '2026-08-14'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000569'), 'BC000143', N'CN-34', 'Available', '2026-08-14'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000576'), 'BC000144', N'CN-35', 'Available', '2026-08-14'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000576'), 'BC000145', N'CN-35', 'Available', '2026-08-14'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000583'), 'BC000146', N'CN-36', 'Available', '2026-08-14'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000583'), 'BC000147', N'CN-36', 'Available', '2026-08-14'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000590'), 'BC000148', N'CN-37', 'Available', '2026-08-14'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000590'), 'BC000149', N'CN-37', 'Available', '2026-08-14'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000606'), 'BC000150', N'CN-38', 'Available', '2026-08-14'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000606'), 'BC000151', N'CN-38', 'Available', '2026-08-14'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000613'), 'BC000152', N'VHKD-01', 'Available', '2026-08-14'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000613'), 'BC000153', N'VHKD-01', 'Available', '2026-08-14'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000620'), 'BC000154', N'KHVT-01', 'Available', '2026-08-14'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000620'), 'BC000155', N'KHVT-01', 'Available', '2026-08-14'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000637'), 'BC000156', N'VHKD-02', 'Available', '2026-08-14'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000637'), 'BC000157', N'VHKD-02', 'Available', '2026-08-14'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000644'), 'BC000158', N'VHKD-03', 'Available', '2026-08-15'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000644'), 'BC000159', N'VHKD-03', 'Available', '2026-08-15'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000651'), 'BC000160', N'VHKD-04', 'Available', '2026-08-15'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000651'), 'BC000161', N'VHKD-04', 'Available', '2026-08-15'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000668'), 'BC000162', N'VHKD-05', 'Available', '2026-08-15'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000668'), 'BC000163', N'VHKD-05', 'Available', '2026-08-15'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000675'), 'BC000164', N'FT-04', 'Available', '2026-08-15'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000675'), 'BC000165', N'FT-04', 'Available', '2026-08-15'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000682'), 'BC000166', N'FT-05', 'Available', '2026-08-15'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000682'), 'BC000167', N'FT-05', 'Available', '2026-08-15'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000699'), 'BC000168', N'FT-06', 'Available', '2026-08-15'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000699'), 'BC000169', N'FT-06', 'Available', '2026-08-15'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000705'), 'BC000170', N'FT-07', 'Available', '2026-08-15'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000705'), 'BC000171', N'FT-07', 'Available', '2026-08-15'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000712'), 'BC000172', N'FT-08', 'Available', '2026-08-15'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000712'), 'BC000173', N'FT-08', 'Available', '2026-08-15'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000729'), 'BC000174', N'FT-09', 'Available', '2026-08-16'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000729'), 'BC000175', N'FT-09', 'Available', '2026-08-16'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000736'), 'BC000176', N'FT-10', 'Available', '2026-08-16'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000736'), 'BC000177', N'FT-10', 'Available', '2026-08-16'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000743'), 'BC000178', N'FT-11', 'Available', '2026-08-16'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000743'), 'BC000179', N'FT-11', 'Available', '2026-08-16'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000750'), 'BC000180', N'FT-12', 'Available', '2026-08-16'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000750'), 'BC000181', N'FT-12', 'Available', '2026-08-16'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000767'), 'BC000182', N'VHKD-06', 'Available', '2026-08-16'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000767'), 'BC000183', N'VHKD-06', 'Available', '2026-08-16'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000774'), 'BC000184', N'VHKD-07', 'Available', '2026-08-16'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000774'), 'BC000185', N'VHKD-07', 'Available', '2026-08-16'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000781'), 'BC000186', N'TTH-08', 'Available', '2026-08-16'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000781'), 'BC000187', N'TTH-08', 'Available', '2026-08-16'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000798'), 'BC000188', N'TTH-09', 'Available', '2026-08-16'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000798'), 'BC000189', N'TTH-09', 'Available', '2026-08-16'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000804'), 'BC000190', N'TTH-10', 'Available', '2026-08-17'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000804'), 'BC000191', N'TTH-10', 'Available', '2026-08-17'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000811'), 'BC000192', N'VHKD-08', 'Available', '2026-08-17'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000811'), 'BC000193', N'VHKD-08', 'Available', '2026-08-17'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000828'), 'BC000194', N'TTH-11', 'Available', '2026-08-17'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000828'), 'BC000195', N'TTH-11', 'Available', '2026-08-17'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000835'), 'BC000196', N'TTH-12', 'Available', '2026-08-17'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000835'), 'BC000197', N'TTH-12', 'Available', '2026-08-17'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000842'), 'BC000198', N'TTH-13', 'Available', '2026-08-17'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000842'), 'BC000199', N'TTH-13', 'Available', '2026-08-17'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000859'), 'BC000200', N'TTH-14', 'Available', '2026-08-17'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000859'), 'BC000201', N'TTH-14', 'Available', '2026-08-17'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000866'), 'BC000202', N'TTH-15', 'Available', '2026-08-17'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000866'), 'BC000203', N'TTH-15', 'Available', '2026-08-17'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000873'), 'BC000204', N'KHVT-02', 'Available', '2026-08-17'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000873'), 'BC000205', N'KHVT-02', 'Available', '2026-08-17'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000880'), 'BC000206', N'KHVT-03', 'Available', '2026-08-18'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000880'), 'BC000207', N'KHVT-03', 'Available', '2026-08-18'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000897'), 'BC000208', N'KHVT-04', 'Available', '2026-08-18'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000897'), 'BC000209', N'KHVT-04', 'Available', '2026-08-18'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000903'), 'BC000210', N'KHVT-05', 'Available', '2026-08-18'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000903'), 'BC000211', N'KHVT-05', 'Available', '2026-08-18'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000910'), 'BC000212', N'KHVT-06', 'Available', '2026-08-18'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000910'), 'BC000213', N'KHVT-06', 'Available', '2026-08-18'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000927'), 'BC000214', N'KHVT-07', 'Available', '2026-08-18'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000927'), 'BC000215', N'KHVT-07', 'Available', '2026-08-18'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000934'), 'BC000216', N'KHVT-08', 'Available', '2026-08-18'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000934'), 'BC000217', N'KHVT-08', 'Available', '2026-08-18'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000941'), 'BC000218', N'KHVT-09', 'Available', '2026-08-18'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000941'), 'BC000219', N'KHVT-09', 'Available', '2026-08-18'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000958'), 'BC000220', N'KHVT-10', 'Available', '2026-08-18'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000958'), 'BC000221', N'KHVT-10', 'Available', '2026-08-18'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000965'), 'BC000222', N'KHVT-11', 'Available', '2026-08-19'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000965'), 'BC000223', N'KHVT-11', 'Available', '2026-08-19'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000972'), 'BC000224', N'TTH-16', 'Available', '2026-08-19'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000972'), 'BC000225', N'TTH-16', 'Available', '2026-08-19'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000989'), 'BC000226', N'TTH-17', 'Available', '2026-08-19'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000989'), 'BC000227', N'TTH-17', 'Available', '2026-08-19'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000996'), 'BC000228', N'TTH-18', 'Available', '2026-08-19'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040000996'), 'BC000229', N'TTH-18', 'Available', '2026-08-19'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001009'), 'BC000230', N'TTH-19', 'Available', '2026-08-19'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001009'), 'BC000231', N'TTH-19', 'Available', '2026-08-19'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001016'), 'BC000232', N'HK-05', 'Available', '2026-08-19'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001016'), 'BC000233', N'HK-05', 'Available', '2026-08-19'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001023'), 'BC000234', N'HK-06', 'Available', '2026-08-19'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001023'), 'BC000235', N'HK-06', 'Available', '2026-08-19'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001030'), 'BC000236', N'HK-07', 'Available', '2026-08-19'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001030'), 'BC000237', N'HK-07', 'Available', '2026-08-19'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001047'), 'BC000238', N'HK-08', 'Available', '2026-08-20'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001047'), 'BC000239', N'HK-08', 'Available', '2026-08-20'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001054'), 'BC000240', N'KH-01', 'Available', '2026-08-20'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001054'), 'BC000241', N'KH-01', 'Available', '2026-08-20'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001061'), 'BC000242', N'KH-02', 'Available', '2026-08-20'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001061'), 'BC000243', N'KH-02', 'Available', '2026-08-20'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001078'), 'BC000244', N'KH-03', 'Available', '2026-08-20'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001078'), 'BC000245', N'KH-03', 'Available', '2026-08-20'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001085'), 'BC000246', N'KH-04', 'Available', '2026-08-20'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001085'), 'BC000247', N'KH-04', 'Available', '2026-08-20'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001092'), 'BC000248', N'KH-05', 'Available', '2026-08-20'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001092'), 'BC000249', N'KH-05', 'Available', '2026-08-20'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001108'), 'BC000250', N'KH-06', 'Available', '2026-08-20'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001108'), 'BC000251', N'KH-06', 'Available', '2026-08-20'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001115'), 'BC000252', N'KH-07', 'Available', '2026-08-20'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001115'), 'BC000253', N'KH-07', 'Available', '2026-08-20'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001122'), 'BC000254', N'KH-08', 'Available', '2026-08-21'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001122'), 'BC000255', N'KH-08', 'Available', '2026-08-21'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001139'), 'BC000256', N'KH-09', 'Available', '2026-08-21'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001139'), 'BC000257', N'KH-09', 'Available', '2026-08-21'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001146'), 'BC000258', N'KH-10', 'Available', '2026-08-21'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001146'), 'BC000259', N'KH-10', 'Available', '2026-08-21'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001153'), 'BC000260', N'KH-11', 'Available', '2026-08-21'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001153'), 'BC000261', N'KH-11', 'Available', '2026-08-21'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001160'), 'BC000262', N'KH-12', 'Available', '2026-08-21'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001160'), 'BC000263', N'KH-12', 'Available', '2026-08-21'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001177'), 'BC000264', N'KH-13', 'Available', '2026-08-21'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001177'), 'BC000265', N'KH-13', 'Available', '2026-08-21'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001184'), 'BC000266', N'KH-14', 'Available', '2026-08-21'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001184'), 'BC000267', N'KH-14', 'Available', '2026-08-21'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001191'), 'BC000268', N'TL-03', 'Available', '2026-08-21'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001191'), 'BC000269', N'TL-03', 'Available', '2026-08-21'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001207'), 'BC000270', N'TL-04', 'Available', '2026-08-22'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001207'), 'BC000271', N'TL-04', 'Available', '2026-08-22'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001214'), 'BC000272', N'TL-05', 'Available', '2026-08-22'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001214'), 'BC000273', N'TL-05', 'Available', '2026-08-22'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001221'), 'BC000274', N'TL-06', 'Available', '2026-08-22'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001221'), 'BC000275', N'TL-06', 'Available', '2026-08-22'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001238'), 'BC000276', N'TL-07', 'Available', '2026-08-22'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001238'), 'BC000277', N'TL-07', 'Available', '2026-08-22'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001245'), 'BC000278', N'TL-08', 'Available', '2026-08-22'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001245'), 'BC000279', N'TL-08', 'Available', '2026-08-22'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001252'), 'BC000280', N'KD-14', 'Available', '2026-08-22'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001252'), 'BC000281', N'KD-14', 'Available', '2026-08-22'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001269'), 'BC000282', N'KD-15', 'Available', '2026-08-22'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001269'), 'BC000283', N'KD-15', 'Available', '2026-08-22'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001276'), 'BC000284', N'KNS-21', 'Available', '2026-08-22'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001276'), 'BC000285', N'KNS-21', 'Available', '2026-08-22'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001283'), 'BC000286', N'KNS-22', 'Available', '2026-08-23'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001283'), 'BC000287', N'KNS-22', 'Available', '2026-08-23'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001290'), 'BC000288', N'KNS-23', 'Available', '2026-08-23'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001290'), 'BC000289', N'KNS-23', 'Available', '2026-08-23'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001306'), 'BC000290', N'KNS-24', 'Available', '2026-08-23'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001306'), 'BC000291', N'KNS-24', 'Available', '2026-08-23'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001313'), 'BC000292', N'TL-09', 'Available', '2026-08-23'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001313'), 'BC000293', N'TL-09', 'Available', '2026-08-23'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001320'), 'BC000294', N'KNS-25', 'Available', '2026-08-23'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001320'), 'BC000295', N'KNS-25', 'Available', '2026-08-23'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001337'), 'BC000296', N'TRH-01', 'Available', '2026-08-23'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001337'), 'BC000297', N'TRH-01', 'Available', '2026-08-23'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001344'), 'BC000298', N'HK-09', 'Available', '2026-08-23'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001344'), 'BC000299', N'HK-09', 'Available', '2026-08-23'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001351'), 'BC000300', N'TRH-02', 'Available', '2026-08-23'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001351'), 'BC000301', N'TRH-02', 'Available', '2026-08-23'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001368'), 'BC000302', N'TRH-03', 'Available', '2026-08-24'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001368'), 'BC000303', N'TRH-03', 'Available', '2026-08-24'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001375'), 'BC000304', N'TRH-04', 'Available', '2026-08-24'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001375'), 'BC000305', N'TRH-04', 'Available', '2026-08-24'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001382'), 'BC000306', N'TRH-05', 'Available', '2026-08-24'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001382'), 'BC000307', N'TRH-05', 'Available', '2026-08-24'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001399'), 'BC000308', N'TRH-06', 'Available', '2026-08-24'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001399'), 'BC000309', N'TRH-06', 'Available', '2026-08-24'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001405'), 'BC000310', N'TRH-07', 'Available', '2026-08-24'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001405'), 'BC000311', N'TRH-07', 'Available', '2026-08-24'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001412'), 'BC000312', N'VHKD-09', 'Available', '2026-08-24'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001412'), 'BC000313', N'VHKD-09', 'Available', '2026-08-24'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001429'), 'BC000314', N'VHKD-10', 'Available', '2026-08-24'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001429'), 'BC000315', N'VHKD-10', 'Available', '2026-08-24'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001436'), 'BC000316', N'VHKD-11', 'Available', '2026-08-24'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001436'), 'BC000317', N'VHKD-11', 'Available', '2026-08-24'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001443'), 'BC000318', N'VHKD-12', 'Available', '2026-08-25'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001443'), 'BC000319', N'VHKD-12', 'Available', '2026-08-25'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001450'), 'BC000320', N'VHKD-13', 'Available', '2026-08-25'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001450'), 'BC000321', N'VHKD-13', 'Available', '2026-08-25'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001467'), 'BC000322', N'VHKD-14', 'Available', '2026-08-25'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001467'), 'BC000323', N'VHKD-14', 'Available', '2026-08-25'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001474'), 'BC000324', N'VHKD-15', 'Available', '2026-08-25'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001474'), 'BC000325', N'VHKD-15', 'Available', '2026-08-25'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001481'), 'BC000326', N'TTKD-01', 'Available', '2026-08-25'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001481'), 'BC000327', N'TTKD-01', 'Available', '2026-08-25'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001498'), 'BC000328', N'TTKD-02', 'Available', '2026-08-25'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001498'), 'BC000329', N'TTKD-02', 'Available', '2026-08-25'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001504'), 'BC000330', N'TTKD-03', 'Available', '2026-08-25'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001504'), 'BC000331', N'TTKD-03', 'Available', '2026-08-25'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001511'), 'BC000332', N'VHKD-16', 'Available', '2026-08-25'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001511'), 'BC000333', N'VHKD-16', 'Available', '2026-08-25'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001528'), 'BC000334', N'KHVT-12', 'Available', '2026-08-26'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001528'), 'BC000335', N'KHVT-12', 'Available', '2026-08-26'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001535'), 'BC000336', N'KHVT-13', 'Available', '2026-08-26'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001535'), 'BC000337', N'KHVT-13', 'Available', '2026-08-26'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001542'), 'BC000338', N'TTKD-04', 'Available', '2026-08-26'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001542'), 'BC000339', N'TTKD-04', 'Available', '2026-08-26'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001559'), 'BC000340', N'TTKD-05', 'Available', '2026-08-26'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001559'), 'BC000341', N'TTKD-05', 'Available', '2026-08-26'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001566'), 'BC000342', N'TTKD-06', 'Available', '2026-08-26'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001566'), 'BC000343', N'TTKD-06', 'Available', '2026-08-26'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001573'), 'BC000344', N'TTKD-07', 'Available', '2026-08-26'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001573'), 'BC000345', N'TTKD-07', 'Available', '2026-08-26'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001580'), 'BC000346', N'TTKD-08', 'Available', '2026-08-26'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001580'), 'BC000347', N'TTKD-08', 'Available', '2026-08-26'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001597'), 'BC000348', N'TTKD-09', 'Available', '2026-08-26'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001597'), 'BC000349', N'TTKD-09', 'Available', '2026-08-26'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001603'), 'BC000350', N'TTKD-10', 'Available', '2026-08-27'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001603'), 'BC000351', N'TTKD-10', 'Available', '2026-08-27'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001610'), 'BC000352', N'TTKD-11', 'Available', '2026-08-27'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001610'), 'BC000353', N'TTKD-11', 'Available', '2026-08-27'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001627'), 'BC000354', N'TTKD-12', 'Available', '2026-08-27'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001627'), 'BC000355', N'TTKD-12', 'Available', '2026-08-27'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001634'), 'BC000356', N'TTKD-13', 'Available', '2026-08-27'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001634'), 'BC000357', N'TTKD-13', 'Available', '2026-08-27'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001641'), 'BC000358', N'TTKD-14', 'Available', '2026-08-27'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001641'), 'BC000359', N'TTKD-14', 'Available', '2026-08-27'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001658'), 'BC000360', N'TTKD-15', 'Available', '2026-08-27'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001658'), 'BC000361', N'TTKD-15', 'Available', '2026-08-27'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001665'), 'BC000362', N'TTKD-16', 'Available', '2026-08-27'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001665'), 'BC000363', N'TTKD-16', 'Available', '2026-08-27'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001672'), 'BC000364', N'TTKD-17', 'Available', '2026-08-27'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001672'), 'BC000365', N'TTKD-17', 'Available', '2026-08-27'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001689'), 'BC000366', N'TTKD-18', 'Available', '2026-08-28'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001689'), 'BC000367', N'TTKD-18', 'Available', '2026-08-28'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001696'), 'BC000368', N'TTKD-19', 'Available', '2026-08-28'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001696'), 'BC000369', N'TTKD-19', 'Available', '2026-08-28'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001702'), 'BC000370', N'TTKD-20', 'Available', '2026-08-28'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001702'), 'BC000371', N'TTKD-20', 'Available', '2026-08-28'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001719'), 'BC000372', N'TTH-20', 'Available', '2026-08-28'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001719'), 'BC000373', N'TTH-20', 'Available', '2026-08-28'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001726'), 'BC000374', N'TTH-21', 'Available', '2026-08-28'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001726'), 'BC000375', N'TTH-21', 'Available', '2026-08-28'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001733'), 'BC000376', N'TTH-22', 'Available', '2026-08-28'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001733'), 'BC000377', N'TTH-22', 'Available', '2026-08-28'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001740'), 'BC000378', N'VHVN-01', 'Available', '2026-08-28'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001740'), 'BC000379', N'VHVN-01', 'Available', '2026-08-28'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001757'), 'BC000380', N'VHVN-02', 'Available', '2026-08-28'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001757'), 'BC000381', N'VHVN-02', 'Available', '2026-08-28'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001764'), 'BC000382', N'VHVN-03', 'Available', '2026-08-29'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001764'), 'BC000383', N'VHVN-03', 'Available', '2026-08-29'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001771'), 'BC000384', N'VHVN-04', 'Available', '2026-08-29'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001771'), 'BC000385', N'VHVN-04', 'Available', '2026-08-29'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001788'), 'BC000386', N'VHVN-05', 'Available', '2026-08-29'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001788'), 'BC000387', N'VHVN-05', 'Available', '2026-08-29'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001795'), 'BC000388', N'VHVN-06', 'Available', '2026-08-29'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001795'), 'BC000389', N'VHVN-06', 'Available', '2026-08-29'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001801'), 'BC000390', N'VHVN-07', 'Available', '2026-08-29'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001801'), 'BC000391', N'VHVN-07', 'Available', '2026-08-29'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001818'), 'BC000392', N'VHKD-17', 'Available', '2026-08-29'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001818'), 'BC000393', N'VHKD-17', 'Available', '2026-08-29'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001825'), 'BC000394', N'VHVN-08', 'Available', '2026-08-29'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001825'), 'BC000395', N'VHVN-08', 'Available', '2026-08-29'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001832'), 'BC000396', N'VHVN-09', 'Available', '2026-08-29'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001832'), 'BC000397', N'VHVN-09', 'Available', '2026-08-29'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001849'), 'BC000398', N'VHVN-10', 'Available', '2026-08-30'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001849'), 'BC000399', N'VHVN-10', 'Available', '2026-08-30'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001856'), 'BC000400', N'VHVN-11', 'Available', '2026-08-30'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001856'), 'BC000401', N'VHVN-11', 'Available', '2026-08-30'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001863'), 'BC000402', N'VHVN-12', 'Available', '2026-08-30'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001863'), 'BC000403', N'VHVN-12', 'Available', '2026-08-30'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001870'), 'BC000404', N'VHVN-13', 'Available', '2026-08-30'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001870'), 'BC000405', N'VHVN-13', 'Available', '2026-08-30'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001887'), 'BC000406', N'VHVN-14', 'Available', '2026-08-30'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001887'), 'BC000407', N'VHVN-14', 'Available', '2026-08-30'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001894'), 'BC000408', N'VHVN-15', 'Available', '2026-08-30'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001894'), 'BC000409', N'VHVN-15', 'Available', '2026-08-30'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001900'), 'BC000410', N'VHVN-16', 'Available', '2026-08-30'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001900'), 'BC000411', N'VHVN-16', 'Available', '2026-08-30'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001917'), 'BC000412', N'VHVN-17', 'Available', '2026-08-30'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001917'), 'BC000413', N'VHVN-17', 'Available', '2026-08-30'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001924'), 'BC000414', N'VHVN-18', 'Available', '2026-08-31'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001924'), 'BC000415', N'VHVN-18', 'Available', '2026-08-31'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001931'), 'BC000416', N'VHVN-19', 'Available', '2026-08-31'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001931'), 'BC000417', N'VHVN-19', 'Available', '2026-08-31'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001948'), 'BC000418', N'VHVN-20', 'Available', '2026-08-31'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001948'), 'BC000419', N'VHVN-20', 'Available', '2026-08-31'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001955'), 'BC000420', N'VHVN-21', 'Available', '2026-08-31'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001955'), 'BC000421', N'VHVN-21', 'Available', '2026-08-31'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001962'), 'BC000422', N'VHVN-22', 'Available', '2026-08-31'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001962'), 'BC000423', N'VHVN-22', 'Available', '2026-08-31'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001979'), 'BC000424', N'KH-15', 'Available', '2026-08-31'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001979'), 'BC000425', N'KH-15', 'Available', '2026-08-31'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001986'), 'BC000426', N'KNS-26', 'Available', '2026-08-31'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001986'), 'BC000427', N'KNS-26', 'Available', '2026-08-31'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001993'), 'BC000428', N'KNS-27', 'Available', '2026-08-31'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040001993'), 'BC000429', N'KNS-27', 'Available', '2026-08-31'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040002006'), 'BC000430', N'KD-16', 'Available', '2026-09-01'),
+    ((SELECT book_id FROM Books WHERE isbn = '9786040002006'), 'BC000431', N'KD-16', 'Available', '2026-09-01');
 GO

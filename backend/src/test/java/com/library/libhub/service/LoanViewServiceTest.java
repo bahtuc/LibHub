@@ -126,6 +126,8 @@ class LoanViewServiceTest {
         assertEquals(10L, view.getTicketId());
         assertEquals("Bạn đọc", view.getUserName());
         assertEquals("Đắc nhân tâm", view.getItems().getFirst().getBookTitle());
+        assertEquals(Date.valueOf("2026-07-01"), view.getItems().getFirst().getBorrowDate());
+        assertEquals(Date.valueOf("2026-07-15"), view.getItems().getFirst().getDueDate());
         assertEquals(Date.valueOf("2026-07-18"), view.getItems().getFirst().getReturnedDate());
         assertEquals("Damaged", view.getItems().getFirst().getConditionBook());
         assertEquals(80L, view.getItems().getFirst().getFineId());

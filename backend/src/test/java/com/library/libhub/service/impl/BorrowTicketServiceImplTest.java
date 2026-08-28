@@ -1,6 +1,7 @@
 
 package com.library.libhub.service.impl;
 
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -288,6 +289,9 @@ class BorrowTicketServiceImplTest {
         request.setUserId(3L);
         request.setBorrowDate(
                 Date.valueOf("2026-08-08"));
+        request.setBorrowDate(
+                Date.valueOf("2026-08-01"));
+
         request.setDueDate(
                 Date.valueOf("2026-08-22"));
         request.setCopyIds(
@@ -348,6 +352,7 @@ class BorrowTicketServiceImplTest {
 
         request.setGuestName("Nguyen Van Guest");
         request.setGuestPhone("0901234567");
+        request.setBorrowDate(Date.valueOf("2026-08-01"));
         request.setDueDate(
                 Date.valueOf("2026-08-22"));
         request.setCopyIds(
@@ -381,8 +386,11 @@ class BorrowTicketServiceImplTest {
                 "0901234567",
                 result.getGuestPhone());
 
+        assertEquals(BigDecimal.valueOf(105000), result.getDepositAmount());
+        assertEquals("Paid", result.getDepositPaidStatus());
+
         assertEquals(
-                Date.valueOf(LocalDate.now()),
+                Date.valueOf("2026-08-01"),
                 result.getBorrowDate());
 
         verifyNoInteractions(userRepo);

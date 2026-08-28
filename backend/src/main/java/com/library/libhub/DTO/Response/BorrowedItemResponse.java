@@ -10,6 +10,8 @@ public class BorrowedItemResponse {
     private String bookTitle;
     private String barcode;
     private String borrowStatus;
+    private Date borrowDate;
+    private Date dueDate;
     private Date returnedDate;
     private String conditionBook;
     private Long returnDetailId;
@@ -30,6 +32,10 @@ public class BorrowedItemResponse {
     public void setBarcode(String barcode) { this.barcode = barcode; }
     public String getBorrowStatus() { return borrowStatus; }
     public void setBorrowStatus(String borrowStatus) { this.borrowStatus = borrowStatus; }
+    public Date getBorrowDate() { return borrowDate; }
+    public void setBorrowDate(Date borrowDate) { this.borrowDate = borrowDate; }
+    public Date getDueDate() { return dueDate; }
+    public void setDueDate(Date dueDate) { this.dueDate = dueDate; }
     public Date getReturnedDate() { return returnedDate; }
     public void setReturnedDate(Date returnedDate) { this.returnedDate = returnedDate; }
     public String getConditionBook() { return conditionBook; }

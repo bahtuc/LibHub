@@ -143,6 +143,8 @@ public class LoanViewService {
         response.setDueDate(ticket.getDueDate());
         response.setStatus(ticket.getStatus());
         response.setNote(ticket.getNote());
+        response.setDepositAmount(ticket.getDepositAmount());
+        response.setDepositPaidStatus(ticket.getDepositPaidStatus());
 
         List<BorrowedItemResponse> items = detailsByTicket
                 .getOrDefault(ticket.getTicketId(), List.of())
@@ -152,6 +154,8 @@ public class LoanViewService {
                         Comparator.nullsLast(Comparator.naturalOrder())))
                 .map(detail -> toItem(
                         ticket.getTicketId(),
+                        ticket.getBorrowDate(),
+                        ticket.getDueDate(),
                         detail,
                         copies,
                         books,
@@ -164,6 +168,8 @@ public class LoanViewService {
 
     private BorrowedItemResponse toItem(
             long ticketId,
+            java.sql.Date borrowDate,
+            java.sql.Date dueDate,
             BorrowDetails detail,
             Map<Long, BookCopies> copies,
             Map<Long, Books> books,
@@ -173,6 +179,8 @@ public class LoanViewService {
         response.setDetailId(detail.getDetailId());
         response.setCopyId(detail.getCopyId());
         response.setBorrowStatus(detail.getBorrowStatus());
+        response.setBorrowDate(borrowDate);
+        response.setDueDate(dueDate);
 
         BookCopies copy = copies.get(detail.getCopyId());
         if (copy != null) {

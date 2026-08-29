@@ -14,6 +14,7 @@ public class AuthResponse {
     private String status;
     private Timestamp memberSince;
     private Timestamp lastLogin;
+    private boolean twoFactorEnabled;
 
     public Long getUserId() {
         return userId;
@@ -61,4 +62,6 @@ public class AuthResponse {
     public void setMemberSince(Timestamp memberSince) { this.memberSince = memberSince; }
     public Timestamp getLastLogin() { return lastLogin; }
     public void setLastLogin(Timestamp lastLogin) { this.lastLogin = lastLogin; }
+    public boolean isTwoFactorEnabled() { return twoFactorEnabled; }
+    public void setTwoFactorEnabled(boolean twoFactorEnabled) { this.twoFactorEnabled = twoFactorEnabled; }
 }

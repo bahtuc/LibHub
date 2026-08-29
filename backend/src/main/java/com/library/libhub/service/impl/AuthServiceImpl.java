@@ -60,6 +60,7 @@ public class AuthServiceImpl implements IAuthService {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(role);
         user.setStatus("ACTIVE");
+        user.setTwoFactorEnabled(false);
         user.setCreatedAt(new Timestamp(System.currentTimeMillis()));
 
         return mapToResponse(userRepo.save(user));
@@ -173,6 +174,21 @@ public class AuthServiceImpl implements IAuthService {
         return mapToResponse(userRepo.save(user));
     }
 
+    @Override
+    public AuthResponse updateTwoFactor(long userId, Boolean enabled) {
+        if (enabled == null) {
+            throw new IllegalArgumentException("Trạng thái xác minh hai bước không hợp lệ");
+        }
+
+        Users user = findUser(userId);
+        if (enabled && isBlank(user.getEmail())) {
+            throw new IllegalArgumentException(
+                    "Vui lòng thêm email trước khi bật xác minh hai bước");
+        }
+        user.setTwoFactorEnabled(enabled);
+        return mapToResponse(userRepo.save(user));
+    }
+
     private void validateRegister(RegisterRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Dữ liệu không hợp lệ");
@@ -216,6 +232,7 @@ public class AuthServiceImpl implements IAuthService {
         response.setStatus(user.getStatus());
         response.setMemberSince(user.getCreatedAt());
         response.setLastLogin(user.getLastLogin());
+        response.setTwoFactorEnabled(user.isTwoFactorEnabled());
         return response;
     }
 

@@ -9,7 +9,7 @@ import Icon from "../components/Icon";
 import Badge from "../admin/Badge";
 import { useAuth } from "../auth/useAuth";
 import { getTicketStatus } from "../utils/loanViews";
-import { formatDate } from "../utils/format";
+import { useLanguage } from "../i18n/LanguageContext";
 import { getMyDetailedBorrowHistory } from "../services/BorrowTicketService";
 import { getMyFines } from "../services/FineService";
 import { createVnpayPayment } from "../services/PaymentService";
@@ -21,6 +21,7 @@ import "../styles/Account.css";
 const TABS = [
   { id: "profile", label: "Hồ sơ", icon: "user" },
   { id: "password", label: "Đổi mật khẩu", icon: "lock" },
+  { id: "security", label: "Bảo mật", icon: "check-circle" },
   { id: "tickets", label: "Phiếu mượn", icon: "layers" },
   { id: "fines", label: "Phạt", icon: "landmark" },
 ];
@@ -37,6 +38,7 @@ const ROLE_TONE = { Admin: "warning", User: "success", Librarian: "info" };
 
 export default function Account() {
   const { user } = useAuth();
+  const { t, translateLabel, formatDate } = useLanguage();
   const [searchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const [tab, setTab] = useState(
@@ -110,11 +112,11 @@ export default function Account() {
 
       <section className="lh-library-hero">
         <div className="lh-container">
-          <p className="lh-eyebrow">Tài khoản</p>
+          <p className="lh-eyebrow">{t("account.eyebrow")}</p>
           <h1 className="lh-h1" style={{ fontSize: "clamp(2rem, 3.4vw, 2.8rem)" }}>
-            Xin chào, {user.full_name}
+            {t("account.hello", { name: user.full_name })}
           </h1>
-          <p className="lh-lede">Quản lý thông tin cá nhân, mật khẩu và lịch sử mượn sách.</p>
+          <p className="lh-lede">{t("account.description")}</p>
         </div>
       </section>
 
@@ -133,11 +135,11 @@ export default function Account() {
 
             <dl className="lh-member-card__meta">
               <div>
-                <dt>Tên đăng nhập</dt>
+                <dt>{t("register.username")}</dt>
                 <dd>{user.username}</dd>
               </div>
               <div>
-                <dt>Thành viên từ</dt>
+                <dt>{t("account.memberSince")}</dt>
                 <dd>{formatDate(user.member_since)}</dd>
               </div>
             </dl>
@@ -145,11 +147,11 @@ export default function Account() {
             <div className="lh-member-card__stats">
               <div>
                 <span className="lh-member-card__stat-value">{activeCount}</span>
-                <span className="lh-member-card__stat-label">Đang mượn</span>
+                <span className="lh-member-card__stat-label">{t("account.activeLoans")}</span>
               </div>
               <div>
                 <span className="lh-member-card__stat-value">{unpaidFines}</span>
-                <span className="lh-member-card__stat-label">Phạt chưa thu</span>
+                <span className="lh-member-card__stat-label">{t("account.unpaidFines")}</span>
               </div>
             </div>
           </aside>
@@ -166,7 +168,7 @@ export default function Account() {
                   <span className="lh-account__tab-icon">
                     <Icon name={t.icon} size={15} />
                   </span>
-                  {t.label}
+                  {translateLabel(t.label)}
                 </button>
               ))}
             </div>
@@ -174,6 +176,7 @@ export default function Account() {
             <div className="lh-account__panel">
               {tab === "profile" && <ProfileTab />}
               {tab === "password" && <PasswordTab />}
+              {tab === "security" && <SecurityTab />}
               {tab === "tickets" && (
                 <TicketsTab
                   tickets={tickets}
@@ -200,6 +203,7 @@ export default function Account() {
 
 function ProfileTab() {
   const { user, updateProfile } = useAuth();
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     full_name: user.full_name || "",
     email: user.email || "",
@@ -221,7 +225,7 @@ function ProfileTab() {
     e.preventDefault();
     const result = await updateProfile(form);
     if (!result?.ok) {
-      setError(result?.message || "Không thể cập nhật hồ sơ.");
+      setError(result?.message || t("account.profileError"));
       return;
     }
     setSuccess(true);
@@ -231,14 +235,14 @@ function ProfileTab() {
     <form className="lh-account__form" onSubmit={handleSubmit}>
       <div className="lh-auth-form__row">
         <label className="lh-field">
-          Họ và tên
+          {t("register.fullName")}
           <span className="lh-field__control">
             <Icon name="user" size={16} className="lh-field__icon" />
             <input type="text" value={form.full_name} onChange={update("full_name")} required />
           </span>
         </label>
         <label className="lh-field">
-          Tên đăng nhập
+          {t("register.username")}
           <span className="lh-field__control">
             <Icon name="lock" size={16} className="lh-field__icon" />
             <input type="text" value={user.username} disabled />
@@ -255,7 +259,7 @@ function ProfileTab() {
           </span>
         </label>
         <label className="lh-field">
-          Số điện thoại
+          {t("register.phone")}
           <span className="lh-field__control">
             <Icon name="phone" size={16} className="lh-field__icon" />
             <input type="tel" value={form.phone} onChange={update("phone")} placeholder="09xxxxxxxx" />
@@ -264,7 +268,7 @@ function ProfileTab() {
       </div>
 
       <label className="lh-field">
-        Địa chỉ
+        {t("account.address")}
         <span className="lh-field__control">
           <Icon name="map-pin" size={16} className="lh-field__icon" />
           <input type="text" value={form.address} onChange={update("address")} placeholder="—" />
@@ -272,10 +276,10 @@ function ProfileTab() {
       </label>
 
       {error && <p className="lh-auth-form__error">{error}</p>}
-      {success && <p className="lh-auth-form__success">Đã lưu thông tin.</p>}
+      {success && <p className="lh-auth-form__success">{t("account.profileSaved")}</p>}
 
       <button type="submit" className="lh-btn lh-btn--primary" style={{ alignSelf: "flex-start" }}>
-        Lưu thay đổi
+        {t("admin.save")}
       </button>
     </form>
   );
@@ -283,6 +287,7 @@ function ProfileTab() {
 
 function PasswordTab() {
   const { changePassword } = useAuth();
+  const { t } = useLanguage();
   const [form, setForm] = useState({ current: "", next: "", confirm: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -298,7 +303,7 @@ function PasswordTab() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (form.next !== form.confirm) {
-      setError("Mật khẩu mới nhập lại không khớp.");
+      setError(t("register.mismatch"));
       return;
     }
     try {
@@ -306,14 +311,14 @@ function PasswordTab() {
       setForm({ current: "", next: "", confirm: "" });
       setSuccess(true);
     } catch (err) {
-      setError(err.message || "Không thể đổi mật khẩu.");
+      setError(err.message || t("account.passwordError"));
     }
   }
 
   return (
     <form className="lh-account__form" onSubmit={handleSubmit}>
       <label className="lh-field">
-        Mật khẩu hiện tại
+        {t("account.currentPassword")}
         <span className="lh-field__control">
           <Icon name="lock" size={16} className="lh-field__icon" />
           <input type="password" value={form.current} onChange={update("current")} required />
@@ -321,14 +326,14 @@ function PasswordTab() {
       </label>
       <div className="lh-auth-form__row">
         <label className="lh-field">
-          Mật khẩu mới
+          {t("account.newPassword")}
           <span className="lh-field__control">
             <Icon name="lock" size={16} className="lh-field__icon" />
             <input type="password" value={form.next} onChange={update("next")} required />
           </span>
         </label>
         <label className="lh-field">
-          Nhập lại mật khẩu mới
+          {t("account.confirmPassword")}
           <span className="lh-field__control">
             <Icon name="lock" size={16} className="lh-field__icon" />
             <input type="password" value={form.confirm} onChange={update("confirm")} required />
@@ -337,23 +342,87 @@ function PasswordTab() {
       </div>
 
       {error && <p className="lh-auth-form__error">{error}</p>}
-      {success && <p className="lh-auth-form__success">Đổi mật khẩu thành công.</p>}
+      {success && <p className="lh-auth-form__success">{t("account.passwordSuccess")}</p>}
 
       <button type="submit" className="lh-btn lh-btn--primary" style={{ alignSelf: "flex-start" }}>
-        Đổi mật khẩu
+        {t("account.changePassword")}
       </button>
     </form>
   );
 }
 
+function SecurityTab() {
+  const { user, updateTwoFactor } = useAuth();
+  const { t } = useLanguage();
+  const enabled = Boolean(user.two_factor_enabled);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  async function toggleTwoFactor() {
+    setSaving(true);
+    setError("");
+    setSuccess("");
+    const nextEnabled = !enabled;
+    const result = await updateTwoFactor(nextEnabled);
+    if (!result?.ok) {
+      setError(result?.message || t("account.securityError"));
+    } else {
+      setSuccess(nextEnabled
+        ? t("account.twoFactorOn")
+        : t("account.twoFactorOff"));
+    }
+    setSaving(false);
+  }
+
+  return (
+    <div className="lh-security-card">
+      <div className="lh-security-card__head">
+        <span className="lh-security-card__icon">
+          <Icon name="lock" size={20} />
+        </span>
+        <div>
+          <h2>{t("account.twoFactor")}</h2>
+          <p>{t("account.twoFactorDescription")}</p>
+        </div>
+      </div>
+
+      <div className="lh-security-card__setting">
+        <div>
+          <strong>{enabled ? t("account.enabled") : t("account.disabled")}</strong>
+          <small>{user.email || t("account.noEmail")}</small>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={enabled}
+          aria-label={t("account.twoFactorLabel")}
+          className={`lh-security-switch ${enabled ? "is-active" : ""}`}
+          disabled={saving}
+          onClick={toggleTwoFactor}
+        >
+          <span />
+        </button>
+      </div>
+
+      <p className="lh-security-card__note">
+        {t("account.twoFactorNote")}
+      </p>
+      {error && <p className="lh-auth-form__error">{error}</p>}
+      {success && <p className="lh-auth-form__success">{success}</p>}
+    </div>
+  );
+}
+
 function TicketsTab({ tickets, loading, loadError }) {
+  const { t, translateLabel, formatDate } = useLanguage();
   const sorted = [...tickets].sort((a, b) => Number(b.ticketId) - Number(a.ticketId));
 
   if (loading) {
     return (
       <div className="lh-account__empty">
         <span className="lh-spinner" />
-        <p>Đang tải lịch sử mượn sách...</p>
+        <p>{t("account.loadingLoans")}</p>
       </div>
     );
   }
@@ -366,7 +435,7 @@ function TicketsTab({ tickets, loading, loadError }) {
     return (
       <div className="lh-account__empty">
         <Icon name="layers" size={26} />
-        <p>Bạn chưa mượn cuốn sách nào.</p>
+        <p>{t("account.noLoans")}</p>
       </div>
     );
   }
@@ -377,11 +446,11 @@ function TicketsTab({ tickets, loading, loadError }) {
         <table className="lh-admin-table">
           <thead>
             <tr>
-              <th>Mã phiếu</th>
-              <th>Sách</th>
-              <th>Ngày mượn</th>
-              <th>Hạn trả</th>
-              <th>Trạng thái</th>
+              <th>{t("account.ticketId")}</th>
+              <th>{t("account.book")}</th>
+              <th>{t("account.borrowDate")}</th>
+              <th>{t("account.dueDate")}</th>
+              <th>{t("account.status")}</th>
             </tr>
           </thead>
           <tbody>
@@ -407,7 +476,7 @@ function TicketsTab({ tickets, loading, loadError }) {
                   <td>{formatDate(t.borrowDate)}</td>
                   <td>{formatDate(t.dueDate)}</td>
                   <td>
-                    <Badge tone={s.tone}>{s.text}</Badge>
+                    <Badge tone={s.tone}>{translateLabel(s.text)}</Badge>
                   </td>
                 </tr>
               );
@@ -420,6 +489,7 @@ function TicketsTab({ tickets, loading, loadError }) {
 }
 
 function FinesTab({ fines, loading, loadError }) {
+  const { t, formatCurrency, formatDate } = useLanguage();
   const [payingId, setPayingId] = useState(null);
   const [paymentError, setPaymentError] = useState("");
   const sorted = [...fines].sort((a, b) => (b.fineId || 0) - (a.fineId || 0));
@@ -445,7 +515,7 @@ function FinesTab({ fines, loading, loadError }) {
     return (
       <div className="lh-account__empty">
         <span className="lh-spinner" />
-        <p>Đang tải khoản phạt...</p>
+        <p>{t("account.loadingFines")}</p>
       </div>
     );
   }
@@ -458,7 +528,7 @@ function FinesTab({ fines, loading, loadError }) {
     return (
       <div className="lh-account__empty">
         <Icon name="check-circle" size={26} />
-        <p>Bạn không có khoản phạt nào.</p>
+        <p>{t("account.noFines")}</p>
       </div>
     );
   }
@@ -471,7 +541,7 @@ function FinesTab({ fines, loading, loadError }) {
     <>
       {totalUnpaid > 0 && (
         <p className="lh-auth-form__error" style={{ marginBottom: 16 }}>
-          Tổng còn nợ: <strong>{totalUnpaid.toLocaleString("vi-VN")}đ</strong>
+          {t("account.totalDue", { amount: formatCurrency(totalUnpaid) })}
         </p>
       )}
       {paymentError && <p className="lh-auth-form__error">{paymentError}</p>}
@@ -480,11 +550,11 @@ function FinesTab({ fines, loading, loadError }) {
           <table className="lh-admin-table">
             <thead>
               <tr>
-                <th>Mã phạt</th>
-                <th>Lý do</th>
-                <th>Ngày tạo</th>
-                <th>Số tiền</th>
-                <th>Trạng thái</th>
+                <th>{t("account.fineId")}</th>
+                <th>{t("account.reason")}</th>
+                <th>{t("account.createdAt")}</th>
+                <th>{t("account.amount")}</th>
+                <th>{t("account.status")}</th>
                 <th />
               </tr>
             </thead>
@@ -494,12 +564,12 @@ function FinesTab({ fines, loading, loadError }) {
                 return (
                   <tr key={fine.fineId}>
                     <td>#{fine.fineId}</td>
-                    <td>{fine.reason || "Phí thư viện"}</td>
-                    <td>{fine.createdAt ? String(fine.createdAt).slice(0, 10) : "—"}</td>
-                    <td>{Number(fine.amount || 0).toLocaleString("vi-VN")}đ</td>
+                    <td>{fine.reason || t("account.libraryFee")}</td>
+                    <td>{formatDate(fine.createdAt)}</td>
+                    <td>{formatCurrency(fine.amount)}</td>
                     <td>
                       <Badge tone={isPaid ? "success" : "danger"}>
-                        {isPaid ? "Đã thanh toán" : "Chưa thanh toán"}
+                        {isPaid ? t("account.paid") : t("account.unpaid")}
                       </Badge>
                     </td>
                     <td>
@@ -510,7 +580,7 @@ function FinesTab({ fines, loading, loadError }) {
                           disabled={payingId === fine.fineId}
                           onClick={() => pay(fine)}
                         >
-                          {payingId === fine.fineId ? "Đang chuyển..." : "Thanh toán"}
+                          {payingId === fine.fineId ? t("account.redirecting") : t("account.pay")}
                         </button>
                       )}
                     </td>

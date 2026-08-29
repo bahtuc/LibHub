@@ -69,3 +69,19 @@ frontend/build/
 
 # Junie (AI assistant)
 .junie/
+
+# Codex and local AI agent workspaces
+.codex/
+.agents/
+.aia/
+
+# Frontend caches and test output
+.vite/
+coverage/
+.nyc_output/
+*.tsbuildinfo
+
+# JVM crash and diagnostic files
+hs_err_pid*
+replay_pid*
+.attach_pid*

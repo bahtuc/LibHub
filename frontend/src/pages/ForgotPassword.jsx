@@ -9,6 +9,7 @@ import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "./AuthLayout";
 import Icon from "../components/Icon";
 import { useAuth } from "../auth/useAuth";
+import { useLanguage } from "../i18n/LanguageContext";
 import "../styles/AuthForm.css";
 
 const STEP_REQUEST = "request";
@@ -18,6 +19,7 @@ const STEP_RESET = "reset";
 export default function ForgotPassword() {
   const { requestPasswordReset, verifyOtp, resetPassword } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [step, setStep] = useState(STEP_REQUEST);
   const [username, setUsername] = useState("");
@@ -66,11 +68,11 @@ export default function ForgotPassword() {
     setError("");
 
     if (passwords.password.length < 6) {
-      setError("Mật khẩu cần tối thiểu 6 ký tự.");
+      setError(t("forgot.tooShort"));
       return;
     }
     if (passwords.password !== passwords.confirm) {
-      setError("Mật khẩu nhập lại không khớp.");
+      setError(t("register.mismatch"));
       return;
     }
 
@@ -84,16 +86,16 @@ export default function ForgotPassword() {
 
   const titles = {
     [STEP_REQUEST]: {
-      title: "Quên mật khẩu",
-      subtitle: "Nhập tên đăng nhập, mình sẽ gửi mã OTP 6 số để xác nhận.",
+      title: t("forgot.requestTitle"),
+      subtitle: t("forgot.requestSubtitle"),
     },
     [STEP_OTP]: {
-      title: "Nhập mã OTP",
-      subtitle: `Mã OTP 6 số đã "gửi" cho tài khoản ${username}.`,
+      title: t("forgot.otpTitle"),
+      subtitle: t("forgot.otpSubtitle", { username }),
     },
     [STEP_RESET]: {
-      title: "Đặt mật khẩu mới",
-      subtitle: "Xác thực thành công, nhập mật khẩu mới cho tài khoản của bạn.",
+      title: t("forgot.resetTitle"),
+      subtitle: t("forgot.resetSubtitle"),
     },
   };
 
@@ -109,14 +111,14 @@ export default function ForgotPassword() {
         {step === STEP_REQUEST && (
           <form onSubmit={handleRequest} noValidate>
             <label className="lh-field">
-              Tên đăng nhập hoặc email
+              {t("forgot.identity")}
               <span className="lh-field__control">
                 <Icon name="user" size={17} className="lh-field__icon" />
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="vd: admin hoặc admin@libhub.vn"
+                  placeholder={t("forgot.identityPlaceholder")}
                   autoComplete="username"
                   required
                 />
@@ -126,7 +128,7 @@ export default function ForgotPassword() {
             {error && <p className="lh-auth-form__error">{error}</p>}
 
             <button type="submit" className="lh-btn lh-btn--primary lh-auth-form__submit">
-              Gửi mã OTP
+              {t("forgot.send")}
             </button>
           </form>
         )}
@@ -135,12 +137,12 @@ export default function ForgotPassword() {
           <form onSubmit={handleVerify} noValidate>
             {devCode && (
               <p className="lh-auth-form__success">
-                Demo (chưa nối email/SMS): mã OTP của bạn là <strong>{devCode}</strong>
+                {t("forgot.demoCode")} <strong>{devCode}</strong>
               </p>
             )}
 
             <label className="lh-field">
-              Mã OTP (6 số)
+              {t("forgot.otp")}
               <input
                 type="text"
                 inputMode="numeric"
@@ -160,11 +162,11 @@ export default function ForgotPassword() {
               className="lh-btn lh-btn--primary lh-auth-form__submit"
               disabled={otp.length !== 6}
             >
-              Xác nhận mã OTP
+              {t("forgot.verify")}
             </button>
 
             <button type="button" className="lh-auth-form__linklike" onClick={handleResend}>
-              Gửi lại mã
+              {t("forgot.resend")}
             </button>
           </form>
         )}
@@ -172,7 +174,7 @@ export default function ForgotPassword() {
         {step === STEP_RESET && (
           <form onSubmit={handleReset} noValidate>
             <label className="lh-field">
-              Mật khẩu mới
+              {t("forgot.newPassword")}
               <span className="lh-field__control">
                 <Icon name="lock" size={17} className="lh-field__icon" />
                 <input
@@ -186,7 +188,7 @@ export default function ForgotPassword() {
               </span>
             </label>
             <label className="lh-field">
-              Xác nhận mật khẩu mới
+              {t("forgot.confirmPassword")}
               <span className="lh-field__control">
                 <Icon name="lock" size={17} className="lh-field__icon" />
                 <input
@@ -203,13 +205,13 @@ export default function ForgotPassword() {
             {error && <p className="lh-auth-form__error">{error}</p>}
 
             <button type="submit" className="lh-btn lh-btn--primary lh-auth-form__submit">
-              Đổi mật khẩu
+              {t("forgot.change")}
             </button>
           </form>
         )}
 
         <p className="lh-auth-form__switch-line">
-          <Link to="/login">← Quay lại đăng nhập</Link>
+          <Link to="/login">← {t("forgot.back")}</Link>
         </p>
       </div>
     </AuthLayout>

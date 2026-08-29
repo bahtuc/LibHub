@@ -60,6 +60,10 @@
 .lh-admin-action > span { width: 42px; height: 42px; display: grid; place-items: center; border-radius: var(--lh-radius-sm); color: white; background: var(--lh-primary); }
 .lh-admin-action strong, .lh-admin-action small { display: block; }.lh-admin-action small { margin-top: 4px; color: var(--lh-text-muted); line-height: 1.35; }
 .lh-statistics-rankings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }.lh-statistics-rankings__title { padding: 14px 16px; font-weight: 700; }
+.lh-statistics-financial { display: grid; grid-template-columns: minmax(320px, .85fr) minmax(520px, 1.15fr); gap: 16px; }
+.lh-statistics-money { font-family: var(--lh-font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right !important; }
+.lh-statistics-total td { color: var(--lh-ink) !important; font-weight: 750 !important; background: color-mix(in srgb, var(--lh-gold) 9%, white); }
+@media (max-width: 1100px) { .lh-statistics-financial { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .lh-admin-actions, .lh-statistics-rankings { grid-template-columns: 1fr; } .lh-admin__nav-section { display: flex; } .lh-admin__nav-section .lh-admin__nav-label { display: none; } }
 
 .lh-admin__nav a {
@@ -403,6 +407,31 @@
   overflow-x: auto;
 }
 
+.lh-admin-table-pagination {
+  padding: 14px 18px 16px;
+  border-top: 1px solid var(--lh-border);
+  background: var(--lh-paper-soft);
+}
+
+.lh-admin-table-pagination__summary {
+  margin: 0 0 12px;
+  color: var(--lh-text-muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.lh-admin-table-pagination .lh-pagination {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+@media (max-width: 640px) {
+  .lh-admin-table-pagination {
+    padding-inline: 10px;
+  }
+}
+
 .lh-admin-table {
   width: 100%;
   border-collapse: collapse;
@@ -669,4 +698,9 @@
   .lh-admin__content {
     padding: 22px 18px 40px;
   }
+}
+.lh-language--sidebar {
+  align-self: flex-start;
+  margin-bottom: 12px;
+  background: rgba(255, 255, 255, 0.92);
 }

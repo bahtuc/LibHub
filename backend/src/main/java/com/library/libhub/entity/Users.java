@@ -49,6 +49,9 @@ public class Users {
     @Column(name = "status")
     private String status;
 
+    @Column(name = "two_factor_enabled", nullable = false)
+    private Boolean twoFactorEnabled = false;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
     private Roles role;
@@ -131,6 +134,14 @@ public class Users {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public boolean isTwoFactorEnabled() {
+        return Boolean.TRUE.equals(twoFactorEnabled);
+    }
+
+    public void setTwoFactorEnabled(Boolean twoFactorEnabled) {
+        this.twoFactorEnabled = Boolean.TRUE.equals(twoFactorEnabled);
     }
 
     public Roles getRole() {

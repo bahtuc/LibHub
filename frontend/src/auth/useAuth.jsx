@@ -14,6 +14,9 @@ function normaliseUser(user) {
     full_name: user.fullName ?? user.full_name,
     role_name: user.role ?? user.role_name,
     member_since: (user.memberSince ?? user.member_since)?.slice?.(0, 10),
+    two_factor_enabled: Boolean(
+      user.twoFactorEnabled ?? user.two_factor_enabled,
+    ),
   };
 }
 
@@ -99,6 +102,21 @@ export function AuthProvider({ children }) {
     });
   }
 
+  async function updateTwoFactor(enabled) {
+    if (!user) {
+      return { ok: false, message: "Chưa đăng nhập" };
+    }
+    try {
+      const updatedUser = normaliseUser(
+        await authService.updateTwoFactor(Boolean(enabled)),
+      );
+      setUser(updatedUser);
+      return { ok: true, user: updatedUser };
+    } catch (error) {
+      return { ok: false, message: error.message };
+    }
+  }
+
   // Password recovery still has no corresponding backend flow.
   const unavailable = () => ({
     ok: false,
@@ -116,6 +134,7 @@ export function AuthProvider({ children }) {
         logout,
         updateProfile,
         changePassword,
+        updateTwoFactor,
         requestPasswordReset: unavailable,
         verifyOtp: unavailable,
         resetPassword: unavailable,

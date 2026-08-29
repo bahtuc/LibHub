@@ -23,9 +23,6 @@ export default function AdminBooks() {
     value: p.publisher_id,
     label: p.publisher_name,
   }));
-  const books = booksStore.useCollection();
-  console.log("Books:", books);
-
   return (
     <AdminCrudPage
       title="Kho sách"

@@ -2,9 +2,11 @@
 import Icon from "../components/Icon";
 import { Link } from "react-router-dom";
 import { booksStore, categoriesStore, authorsStore, copiesStore, usersStore } from "../data/adminStore";
+import { useLanguage } from "../i18n/LanguageContext";
 import "./admin.css";
 
 export default function AdminDashboard() {
+  const { translateLabel } = useLanguage();
   const bookList = booksStore.useCollection();
   const categoryList = categoriesStore.useCollection();
   const authorList = authorsStore.useCollection();
@@ -34,9 +36,9 @@ export default function AdminDashboard() {
     <div className="lh-admin-page">
       <div className="lh-admin-page__head">
         <div>
-          <h1 className="lh-admin-page__title">Tổng quan</h1>
+          <h1 className="lh-admin-page__title">{translateLabel("Tổng quan")}</h1>
           <p className="lh-admin-page__subtitle">
-            Số liệu nhanh từ dữ liệu hiện có trong hệ thống (đã tính cả thay đổi bạn thêm/sửa).
+            {translateLabel("Số liệu nhanh từ dữ liệu hiện có trong hệ thống (đã tính cả thay đổi bạn thêm/sửa).")}
           </p>
         </div>
       </div>
@@ -48,18 +50,18 @@ export default function AdminDashboard() {
               <Icon name={s.icon} size={18} />
             </span>
             <span className="lh-admin-stat-card__value">{s.value}</span>
-            <span className="lh-admin-stat-card__label">{s.label}</span>
+            <span className="lh-admin-stat-card__label">{translateLabel(s.label)}</span>
           </div>
         ))}
       </div>
 
       <section className="lh-dashboard-section">
-        <div className="lh-dashboard-section__head"><div><h2>Nghiệp vụ thủ thư</h2><p>Admin có đầy đủ quyền vận hành quầy mượn trả.</p></div><Link className="lh-btn lh-btn--ghost" to="/admin/statistics">Xem thống kê <Icon name="arrow" size={14}/></Link></div>
-        <div className="lh-admin-actions">{librarianActions.map((action) => <Link to={action.to} className="lh-admin-action" key={action.to}><span><Icon name={action.icon} size={20}/></span><div><strong>{action.title}</strong><small>{action.text}</small></div><Icon name="arrow" size={16}/></Link>)}</div>
+        <div className="lh-dashboard-section__head"><div><h2>{translateLabel("Nghiệp vụ thủ thư")}</h2><p>{translateLabel("Admin có đầy đủ quyền vận hành quầy mượn trả.")}</p></div><Link className="lh-btn lh-btn--ghost" to="/admin/statistics">{translateLabel("Xem thống kê")} <Icon name="arrow" size={14}/></Link></div>
+        <div className="lh-admin-actions">{librarianActions.map((action) => <Link to={action.to} className="lh-admin-action" key={action.to}><span><Icon name={action.icon} size={20}/></span><div><strong>{translateLabel(action.title)}</strong><small>{translateLabel(action.text)}</small></div><Icon name="arrow" size={16}/></Link>)}</div>
       </section>
 
       <p style={{ color: "var(--lh-text-muted)", fontSize: "0.88rem" }}>
-        Dùng menu bên trái để truy cập nghiệp vụ thủ thư, quản trị dữ liệu và báo cáo thống kê.
+        {translateLabel("Dùng menu bên trái để truy cập nghiệp vụ thủ thư, quản trị dữ liệu và báo cáo thống kê.")}
       </p>
     </div>
   );

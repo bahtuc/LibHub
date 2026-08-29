@@ -68,6 +68,7 @@ public class LoginInterceptor implements HandlerInterceptor {
     private boolean isSelfServicePath(String path) {
         return path.equals("/api/auth/me") || path.equals("/api/auth/logout")
                 || path.equals("/api/auth/profile") || path.equals("/api/auth/change-password")
+                || path.equals("/api/auth/two-factor")
                 || path.equals("/api/borrow-tickets/history")
                 || path.equals("/api/borrow-tickets/history/details")
                 || path.equals("/api/borrow-tickets/borrow")

@@ -2,6 +2,8 @@
 import { NavLink, Outlet, Link } from "react-router-dom";
 import Icon from "../components/Icon";
 import { useAuth } from "../auth/useAuth";
+import LanguageToggle from "../components/LanguageToggle";
+import { useLanguage } from "../i18n/LanguageContext";
 import "./admin.css";
 
 const NAV_SECTIONS = [
@@ -28,6 +30,7 @@ const NAV_SECTIONS = [
 
 export default function AdminLayout() {
   const { user, logout } = useAuth();
+  const { t, translateLabel } = useLanguage();
 
   return (
     <div className="lh-admin lh-root">
@@ -35,20 +38,21 @@ export default function AdminLayout() {
         <div className="lh-admin__brand">
           <Icon name="book-open" size={20} />
           <span>
-            Lib<strong>Hub</strong> Admin
+            Lib<strong>Hub</strong> {t("admin.brand")}
           </span>
         </div>
 
         <nav className="lh-admin__nav">
           {NAV_SECTIONS.map((section) => <div className="lh-admin__nav-section" key={section.label}>
-            <p className="lh-admin__nav-label">{section.label}</p>
+            <p className="lh-admin__nav-label">{translateLabel(section.label)}</p>
             {section.items.map((item) => <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => (isActive ? "is-active" : "")}>
-              <Icon name={item.icon} size={17} />{item.label}
+              <Icon name={item.icon} size={17} />{translateLabel(item.label)}
             </NavLink>)}
           </div>)}
         </nav>
 
         <div className="lh-admin__sidebar-foot">
+          <LanguageToggle className="lh-language--sidebar" />
           <div className="lh-admin__whoami">
             <span className="lh-admin__whoami-avatar">{user?.full_name?.charAt(0)}</span>
             <span>
@@ -59,10 +63,10 @@ export default function AdminLayout() {
           </div>
           <div className="lh-admin__sidebar-foot-links">
             <Link to="/">
-              <Icon name="arrow" size={14} style={{ transform: "rotate(180deg)" }} /> Về trang chủ
+              <Icon name="arrow" size={14} style={{ transform: "rotate(180deg)" }} /> {t("admin.home")}
             </Link>
             <button onClick={logout}>
-              <Icon name="lock" size={14} /> Đăng xuất
+              <Icon name="lock" size={14} /> {t("nav.logout")}
             </button>
           </div>
         </div>

@@ -77,6 +77,7 @@ class AuthServiceImplTest {
         assertEquals("Ho Chi Minh City", response.getAddress());
         assertEquals("Member", response.getRole());
         assertEquals(user.getCreatedAt(), response.getMemberSince());
+        assertEquals(false, response.isTwoFactorEnabled());
     }
 
     @Test
@@ -129,6 +130,28 @@ class AuthServiceImplTest {
 
         assertThrows(IllegalArgumentException.class,
                 () -> authService.changePassword(7L, request));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void updateTwoFactorPersistsUserPreference() {
+        when(userRepository.findById(7L)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+
+        AuthResponse response = authService.updateTwoFactor(7L, true);
+
+        assertEquals(true, response.isTwoFactorEnabled());
+        assertEquals(true, user.isTwoFactorEnabled());
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void enablingTwoFactorRequiresEmail() {
+        user.setEmail(null);
+        when(userRepository.findById(7L)).thenReturn(Optional.of(user));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> authService.updateTwoFactor(7L, true));
         verify(userRepository, never()).save(any());
     }
 }

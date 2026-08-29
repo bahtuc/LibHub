@@ -4,6 +4,8 @@
 import { NavLink, Outlet, Link } from "react-router-dom";
 import Icon from "../components/Icon";
 import { useAuth } from "../auth/useAuth";
+import LanguageToggle from "../components/LanguageToggle";
+import { useLanguage } from "../i18n/LanguageContext";
 import "../admin/admin.css";
 
 const NAV = [
@@ -16,6 +18,7 @@ const NAV = [
 
 export default function LibrarianLayout() {
   const { user, logout } = useAuth();
+  const { t, translateLabel } = useLanguage();
 
   return (
     <div className="lh-admin lh-root">
@@ -23,11 +26,11 @@ export default function LibrarianLayout() {
         <div className="lh-admin__brand">
           <Icon name="book-open" size={20} />
           <span>
-            Lib<strong>Hub</strong> Thủ thư
+            Lib<strong>Hub</strong> {t("admin.librarian")}
           </span>
         </div>
 
-        <p className="lh-admin__nav-label">Nghiệp vụ</p>
+        <p className="lh-admin__nav-label">{t("admin.operations")}</p>
 
         <nav className="lh-admin__nav">
           {NAV.map((item) => (
@@ -38,12 +41,13 @@ export default function LibrarianLayout() {
               className={({ isActive }) => (isActive ? "is-active" : "")}
             >
               <Icon name={item.icon} size={17} />
-              {item.label}
+              {translateLabel(item.label)}
             </NavLink>
           ))}
         </nav>
 
         <div className="lh-admin__sidebar-foot">
+          <LanguageToggle className="lh-language--sidebar" />
           <div className="lh-admin__whoami">
             <span className="lh-admin__whoami-avatar">{user?.full_name?.charAt(0)}</span>
             <span>
@@ -54,10 +58,10 @@ export default function LibrarianLayout() {
           </div>
           <div className="lh-admin__sidebar-foot-links">
             <Link to="/">
-              <Icon name="arrow" size={14} style={{ transform: "rotate(180deg)" }} /> Về trang chủ
+              <Icon name="arrow" size={14} style={{ transform: "rotate(180deg)" }} /> {t("admin.home")}
             </Link>
             <button onClick={logout}>
-              <Icon name="lock" size={14} /> Đăng xuất
+              <Icon name="lock" size={14} /> {t("nav.logout")}
             </button>
           </div>
         </div>

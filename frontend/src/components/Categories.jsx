@@ -6,7 +6,7 @@ import "../styles/Categories.css";
 
 export default function Categories() {
   const { categories, books } = useCatalog();
-  const { t } = useLanguage();
+  const { t, translateCategory } = useLanguage();
   return (
     <section className="lh-section lh-section--soft" id="categories">
       <div className="lh-container">
@@ -20,7 +20,7 @@ export default function Categories() {
             return (
               <Link to={`/genres/${category.category_id}`} className="lh-cat__card" key={category.category_id}>
                 <span className="lh-cat__index">{String(index + 1).padStart(2, "0")}</span>
-                <span className="lh-cat__name">{category.category_name}</span>
+                <span className="lh-cat__name">{translateCategory(category.category_name)}</span>
                 <span className="lh-cat__count">{t("categories.bookCount", { count })}</span>
                 <Icon name="arrow" size={17} className="lh-cat__arrow" />
               </Link>

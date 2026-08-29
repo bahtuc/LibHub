@@ -187,6 +187,101 @@
   cursor: not-allowed;
 }
 
+.lh-security-card {
+  display: grid;
+  gap: 20px;
+  max-width: 620px;
+  padding: 26px;
+  border: 1px solid var(--lh-border);
+  border-radius: var(--lh-radius-lg);
+  background: #fff;
+  box-shadow: var(--lh-shadow-sm);
+}
+
+.lh-security-card__head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.lh-security-card__icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--lh-ink);
+  background: var(--lh-paper-soft);
+}
+
+.lh-security-card h2 {
+  margin: 0;
+  color: var(--lh-ink);
+  font-family: var(--lh-font-display);
+  font-size: 1.35rem;
+}
+
+.lh-security-card__head p,
+.lh-security-card__note {
+  margin: 6px 0 0;
+  color: var(--lh-text-muted);
+  font-size: .82rem;
+  line-height: 1.55;
+}
+
+.lh-security-card__setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px;
+  border: 1px solid var(--lh-border);
+  border-radius: 13px;
+  background: var(--lh-paper);
+}
+
+.lh-security-card__setting strong,
+.lh-security-card__setting small {
+  display: block;
+}
+
+.lh-security-card__setting small {
+  margin-top: 3px;
+  color: var(--lh-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.lh-security-switch {
+  position: relative;
+  width: 52px;
+  height: 30px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #b9b7af;
+  cursor: pointer;
+  transition: background .18s ease;
+}
+
+.lh-security-switch span {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,.2);
+  transition: transform .18s ease;
+}
+
+.lh-security-switch.is-active { background: var(--lh-forest); }
+.lh-security-switch.is-active span { transform: translateX(22px); }
+.lh-security-switch:focus-visible { outline: 3px solid rgba(185,131,42,.35); outline-offset: 3px; }
+.lh-security-switch:disabled { opacity: .55; cursor: wait; }
+
 .lh-account__empty {
   display: flex;
   flex-direction: column;

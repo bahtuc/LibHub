@@ -13,6 +13,8 @@ export default function LanguageToggle({ className = "" }) {
           key={value}
           className={language === value ? "is-active" : ""}
           aria-pressed={language === value}
+          aria-label={t(`language.${value}`)}
+          title={t(`language.${value}`)}
           onClick={() => setLanguage(value)}
         >
           {label}

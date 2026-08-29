@@ -4,8 +4,10 @@
 // Người dùng — mỗi trang cụ thể chỉ cần khai báo columns + fields, không phải
 // viết lại bảng/form từ đầu.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Icon from "../components/Icon";
+import Pagination from "../components/Pagination";
+import { useLanguage } from "../i18n/LanguageContext";
 import "./admin.css";
 
 export default function AdminCrudPage({
@@ -21,8 +23,11 @@ export default function AdminCrudPage({
   rowActions, // (item) => JSX, render thêm nút riêng trước nút Sửa/Xóa
   headerActions,
   hideAdd = false,
+  pageSize = 10,
 }) {
+  const { t, translateLabel } = useLanguage();
   const items = store.useCollection();
+  const [currentPage, setCurrentPage] = useState(1);
   const [editing, setEditing] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -32,6 +37,13 @@ export default function AdminCrudPage({
     (!field.createOnly || isNew)
     && (!field.editOnly || !isNew)
     && (!field.when || editing == null || field.when(editing, isNew)));
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const pageStart = (currentPage - 1) * pageSize;
+  const paginatedItems = items.slice(pageStart, pageStart + pageSize);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
   function openAdd() {
     setEditing({ ...emptyItem });
@@ -61,7 +73,7 @@ export default function AdminCrudPage({
       }
       setEditing(null);
     } catch (err) {
-      setError(err.message || "Không thể lưu dữ liệu.");
+      setError(err.message || t("admin.saveError"));
     } finally {
       setSaving(false);
     }
@@ -73,7 +85,7 @@ export default function AdminCrudPage({
       await store.remove(id);
       setConfirmId(null);
     } catch (err) {
-      setError(err.message || "Không thể xóa dữ liệu.");
+      setError(err.message || t("admin.deleteError"));
     } finally {
       setSaving(false);
     }
@@ -83,14 +95,14 @@ export default function AdminCrudPage({
     <div className="lh-admin-page">
       <div className="lh-admin-page__head">
         <div>
-          <h1 className="lh-admin-page__title">{title}</h1>
-          {subtitle && <p className="lh-admin-page__subtitle">{subtitle}</p>}
+          <h1 className="lh-admin-page__title">{translateLabel(title)}</h1>
+          {subtitle && <p className="lh-admin-page__subtitle">{translateLabel(subtitle)}</p>}
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "flex-start", flexWrap: "wrap", justifyContent: "flex-end" }}>
           {headerActions}
           {!hideAdd && (
             <button className="lh-btn lh-btn--primary" onClick={openAdd}>
-              <Icon name="plus" size={16} /> Thêm mới
+              <Icon name="plus" size={16} /> {t("admin.add")}
             </button>
           )}
         </div>
@@ -100,13 +112,13 @@ export default function AdminCrudPage({
         <form className="lh-admin-form" onSubmit={handleSubmit}>
           <h2 className="lh-admin-form__heading">
             <Icon name={isNew ? "plus" : "edit"} size={18} />
-            {isNew ? `Thêm mới — ${title}` : `Chỉnh sửa — ${title}`}
+            {isNew ? t("admin.addTitle", { title: translateLabel(title) }) : t("admin.edit", { title: translateLabel(title) })}
           </h2>
 
           <div className="lh-admin-form__grid">
             {visibleFields.map((f) => (
               <label key={f.name} className="lh-field lh-admin-form__field">
-                {f.label}
+                {translateLabel(f.label)}
 
                 {f.type === "select" ? (
                   <select
@@ -117,11 +129,11 @@ export default function AdminCrudPage({
                     required={f.required}
                   >
                     <option value="" disabled>
-                      Chọn…
+                      {t("admin.choose")}
                     </option>
                     {f.options.map((o) => (
                       <option key={o.value} value={o.value}>
-                        {o.label}
+                        {translateLabel(o.label)}
                       </option>
                     ))}
                   </select>
@@ -156,7 +168,7 @@ export default function AdminCrudPage({
                   <span className="lh-admin-form__image-preview">
                     <img
                       src={editing[f.name]}
-                      alt="Xem trước ảnh bìa"
+                      alt={t("admin.coverPreview")}
                       onLoad={(event) => {
                         event.currentTarget.style.display = "block";
                         event.currentTarget.nextElementSibling.style.display = "none";
@@ -166,7 +178,7 @@ export default function AdminCrudPage({
                         event.currentTarget.nextElementSibling.style.display = "block";
                       }}
                     />
-                    <small>Không tải được ảnh. Hãy kiểm tra lại đường dẫn URL.</small>
+                    <small>{t("admin.coverError")}</small>
                   </span>
                 )}
               </label>
@@ -175,10 +187,10 @@ export default function AdminCrudPage({
 
           <div className="lh-admin-form__actions">
             <button type="submit" className="lh-btn lh-btn--primary" disabled={saving}>
-              {saving ? "Đang lưu…" : isNew ? "Thêm" : "Lưu thay đổi"}
+              {saving ? t("admin.saving") : isNew ? t("admin.add") : t("admin.save")}
             </button>
             <button type="button" className="lh-btn lh-btn--ghost" onClick={closeForm}>
-              Hủy
+              {t("admin.cancel")}
             </button>
           </div>
         </form>
@@ -192,13 +204,13 @@ export default function AdminCrudPage({
           <thead>
             <tr>
               {columns.map((c) => (
-                <th key={c.key}>{c.label}</th>
+                <th key={c.key}>{translateLabel(c.label)}</th>
               ))}
-              <th className="lh-admin-table__actions-head">Thao tác</th>
+              <th className="lh-admin-table__actions-head">{t("admin.actions")}</th>
             </tr>
           </thead>
           <tbody>
-            {items.map((item) => {
+            {paginatedItems.map((item) => {
               const deletable = canDelete ? canDelete(item) : true;
               return (
                 <tr key={item[idField]}>
@@ -209,7 +221,7 @@ export default function AdminCrudPage({
                     {rowActions && rowActions(item)}
                     <button
                       className="lh-admin-icon-btn"
-                      aria-label="Sửa"
+                      aria-label={t("admin.editAction")}
                       onClick={() => openEdit(item)}
                     >
                       <Icon name="edit" size={16} />
@@ -222,7 +234,7 @@ export default function AdminCrudPage({
                             className="lh-admin-confirm__yes"
                             onClick={() => handleDelete(item[idField])}
                           >
-                            Xóa?
+                            {t("admin.deleteConfirm")}
                           </button>
                           <button className="lh-admin-confirm__no" onClick={() => setConfirmId(null)}>
                             <Icon name="x" size={14} />
@@ -231,9 +243,9 @@ export default function AdminCrudPage({
                       ) : (
                         <button
                           className="lh-admin-icon-btn lh-admin-icon-btn--danger"
-                          aria-label="Xóa"
+                          aria-label={t("admin.deleteAction")}
                           disabled={!deletable}
-                          title={!deletable ? "Không thể xóa mục này" : undefined}
+                          title={!deletable ? t("admin.cannotDelete") : undefined}
                           onClick={() => setConfirmId(item[idField])}
                         >
                           <Icon name="trash" size={16} />
@@ -246,13 +258,26 @@ export default function AdminCrudPage({
             {items.length === 0 && (
               <tr>
                 <td colSpan={columns.length + 1} className="lh-admin-table__empty">
-                  Chưa có dữ liệu.
+                  {t("admin.empty")}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
         </div>
+        {items.length > 0 && (
+          <div className="lh-admin-table-pagination">
+            <p className="lh-admin-table-pagination__summary">
+              {t("admin.summary", { from: pageStart + 1, to: Math.min(pageStart + pageSize, items.length), count: items.length })}
+            </p>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              label={`${t("pagination.label")} ${translateLabel(title)}`}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

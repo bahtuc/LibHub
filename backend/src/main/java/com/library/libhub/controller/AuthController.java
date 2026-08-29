@@ -13,6 +13,7 @@ import com.library.libhub.DTO.Request.LoginRequest;
 import com.library.libhub.DTO.Request.RegisterRequest;
 import com.library.libhub.DTO.Request.UpdateProfileRequest;
 import com.library.libhub.DTO.Request.VerifyOtpRequest;
+import com.library.libhub.DTO.Request.UpdateTwoFactorRequest;
 import com.library.libhub.DTO.Response.AuthResponse;
 import com.library.libhub.DTO.Response.LoginStartResponse;
 import com.library.libhub.entity.Users;
@@ -46,7 +47,7 @@ public class AuthController {
             HttpSession session,
             HttpServletRequest servletRequest) {
         Users user = authService.authenticate(request);
-        if (twoFactorService.isEnabled()) {
+        if (twoFactorService.isEnabled() && user.isTwoFactorEnabled()) {
             return ResponseEntity.ok(twoFactorService.beginChallenge(user, session));
         }
 
@@ -109,6 +110,21 @@ public class AuthController {
         }
         return ResponseEntity.ok(
                 authService.changePassword(currentUser.getUserId(), request));
+    }
+
+    @PutMapping("/two-factor")
+    public ResponseEntity<?> updateTwoFactor(
+            @RequestBody UpdateTwoFactorRequest request,
+            HttpSession session) {
+        Users currentUser = getSessionUser(session);
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body("Chưa đăng nhập");
+        }
+        AuthResponse response = authService.updateTwoFactor(
+                currentUser.getUserId(), request == null ? null : request.getEnabled());
+        currentUser.setTwoFactorEnabled(response.isTwoFactorEnabled());
+        session.setAttribute("USER_LOGIN", currentUser);
+        return ResponseEntity.ok(response);
     }
 
     private Users getSessionUser(HttpSession session) {

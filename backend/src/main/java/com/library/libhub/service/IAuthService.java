@@ -17,4 +17,5 @@ public interface IAuthService {
     AuthResponse getProfile(long userId);
     AuthResponse updateProfile(long userId, UpdateProfileRequest request);
     AuthResponse changePassword(long userId, ChangePasswordRequest request);
+    AuthResponse updateTwoFactor(long userId, Boolean enabled);
 }

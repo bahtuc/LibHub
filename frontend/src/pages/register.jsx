@@ -3,11 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "./AuthLayout";
 import Icon from "../components/Icon";
 import { useAuth } from "../auth/useAuth";
+import { useLanguage } from "../i18n/LanguageContext";
 import "../styles/AuthForm.css";
 
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     full_name: "",
     username: "",
@@ -20,7 +22,7 @@ export default function Register() {
 
   async function submit(event) {
     event.preventDefault();
-    if (form.password !== form.confirm) return setError("Mật khẩu nhập lại không khớp.");
+    if (form.password !== form.confirm) return setError(t("register.mismatch"));
     try {
       await register(form);
       navigate("/login", { replace: true, state: { registered: true } });
@@ -45,20 +47,20 @@ export default function Register() {
   );
 
   return (
-    <AuthLayout mode="register" title="Tạo tài khoản LibHub" subtitle="Đăng ký để mượn và theo dõi sách.">
+    <AuthLayout mode="register" title={t("register.title")} subtitle={t("register.subtitle")}>
       <div className="lh-auth-form">
         <form onSubmit={submit}>
-          {field("Họ và tên", "full_name", "user")}
-          {field("Tên đăng nhập", "username", "user")}
-          {field("Email", "email", "mail", "email")}
-          {field("Số điện thoại", "phone", "phone", "tel")}
-          {field("Mật khẩu", "password", "lock", "password")}
-          {field("Nhập lại mật khẩu", "confirm", "lock", "password")}
+          {field(t("register.fullName"), "full_name", "user")}
+          {field(t("register.username"), "username", "user")}
+          {field(t("register.email"), "email", "mail", "email")}
+          {field(t("register.phone"), "phone", "phone", "tel")}
+          {field(t("register.password"), "password", "lock", "password")}
+          {field(t("register.confirm"), "confirm", "lock", "password")}
           {error && <p className="lh-auth-form__error">{error}</p>}
-          <button className="lh-btn lh-btn--primary lh-auth-form__submit">Đăng ký</button>
+          <button className="lh-btn lh-btn--primary lh-auth-form__submit">{t("register.submit")}</button>
         </form>
         <p className="lh-auth-form__switch-line">
-          Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
+          {t("register.haveAccount")} <Link to="/login">{t("register.signIn")}</Link>
         </p>
       </div>
     </AuthLayout>

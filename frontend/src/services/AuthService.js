@@ -27,3 +27,7 @@ export function updateProfile(payload) {
 export function changePassword(payload) {
     return apiRequest("/auth/change-password", { method: "POST", body: payload });
 }
+
+export function updateTwoFactor(enabled) {
+    return apiRequest("/auth/two-factor", { method: "PUT", body: { enabled } });
+}

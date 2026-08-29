@@ -16,7 +16,7 @@ const BOOKS_PER_PAGE = 12;
 
 export default function Library() {
   const { books, categories, authors, loading, error } = useCatalog();
-  const { language, t } = useLanguage();
+  const { language, t, translateCategory } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState("all");
   const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
@@ -120,11 +120,11 @@ export default function Library() {
             </label>
 
             <div className="lh-library-controls">
-              <select value={availability} onChange={(event) => { setAvailability(event.target.value); resetPage(); }} aria-label="Lọc tình trạng sách">
+              <select value={availability} onChange={(event) => { setAvailability(event.target.value); resetPage(); }} aria-label={t("library.filterAvailability")}>
                 <option value="all">{t("library.allStatuses")}</option>
                 <option value="available">{t("library.inStock")}</option>
               </select>
-              <select value={sortBy} onChange={(event) => { setSortBy(event.target.value); resetPage(); }} aria-label="Sắp xếp sách">
+              <select value={sortBy} onChange={(event) => { setSortBy(event.target.value); resetPage(); }} aria-label={t("library.sortLabel")}>
                 <option value="title">{t("library.sortTitle")}</option>
                 <option value="newest">{t("library.sortNewest")}</option>
                 <option value="available">{t("library.sortAvailable")}</option>
@@ -132,7 +132,7 @@ export default function Library() {
             </div>
           </div>
 
-          <div className="lh-library-filters" aria-label="Lọc theo thể loại">
+          <div className="lh-library-filters" aria-label={t("library.filterGenre")}>
             <button
               type="button"
               className={`lh-library-filter ${activeCategory === "all" ? "is-active" : ""}`}
@@ -149,7 +149,7 @@ export default function Library() {
                   className={`lh-library-filter ${Number(activeCategory) === category.category_id ? "is-active" : ""}`}
                   onClick={() => { setActiveCategory(category.category_id); resetPage(); }}
                 >
-                  {category.category_name} <span>{count}</span>
+                  {translateCategory(category.category_name)} <span>{count}</span>
                 </button>
               );
             })}

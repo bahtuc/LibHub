@@ -128,10 +128,12 @@ public class StatisticsService {
         long returnedBooks = returnDetailRepo.findAll().stream()
                 .filter(detail -> monthlyReturnIds.contains(detail.getReturnId())).count();
 
-        BigDecimal paidFines = fineRepo.findAll().stream()
-                .filter(fine -> "paid".equalsIgnoreCase(fine.getPaidStatus()))
+        List<Fines> monthlyFines = fineRepo.findAll().stream()
                 .filter(fine -> fine.getCreatedAt() != null
                         && isInMonth(new Date(fine.getCreatedAt().getTime()), start, end))
+                .toList();
+        BigDecimal paidFines = monthlyFines.stream()
+                .filter(fine -> "paid".equalsIgnoreCase(fine.getPaidStatus()))
                 .map(fine -> fine.getAmount() == null ? BigDecimal.ZERO : fine.getAmount())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal paidBorrowFees = tickets.stream()
@@ -161,9 +163,48 @@ public class StatisticsService {
         summary.put("depositRevenue", paidBorrowFees); // tương thích frontend cũ
         summary.put("fineRevenue", paidFines);
         summary.put("totalRevenue", paidBorrowFees.add(paidFines));
+        summary.put("fineBreakdown", fineBreakdown(monthlyFines));
         summary.put("mostBorrowedBooks", rankedBorrowedBooks(5, false));
         summary.put("leastBorrowedBooks", rankedBorrowedBooks(5, true));
         return summary;
+    }
+
+    private List<Map<String, Object>> fineBreakdown(List<Fines> fines) {
+        Map<String, List<Fines>> grouped = fines.stream()
+                .collect(Collectors.groupingBy(this::fineType, LinkedHashMap::new, Collectors.toList()));
+
+        return List.of("Quá hạn", "Sách hư hỏng", "Quá hạn và hư hỏng", "Khác").stream()
+                .filter(grouped::containsKey)
+                .map(type -> {
+                    List<Fines> rows = grouped.get(type);
+                    BigDecimal paidAmount = fineAmount(rows, true);
+                    BigDecimal unpaidAmount = fineAmount(rows, false);
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("fineType", type);
+                    item.put("fineCount", rows.size());
+                    item.put("paidAmount", paidAmount);
+                    item.put("unpaidAmount", unpaidAmount);
+                    item.put("totalAmount", paidAmount.add(unpaidAmount));
+                    return item;
+                })
+                .toList();
+    }
+
+    private BigDecimal fineAmount(List<Fines> fines, boolean paid) {
+        return fines.stream()
+                .filter(fine -> paid == "paid".equalsIgnoreCase(fine.getPaidStatus()))
+                .map(fine -> fine.getAmount() == null ? BigDecimal.ZERO : fine.getAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private String fineType(Fines fine) {
+        String reason = fine.getReason() == null ? "" : fine.getReason().toLowerCase(java.util.Locale.ROOT);
+        boolean overdue = reason.contains("quá hạn");
+        boolean damaged = reason.contains("hư hỏng");
+        if (overdue && damaged) return "Quá hạn và hư hỏng";
+        if (overdue) return "Quá hạn";
+        if (damaged) return "Sách hư hỏng";
+        return "Khác";
     }
 
     private List<Map<String, Object>> rankedBorrowedBooks(int limit, boolean ascending) {

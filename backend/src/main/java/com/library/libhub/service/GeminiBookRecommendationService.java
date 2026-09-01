@@ -1,6 +1,8 @@
 package com.library.libhub.service;
 
 import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,8 @@ import com.library.libhub.repository.BookRepository;
 
 @Service
 public class GeminiBookRecommendationService {
+    private static final Logger log = LoggerFactory.getLogger(GeminiBookRecommendationService.class);
+
     private final BookRepository books;
     private final RestClient gemini;
     private final ObjectMapper json;
@@ -23,7 +27,7 @@ public class GeminiBookRecommendationService {
 
     public GeminiBookRecommendationService(BookRepository books, RestClient.Builder builder, ObjectMapper json,
             @Value("${gemini.api-key:}") String apiKey,
-            @Value("${gemini.model:gemini-2.5-flash}") String model) {
+            @Value("${gemini.model:gemini-3.1-flash-lite}") String model) {
         this.books = books;
         this.gemini = builder.baseUrl("https://generativelanguage.googleapis.com").build();
         this.json = json;
@@ -67,25 +71,79 @@ public class GeminiBookRecommendationService {
                 %s
                 """.formatted(history, message, catalogText);
 
+        Map<String, Object> recommendationSchema = Map.of(
+                "type", "object",
+                "additionalProperties", false,
+                "properties", Map.of(
+                        "bookId", Map.of("type", "integer", "minimum", 1),
+                        "reason", Map.of("type", "string")),
+                "required", List.of("bookId", "reason"));
+        Map<String, Object> responseSchema = Map.of(
+                "type", "object",
+                "additionalProperties", false,
+                "properties", Map.of(
+                        "reply", Map.of("type", "string"),
+                        "recommendations", Map.of(
+                                "type", "array",
+                                "maxItems", 4,
+                                "items", recommendationSchema)),
+                "required", List.of("reply", "recommendations"));
+        Map<String, Object> generationConfig = Map.of(
+                "maxOutputTokens", 4096,
+                "thinkingConfig", Map.of("thinkingLevel", "MINIMAL"),
+                "responseFormat", Map.of(
+                        "text", Map.of(
+                                "mimeType", "APPLICATION_JSON",
+                                "schema", responseSchema)));
         Map<String, Object> body = Map.of(
                 "contents", List.of(Map.of("role", "user", "parts", List.of(Map.of("text", prompt)))),
-                "generationConfig", Map.of("temperature", 0.45, "maxOutputTokens", 900, "responseMimeType", "application/json"));
+                "generationConfig", generationConfig);
         JsonNode response = gemini.post().uri("/v1beta/models/{model}:generateContent", model)
                 .header("x-goog-api-key", apiKey).contentType(MediaType.APPLICATION_JSON).body(body)
                 .retrieve().body(JsonNode.class);
-        String answer = response == null ? "" : response.path("candidates").path(0).path("content").path("parts").path(0).path("text").asText();
-        if (answer.isBlank()) throw new IllegalStateException("Gemini không trả về gợi ý. Hãy thử lại.");
+        JsonNode candidate = response == null ? null : response.path("candidates").path(0);
+        String finishReason = candidate == null ? "" : candidate.path("finishReason").asText();
+        String answer = candidate == null ? "" : candidate.path("content").path("parts").path(0).path("text").asText();
+        if (answer.isBlank()) {
+            String blockReason = response == null ? "" : response.path("promptFeedback").path("blockReason").asText();
+            if (!blockReason.isBlank())
+                throw new IllegalStateException("Gemini đã từ chối yêu cầu (" + blockReason + "). Hãy thử cách diễn đạt khác.");
+            if (!finishReason.isBlank() && !"STOP".equals(finishReason))
+                throw new IllegalStateException("Gemini dừng phản hồi trước khi hoàn tất (" + finishReason + "). Hãy thử lại.");
+            throw new IllegalStateException("Gemini không trả về gợi ý. Hãy thử lại.");
+        }
         try {
-            JsonNode root = json.readTree(answer);
+            JsonNode root = json.readTree(stripMarkdownFence(answer));
+            if (!root.isObject() || !root.path("reply").isTextual() || !root.path("recommendations").isArray())
+                throw new IllegalArgumentException("Cấu trúc JSON không đúng schema");
+
+            String reply = root.path("reply").asText().trim();
+            if (reply.isEmpty()) throw new IllegalArgumentException("Thiếu nội dung reply");
             List<BookSuggestion> suggestions = new ArrayList<>();
             for (JsonNode item : root.path("recommendations")) {
+                if (!item.isObject() || !item.path("bookId").isIntegralNumber() || !item.path("reason").isTextual())
+                    continue;
                 Books book = catalog.get(item.path("bookId").asLong(-1));
                 if (book != null && suggestions.size() < 4)
                     suggestions.add(new BookSuggestion(book.getBookId(), book.getTitle(), book.getCoverImage(), item.path("reason").asText("Phù hợp với bạn.")));
             }
-            return new ChatRecommendationResponse(root.path("reply").asText("Mình đã tìm được vài cuốn phù hợp."), suggestions);
+            return new ChatRecommendationResponse(reply, suggestions);
         } catch (Exception ex) {
+            log.warn("Không đọc được phản hồi có cấu trúc từ Gemini: model={}, finishReason={}, answerLength={}",
+                    model, finishReason, answer.length(), ex);
+            if (!finishReason.isBlank() && !"STOP".equals(finishReason))
+                throw new IllegalStateException("Gemini dừng phản hồi trước khi hoàn tất (" + finishReason + "). Hãy thử lại.", ex);
             throw new IllegalStateException("Gemini trả về dữ liệu không hợp lệ. Hãy thử lại.", ex);
         }
+    }
+
+    private static String stripMarkdownFence(String answer) {
+        String text = answer.strip();
+        if (!text.startsWith("```")) return text;
+
+        int contentStart = text.indexOf('\n');
+        int closingFence = text.lastIndexOf("```");
+        if (contentStart < 0 || closingFence <= contentStart) return text;
+        return text.substring(contentStart + 1, closingFence).strip();
     }
 }

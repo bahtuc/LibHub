@@ -12,6 +12,7 @@ import * as roleApi from "../services/RoleService";
 import * as publisherApi from "../services/PublisherService";
 import * as fineApi from "../services/FineService";
 import * as borrowTicketApi from "../services/BorrowTicketService";
+import { resolveCoverUrl } from "../utils/covers";
 
 function makeApiStore({ idField, loadAll, create, update, remove, fromApi, toApi }) {
   let cache = [];
@@ -84,7 +85,8 @@ const fromBook = (book) => ({
   ...book,
   book_id: book.bookId,
   publish_year: book.publishYear,
-  cover_image: book.coverImage,
+  cover_image: resolveCoverUrl(book.coverImage),
+  cover_file: null,
   category_id: book.categoryId,
   author_id: book.authorId,
   publisher_id: book.publisherId,
@@ -97,7 +99,7 @@ const toBook = (book) => ({
   isbn: book.isbn || null,
   publishYear: book.publish_year || null,
   description: book.description || null,
-  coverImage: book.cover_image || null,
+  coverFile: book.cover_file instanceof File ? book.cover_file : null,
   language: book.language || null,
   pages: book.pages || null,
   categoryId: book.category_id || null,

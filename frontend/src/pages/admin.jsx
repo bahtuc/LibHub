@@ -10,6 +10,7 @@ import { getPublishers } from "../services/PublisherService";
 import { getUsers } from "../services/UserService";
 import { isReturned, loanTitle, returnLoan, isAvailable, COPY_STATUS } from "../utils/loans";
 import { formatDate, todayISO } from "../utils/format";
+import { resolveCoverUrl } from "../utils/covers";
 import "../css/admin.css";
 
 const TABS = [
@@ -48,7 +49,7 @@ export default function Admin() {
 
 const EMPTY_BOOK = {
     title: "", isbn: "", publishYear: "", language: "", pages: "",
-    coverImage: "", description: "", categoryId: "", authorId: "", publisherId: "",
+    coverImage: "", coverFile: null, description: "", categoryId: "", authorId: "", publisherId: "",
 };
 
 function BooksTab() {
@@ -87,7 +88,7 @@ function BooksTab() {
     function openEdit(b) {
         setForm({
             title: b.title || "", isbn: b.isbn || "", publishYear: b.publishYear ?? "",
-            language: b.language || "", pages: b.pages ?? "", coverImage: b.coverImage || "",
+            language: b.language || "", pages: b.pages ?? "", coverImage: resolveCoverUrl(b.coverImage) || "", coverFile: null,
             description: b.description || "", categoryId: b.categoryId ?? "",
             authorId: b.authorId ?? "", publisherId: b.publisherId ?? "",
         });
@@ -107,7 +108,7 @@ function BooksTab() {
             publishYear: num(form.publishYear),
             language: form.language.trim() || null,
             pages: num(form.pages),
-            coverImage: form.coverImage.trim() || null,
+            coverFile: form.coverFile,
             description: form.description.trim() || null,
             categoryId: num(form.categoryId),
             authorId: num(form.authorId),
@@ -151,7 +152,14 @@ function BooksTab() {
                         <Field label="Năm xuất bản"><input className="lh-input" type="number" value={form.publishYear} onChange={set("publishYear")} /></Field>
                         <Field label="Số trang"><input className="lh-input" type="number" value={form.pages} onChange={set("pages")} /></Field>
                         <Field label="Ngôn ngữ"><input className="lh-input" value={form.language} onChange={set("language")} /></Field>
-                        <Field label="Ảnh bìa (URL)"><input className="lh-input" value={form.coverImage} onChange={set("coverImage")} /></Field>
+                        <Field label="Tải ảnh bìa">
+                            <input
+                                className="lh-input"
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                onChange={(e) => setForm((f) => ({ ...f, coverFile: e.target.files?.[0] ?? null }))}
+                            />
+                        </Field>
                         <Field label="Thể loại">
                             <select className="lh-select" value={form.categoryId} onChange={set("categoryId")}>
                                 <option value="">— Chọn —</option>

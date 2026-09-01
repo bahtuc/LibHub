@@ -15,6 +15,7 @@ public interface IBorrowTicketService {
     BorrowTickets cancelOnlinePayment(long ticketId);
     BorrowTickets createBorrowTicketWithCopies(BorrowTicketRequest request);
     BorrowTickets updateStatus(long ticketId, String status);
+    BorrowTickets renewBorrowTicket(long ticketId, long requesterUserId, boolean staff, int extensionDays);
     Optional<BorrowTickets> getBorrowTicketById(long ticketId);
     List<BorrowTickets> getAllBorrowTickets();
     BorrowTickets updateBorrowTicket(long ticketId, BorrowTickets borrowTicket);

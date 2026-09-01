@@ -42,7 +42,7 @@ public class BookImportService {
     private static final int MAX_ROWS = 5_000;
     private static final long MAX_FILE_SIZE = 10L * 1024 * 1024;
     private static final List<String> HEADERS = List.of(
-            "title", "isbn", "publish_year", "description", "cover_image", "language", "pages",
+            "title", "isbn", "publish_year", "description", "language", "pages",
             "category_id", "author_id", "publisher_id", "is_hidden", "is_featured");
 
     private final BookRepository bookRepo;
@@ -88,7 +88,7 @@ public class BookImportService {
     }
 
     public byte[] csvTemplate() {
-        String example = "Sách mẫu,9786040000001,2026,Mô tả,https://example.com/cover.jpg,Tiếng Việt,200,1,1,1,false,false";
+        String example = "Sách mẫu,9786040000001,2026,Mô tả,Tiếng Việt,200,1,1,1,false,false";
         return ("\uFEFF" + String.join(",", HEADERS) + "\n" + example + "\n")
                 .getBytes(StandardCharsets.UTF_8);
     }
@@ -102,7 +102,7 @@ public class BookImportService {
                 sheet.setColumnWidth(column, column == 3 ? 12_000 : 4_500);
             }
             Row example = sheet.createRow(1);
-            List<Object> values = List.of("Sách mẫu", "9786040000001", 2026, "Mô tả", "", "Tiếng Việt",
+            List<Object> values = List.of("Sách mẫu", "9786040000001", 2026, "Mô tả", "Tiếng Việt",
                     200, 1, 1, 1, false, false);
             for (int column = 0; column < values.size(); column++) {
                 Object value = values.get(column);
@@ -154,7 +154,6 @@ public class BookImportService {
         book.setIsbn(isbn);
         book.setPublishYear(publishYear);
         book.setDescription(text(row, "description"));
-        book.setCoverImage(text(row, "cover_image"));
         book.setLanguage(text(row, "language"));
         book.setPages(pages);
         book.setCategoryId(categoryId);

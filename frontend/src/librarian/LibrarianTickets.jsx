@@ -2,7 +2,7 @@ import { Fragment, useState } from "react";
 import Icon from "../components/Icon";
 import Badge from "../admin/Badge";
 import { copiesStore } from "../data/adminStore";
-import { getBorrowTicketViews } from "../services/BorrowTicketService";
+import { getBorrowTicketViews, renewBorrowTicket } from "../services/BorrowTicketService";
 import { createReturn } from "../services/ReturnService";
 import useLoanViews from "../hooks/useLoanViews";
 import { getTicketStatus } from "../utils/loanViews";
@@ -37,6 +37,23 @@ export default function LibrarianTickets() {
   const [selectedCopyIds, setSelectedCopyIds] = useState([]);
   const [actionError, setActionError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [renewingId, setRenewingId] = useState(null);
+  const [actionNotice, setActionNotice] = useState("");
+
+  async function renew(ticket) {
+    setRenewingId(ticket.ticketId);
+    setActionError("");
+    setActionNotice("");
+    try {
+      await renewBorrowTicket(ticket.ticketId, 7);
+      await refresh();
+      setActionNotice(`Đã gia hạn phiếu #${ticket.ticketId} thêm 7 ngày.`);
+    } catch (requestError) {
+      setActionError(requestError.message || "Không thể gia hạn phiếu mượn.");
+    } finally {
+      setRenewingId(null);
+    }
+  }
 
   function openReturn(ticket) {
     if (ticket.ticketId === openTicketId) {
@@ -86,6 +103,7 @@ export default function LibrarianTickets() {
       </div>
 
       {(error || actionError) && <p className="lh-auth-form__error">{actionError || error}</p>}
+      {actionNotice && <p className="lh-auth-form__success">{actionNotice}</p>}
 
       <div className="lh-admin-table-wrap">
         <div className="lh-admin-table-scroll">
@@ -106,6 +124,7 @@ export default function LibrarianTickets() {
                 const status = getTicketStatus(ticket);
                 const badge = STATUS_BADGE[status] ?? STATUS_BADGE.borrowing;
                 const pending = pendingItems(ticket);
+                const canRenew = status === "borrowing" && Number(ticket.renewalCount || 0) < 2;
                 return (
                   <Fragment key={ticket.ticketId}>
                     <tr>
@@ -116,6 +135,15 @@ export default function LibrarianTickets() {
                       <td>{ticket.items?.length ?? 0}</td>
                       <td><Badge tone={badge.tone}>{badge.text}</Badge></td>
                       <td className="lh-admin-table__actions">
+                        {canRenew && (
+                          <button
+                            className="lh-btn lh-btn--ghost"
+                            disabled={renewingId === ticket.ticketId}
+                            onClick={() => renew(ticket)}
+                          >
+                            {renewingId === ticket.ticketId ? "Đang gia hạn..." : "Gia hạn 7 ngày"}
+                          </button>
+                        )}
                         {pending.length > 0 ? (
                           <button className="lh-btn lh-btn--ghost" onClick={() => openReturn(ticket)}>
                             {openTicketId === ticket.ticketId ? "Đóng" : "Trả sách"}

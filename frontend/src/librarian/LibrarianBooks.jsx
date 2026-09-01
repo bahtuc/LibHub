@@ -33,6 +33,7 @@ export default function LibrarianBooks() {
         is_featured: false,
         is_hidden: false,
         cover_image: null,
+        cover_file: null,
       }}
       rowActions={(item) => (
         <button
@@ -81,11 +82,11 @@ export default function LibrarianBooks() {
         { name: "publish_year", label: "Năm xuất bản", type: "number" },
         { name: "pages", label: "Số trang", type: "number" },
         {
-          name: "cover_image",
-          label: "Ảnh bìa (URL)",
-          type: "url",
-          placeholder: "https://example.com/anh-bia.jpg",
-          maxLength: 255,
+          name: "cover_file",
+          label: "Tải ảnh bìa",
+          type: "file",
+          accept: "image/jpeg,image/png,image/webp",
+          existingImageField: "cover_image",
           previewImage: true,
         },
         { name: "description", label: "Mô tả", type: "textarea" },

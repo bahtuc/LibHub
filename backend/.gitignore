@@ -36,3 +36,9 @@ build/
 /data/
 *.mv.db
 *.trace.db
+
+# Runtime files uploaded through the application
+/uploads/
+
+# Local secrets loaded by Spring Boot
+.env

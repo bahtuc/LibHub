@@ -35,6 +35,8 @@ import jakarta.transaction.Transactional;
 public class BorrowTicketServiceImpl implements IBorrowTicketService {
 
     private static final int MAX_ACTIVE_LOANS_PER_BORROWER = 5;
+    private static final int MAX_RENEWALS = 2;
+    private static final int MAX_RENEWAL_DAYS = 14;
 
     private final BorrowTicketRepository borrowTicketRepo;
     private final BorrowDetailRepository borrowDetailRepo;
@@ -331,6 +333,41 @@ public class BorrowTicketServiceImpl implements IBorrowTicketService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Borrow ticket not found with id: " + ticketId));
         ticket.setStatus(canonicalStatus);
+        return borrowTicketRepo.save(ticket);
+    }
+
+    @Override
+    public BorrowTickets renewBorrowTicket(
+            long ticketId,
+            long requesterUserId,
+            boolean staff,
+            int extensionDays) {
+        if (extensionDays < 1 || extensionDays > MAX_RENEWAL_DAYS) {
+            throw new IllegalArgumentException("Số ngày gia hạn phải từ 1 đến 14 ngày");
+        }
+
+        BorrowTickets ticket = borrowTicketRepo.findByIdForUpdate(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Không tìm thấy phiếu mượn #" + ticketId));
+        if (!staff && (ticket.getUserId() == null || ticket.getUserId() != requesterUserId)) {
+            throw new IllegalArgumentException("Bạn không có quyền gia hạn phiếu mượn này");
+        }
+        if (!"Borrowed".equalsIgnoreCase(ticket.getStatus())) {
+            throw new IllegalArgumentException("Chỉ phiếu đang mượn mới được gia hạn");
+        }
+        if (!"Paid".equalsIgnoreCase(ticket.getDepositPaidStatus())) {
+            throw new IllegalArgumentException("Phiếu mượn phải được thanh toán trước khi gia hạn");
+        }
+        if (ticket.getDueDate() == null || ticket.getDueDate().toLocalDate().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Phiếu đã quá hạn, vui lòng liên hệ thủ thư");
+        }
+        if (ticket.getRenewalCount() >= MAX_RENEWALS) {
+            throw new IllegalArgumentException("Phiếu mượn đã dùng hết 2 lượt gia hạn");
+        }
+
+        ticket.setDueDate(Date.valueOf(ticket.getDueDate().toLocalDate().plusDays(extensionDays)));
+        ticket.setRenewalCount(ticket.getRenewalCount() + 1);
+        ticket.setLastRenewedAt(new Timestamp(System.currentTimeMillis()));
         return borrowTicketRepo.save(ticket);
     }
 

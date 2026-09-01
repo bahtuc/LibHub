@@ -573,6 +573,80 @@ class BorrowTicketServiceImplTest {
                 result.getStatus());
     }
 
+    @Test
+    void memberCanRenewOwnBorrowedTicket() {
+        BorrowTickets existing = ticket();
+        existing.setTicketId(7L);
+        existing.setUserId(3L);
+        existing.setStatus("Borrowed");
+        existing.setDepositPaidStatus("Paid");
+        existing.setRenewalCount(0);
+        Date oldDueDate = existing.getDueDate();
+
+        when(Repo.findByIdForUpdate(7L)).thenReturn(Optional.of(existing));
+        when(Repo.save(existing)).thenReturn(existing);
+
+        BorrowTickets renewed = service.renewBorrowTicket(7L, 3L, false, 7);
+
+        assertEquals(Date.valueOf(oldDueDate.toLocalDate().plusDays(7)), renewed.getDueDate());
+        assertEquals(1, renewed.getRenewalCount());
+        assertNotNull(renewed.getLastRenewedAt());
+        verify(Repo).save(existing);
+    }
+
+    @Test
+    void memberCannotRenewAnotherUsersTicket() {
+        BorrowTickets existing = ticket();
+        existing.setTicketId(7L);
+        existing.setUserId(4L);
+        existing.setStatus("Borrowed");
+        existing.setDepositPaidStatus("Paid");
+        when(Repo.findByIdForUpdate(7L)).thenReturn(Optional.of(existing));
+
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.renewBorrowTicket(7L, 3L, false, 7));
+
+        assertTrue(error.getMessage().contains("không có quyền"));
+        verify(Repo, never()).save(any());
+    }
+
+    @Test
+    void overdueTicketCannotBeRenewed() {
+        BorrowTickets existing = ticket();
+        existing.setTicketId(7L);
+        existing.setUserId(3L);
+        existing.setStatus("Borrowed");
+        existing.setDepositPaidStatus("Paid");
+        existing.setDueDate(Date.valueOf(LocalDate.now().minusDays(1)));
+        when(Repo.findByIdForUpdate(7L)).thenReturn(Optional.of(existing));
+
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.renewBorrowTicket(7L, 3L, false, 7));
+
+        assertTrue(error.getMessage().contains("quá hạn"));
+        verify(Repo, never()).save(any());
+    }
+
+    @Test
+    void ticketCannotBeRenewedMoreThanTwice() {
+        BorrowTickets existing = ticket();
+        existing.setTicketId(7L);
+        existing.setUserId(3L);
+        existing.setStatus("Borrowed");
+        existing.setDepositPaidStatus("Paid");
+        existing.setRenewalCount(2);
+        when(Repo.findByIdForUpdate(7L)).thenReturn(Optional.of(existing));
+
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.renewBorrowTicket(7L, 3L, false, 7));
+
+        assertTrue(error.getMessage().contains("hết 2 lượt"));
+        verify(Repo, never()).save(any());
+    }
+
     private BorrowTickets ticket() {
 
         BorrowTickets ticket = new BorrowTickets();

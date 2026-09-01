@@ -10,7 +10,7 @@ import Badge from "../admin/Badge";
 import { useAuth } from "../auth/useAuth";
 import { getTicketStatus } from "../utils/loanViews";
 import { useLanguage } from "../i18n/LanguageContext";
-import { getMyDetailedBorrowHistory } from "../services/BorrowTicketService";
+import { getMyDetailedBorrowHistory, renewBorrowTicket } from "../services/BorrowTicketService";
 import { getMyFines } from "../services/FineService";
 import { createVnpayPayment } from "../services/PaymentService";
 import "../styles/theme.css";
@@ -182,6 +182,9 @@ export default function Account() {
                   tickets={tickets}
                   loading={ticketsLoading}
                   loadError={ticketsError}
+                  onRenewed={(renewed) => setTickets((current) => current.map((ticket) =>
+                    ticket.ticketId === renewed.ticketId ? { ...ticket, ...renewed, items: ticket.items } : ticket
+                  ))}
                 />
               )}
               {tab === "fines" && (
@@ -414,9 +417,27 @@ function SecurityTab() {
   );
 }
 
-function TicketsTab({ tickets, loading, loadError }) {
+function TicketsTab({ tickets, loading, loadError, onRenewed }) {
   const { t, translateLabel, formatDate } = useLanguage();
   const sorted = [...tickets].sort((a, b) => Number(b.ticketId) - Number(a.ticketId));
+  const [renewingId, setRenewingId] = useState(null);
+  const [renewError, setRenewError] = useState("");
+  const [renewNotice, setRenewNotice] = useState("");
+
+  async function renew(ticket) {
+    setRenewingId(ticket.ticketId);
+    setRenewError("");
+    setRenewNotice("");
+    try {
+      const renewed = await renewBorrowTicket(ticket.ticketId, 7);
+      onRenewed(renewed);
+      setRenewNotice(`Đã gia hạn phiếu #${ticket.ticketId} thêm 7 ngày.`);
+    } catch (error) {
+      setRenewError(error.message || "Không thể gia hạn phiếu mượn.");
+    } finally {
+      setRenewingId(null);
+    }
+  }
 
   if (loading) {
     return (
@@ -441,7 +462,10 @@ function TicketsTab({ tickets, loading, loadError }) {
   }
 
   return (
-    <div className="lh-admin-table-wrap">
+    <div>
+      {renewNotice && <p className="lh-auth-form__success">{renewNotice}</p>}
+      {renewError && <p className="lh-auth-form__error">{renewError}</p>}
+      <div className="lh-admin-table-wrap">
       <div className="lh-admin-table-scroll">
         <table className="lh-admin-table">
           <thead>
@@ -451,11 +475,19 @@ function TicketsTab({ tickets, loading, loadError }) {
               <th>{t("account.borrowDate")}</th>
               <th>{t("account.dueDate")}</th>
               <th>{t("account.status")}</th>
+              <th>Gia hạn</th>
             </tr>
           </thead>
           <tbody>
             {sorted.map((t) => {
-              const s = TICKET_BADGE[getTicketStatus(t)] ?? TICKET_BADGE.borrowing;
+              const ticketStatus = getTicketStatus(t);
+              const s = TICKET_BADGE[ticketStatus] ?? TICKET_BADGE.borrowing;
+              const renewalCount = Number(t.renewalCount || 0);
+              const dueDate = t.dueDate ? new Date(`${t.dueDate}T00:00:00`) : null;
+              const canRenew = ticketStatus === "borrowing"
+                && renewalCount < 2
+                && dueDate
+                && dueDate >= new Date(new Date().setHours(0, 0, 0, 0));
               return (
                 <tr key={t.ticketId}>
                   <td>#{t.ticketId}</td>
@@ -478,12 +510,34 @@ function TicketsTab({ tickets, loading, loadError }) {
                   <td>
                     <Badge tone={s.tone}>{translateLabel(s.text)}</Badge>
                   </td>
+                  <td>
+                    {canRenew ? (
+                      <button
+                        type="button"
+                        className="lh-btn lh-btn--ghost"
+                        disabled={renewingId === t.ticketId}
+                        onClick={() => renew(t)}
+                      >
+                        {renewingId === t.ticketId ? "Đang gia hạn..." : "Gia hạn 7 ngày"}
+                      </button>
+                    ) : (
+                      <span style={{ color: "var(--lh-text-muted)", fontSize: "0.82rem" }}>
+                        {renewalCount >= 2 ? "Đã hết lượt" : `${renewalCount}/2 lượt`}
+                      </span>
+                    )}
+                    {canRenew && (
+                      <small style={{ display: "block", marginTop: 4, color: "var(--lh-text-muted)" }}>
+                        Đã dùng {renewalCount}/2 lượt
+                      </small>
+                    )}
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+    </div>
     </div>
   );
 }

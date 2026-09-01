@@ -22,7 +22,7 @@ public class GeminiBookRecommendationService {
     private final String model;
 
     public GeminiBookRecommendationService(BookRepository books, RestClient.Builder builder, ObjectMapper json,
-            @Value("${gemini.api-key:${GEMINI_API_KEY:AIzaSyCv_pR_QLGEs5tnWQ8d-2U-FyGr9Ytq76I}}") String apiKey,
+            @Value("${gemini.api-key:}") String apiKey,
             @Value("${gemini.model:gemini-2.5-flash}") String model) {
         this.books = books;
         this.gemini = builder.baseUrl("https://generativelanguage.googleapis.com").build();

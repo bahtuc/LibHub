@@ -6,17 +6,15 @@ export const API_BASE_URL =
 export async function apiRequest(endpoint, options = {}) {
     const { method = "GET", body, headers = {} } = options;
 
+    const isFormData = body instanceof FormData;
     const config = {
         method,
-        headers: {
-            "Content-Type": "application/json",
-            ...headers,
-        },
+        headers: isFormData ? headers : { "Content-Type": "application/json", ...headers },
         credentials: "include", // QUAN TRỌNG: gửi cookie JSESSIONID kèm mỗi request
     };
 
     if (body !== undefined) {
-        config.body = JSON.stringify(body);
+        config.body = isFormData ? body : JSON.stringify(body);
     }
 
     let response;

@@ -151,6 +151,13 @@ export default function AdminCrudPage({
                     onChange={(e) => handleChange(f.name, e.target.checked)}
                     style={{ width: 18, height: 18, alignSelf: "flex-start" }}
                   />
+                ) : f.type === "file" ? (
+                  <input
+                    type="file"
+                    accept={f.accept}
+                    onChange={(e) => handleChange(f.name, e.target.files?.[0] ?? null)}
+                    required={f.required && !editing[f.existingImageField]}
+                  />
                 ) : (
                   <input
                     type={f.type || "text"}
@@ -164,22 +171,13 @@ export default function AdminCrudPage({
                   />
                 )}
 
-                {f.previewImage && editing[f.name] && (
-                  <span className="lh-admin-form__image-preview">
-                    <img
-                      src={editing[f.name]}
-                      alt={t("admin.coverPreview")}
-                      onLoad={(event) => {
-                        event.currentTarget.style.display = "block";
-                        event.currentTarget.nextElementSibling.style.display = "none";
-                      }}
-                      onError={(event) => {
-                        event.currentTarget.style.display = "none";
-                        event.currentTarget.nextElementSibling.style.display = "block";
-                      }}
-                    />
-                    <small>{t("admin.coverError")}</small>
-                  </span>
+                {f.previewImage && (
+                  <ImagePreview
+                    file={editing[f.name]}
+                    fallback={editing[f.existingImageField]}
+                    alt={t("admin.coverPreview")}
+                    errorText={t("admin.coverError")}
+                  />
                 )}
               </label>
             ))}
@@ -280,5 +278,38 @@ export default function AdminCrudPage({
         )}
       </div>
     </div>
+  );
+}
+
+function ImagePreview({ file, fallback, alt, errorText }) {
+  const [source, setSource] = useState(fallback || "");
+
+  useEffect(() => {
+    if (!(file instanceof File)) {
+      setSource(fallback || "");
+      return undefined;
+    }
+    const objectUrl = URL.createObjectURL(file);
+    setSource(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [file, fallback]);
+
+  if (!source) return null;
+  return (
+    <span className="lh-admin-form__image-preview">
+      <img
+        src={source}
+        alt={alt}
+        onLoad={(event) => {
+          event.currentTarget.style.display = "block";
+          event.currentTarget.nextElementSibling.style.display = "none";
+        }}
+        onError={(event) => {
+          event.currentTarget.style.display = "none";
+          event.currentTarget.nextElementSibling.style.display = "block";
+        }}
+      />
+      <small>{errorText}</small>
+    </span>
   );
 }

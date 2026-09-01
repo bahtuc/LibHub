@@ -34,6 +34,13 @@ export function updateBorrowTicketStatus(id, status) {
     });
 }
 
+export function renewBorrowTicket(id, extensionDays = 7) {
+    return apiRequest(`/borrow-tickets/${id}/renew`, {
+        method: "PATCH",
+        body: { extensionDays },
+    });
+}
+
 export function deleteBorrowTicket(id) {
     return apiRequest(`/borrow-tickets/${id}`, { method: "DELETE" });
 }

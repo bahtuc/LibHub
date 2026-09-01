@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,6 +21,7 @@ import org.springframework.http.MediaType;
 import com.library.libhub.entity.Books;
 import com.library.libhub.service.IBookService;
 import com.library.libhub.service.BookImportService;
+import com.library.libhub.service.BookCoverStorageService;
 import com.library.libhub.DTO.Response.BookImportResponse;
 import jakarta.servlet.http.HttpSession;
 
@@ -31,10 +31,13 @@ public class BookController {
 
     private final IBookService bookService;
     private final BookImportService bookImportService;
+    private final BookCoverStorageService coverStorage;
 
-    public BookController(IBookService bookService, BookImportService bookImportService) {
+    public BookController(IBookService bookService, BookImportService bookImportService,
+            BookCoverStorageService coverStorage) {
         this.bookService = bookService;
         this.bookImportService = bookImportService;
+        this.coverStorage = coverStorage;
     }
 
     @GetMapping
@@ -68,10 +71,18 @@ public class BookController {
         return ResponseEntity.of(bookService.getBookById(id, includeHidden));
     }
 
-    @PostMapping
-    public ResponseEntity<Books> createBook(@RequestBody Books book) {
-        Books createdBook = bookService.createBook(book);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdBook);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Books> createBook(
+            @RequestPart("book") Books book,
+            @RequestPart(value = "cover", required = false) MultipartFile cover) {
+        String coverPath = coverStorage.save(cover);
+        book.setCoverImage(coverPath);
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED).body(bookService.createBook(book));
+        } catch (RuntimeException ex) {
+            coverStorage.delete(coverPath);
+            throw ex;
+        }
     }
 
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -95,14 +106,39 @@ public class BookController {
                 .body(bookImportService.xlsxTemplate());
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Books> updateBook(@PathVariable long id, @RequestBody Books book) {
-        return ResponseEntity.ok(bookService.updateBook(id, book));
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Books> updateBook(
+            @PathVariable long id,
+            @RequestPart("book") Books book,
+            @RequestPart(value = "cover", required = false) MultipartFile cover) {
+        String oldCover = bookService.getBookById(id)
+                .map(Books::getCoverImage)
+                .orElse(null);
+        String newCover = coverStorage.save(cover);
+        if (newCover != null) {
+            book.setCoverImage(newCover);
+        } else {
+            book.setCoverImage(null);
+        }
+        try {
+            Books updated = bookService.updateBook(id, book);
+            if (newCover != null) {
+                coverStorage.delete(oldCover);
+            }
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException ex) {
+            coverStorage.delete(newCover);
+            throw ex;
+        }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBook(@PathVariable long id) {
+        String coverPath = bookService.getBookById(id)
+                .map(Books::getCoverImage)
+                .orElse(null);
         bookService.deleteBook(id);
+        coverStorage.delete(coverPath);
         return ResponseEntity.noContent().build();
     }
 

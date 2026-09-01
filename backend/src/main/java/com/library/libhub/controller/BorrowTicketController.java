@@ -3,6 +3,7 @@ package com.library.libhub.controller;
 import com.library.libhub.DTO.Request.BorrowBookRequest;
 import com.library.libhub.DTO.Request.BorrowTicketRequest;
 import com.library.libhub.DTO.Request.UpdateBorrowStatusRequest;
+import com.library.libhub.DTO.Request.RenewBorrowTicketRequest;
 import com.library.libhub.entity.BorrowTickets;
 import com.library.libhub.entity.Users;
 import com.library.libhub.service.IBorrowTicketService;
@@ -70,6 +71,21 @@ public class BorrowTicketController {
             @PathVariable long id, @RequestBody UpdateBorrowStatusRequest request) {
         if (request == null) throw new IllegalArgumentException("Thiếu trạng thái");
         return ResponseEntity.ok(borrowTicketService.updateStatus(id, request.getStatus()));
+    }
+
+    @PatchMapping("/{id}/renew")
+    public ResponseEntity<BorrowTickets> renewBorrowTicket(
+            @PathVariable long id,
+            @RequestBody RenewBorrowTicketRequest request,
+            HttpSession session) {
+        Users user = requireUser(session);
+        if (request == null || request.getExtensionDays() == null) {
+            throw new IllegalArgumentException("Thiếu số ngày gia hạn");
+        }
+        String role = String.valueOf(session.getAttribute("ROLE"));
+        boolean staff = "Admin".equalsIgnoreCase(role) || "Librarian".equalsIgnoreCase(role);
+        return ResponseEntity.ok(borrowTicketService.renewBorrowTicket(
+                id, user.getUserId(), staff, request.getExtensionDays()));
     }
 
     @DeleteMapping("/{id}")

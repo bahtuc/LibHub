@@ -13,11 +13,19 @@ export function getBookById(id) {
 }
 
 export function createBook(payload) {
-    return apiRequest("/books", { method: "POST", body: payload });
+    return apiRequest("/books", { method: "POST", body: bookFormData(payload) });
 }
 
 export function updateBook(id, payload) {
-    return apiRequest(`/books/${id}`, { method: "PUT", body: payload });
+    return apiRequest(`/books/${id}`, { method: "PUT", body: bookFormData(payload) });
+}
+
+function bookFormData(payload) {
+    const { coverFile, ...book } = payload;
+    const formData = new FormData();
+    formData.append("book", new Blob([JSON.stringify(book)], { type: "application/json" }));
+    if (coverFile instanceof File) formData.append("cover", coverFile);
+    return formData;
 }
 
 export function deleteBook(id) {

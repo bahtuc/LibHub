@@ -41,6 +41,7 @@ export default function AdminBooks() {
         description: "",
         is_featured: false,
         cover_image: null,
+        cover_file: null,
       }}
       columns={[
         {
@@ -87,11 +88,11 @@ export default function AdminBooks() {
         { name: "publish_year", label: "Năm xuất bản", type: "number" },
         { name: "pages", label: "Số trang", type: "number" },
         {
-          name: "cover_image",
-          label: "Ảnh bìa (URL)",
-          type: "url",
-          placeholder: "https://example.com/anh-bia.jpg",
-          maxLength: 255,
+          name: "cover_file",
+          label: "Tải ảnh bìa",
+          type: "file",
+          accept: "image/jpeg,image/png,image/webp",
+          existingImageField: "cover_image",
           previewImage: true,
         },
         { name: "is_featured", label: "Hiện ở mục nổi bật (trang chủ)", type: "checkbox" },

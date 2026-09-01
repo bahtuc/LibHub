@@ -3,6 +3,7 @@ package com.library.libhub.DTO.Response;
 import java.sql.Date;
 import java.math.BigDecimal;
 import java.util.List;
+import java.sql.Timestamp;
 
 public class BorrowTicketResponse {
 
@@ -17,6 +18,8 @@ public class BorrowTicketResponse {
     private String note;
     private BigDecimal depositAmount;
     private String depositPaidStatus;
+    private Integer renewalCount;
+    private Timestamp lastRenewedAt;
     private List<BorrowedItemResponse> items;
 
     public Long getTicketId() {
@@ -95,6 +98,10 @@ public class BorrowTicketResponse {
     public void setDepositAmount(BigDecimal depositAmount) { this.depositAmount = depositAmount; }
     public String getDepositPaidStatus() { return depositPaidStatus; }
     public void setDepositPaidStatus(String depositPaidStatus) { this.depositPaidStatus = depositPaidStatus; }
+    public Integer getRenewalCount() { return renewalCount; }
+    public void setRenewalCount(Integer renewalCount) { this.renewalCount = renewalCount; }
+    public Timestamp getLastRenewedAt() { return lastRenewedAt; }
+    public void setLastRenewedAt(Timestamp lastRenewedAt) { this.lastRenewedAt = lastRenewedAt; }
 
     public List<BorrowedItemResponse> getItems() {
         return items;

@@ -44,6 +44,12 @@ public class BorrowTickets {
   @Column(name = "deposit_paid_status")
   private String depositPaidStatus;
 
+  @Column(name = "renewal_count", nullable = false)
+  private Integer renewalCount = 0;
+
+  @Column(name = "last_renewed_at")
+  private Timestamp lastRenewedAt;
+
 
   public Long getTicketId() {
     return ticketId;
@@ -127,5 +133,9 @@ public class BorrowTickets {
   public void setDepositAmount(BigDecimal depositAmount) { this.depositAmount = depositAmount; }
   public String getDepositPaidStatus() { return depositPaidStatus; }
   public void setDepositPaidStatus(String depositPaidStatus) { this.depositPaidStatus = depositPaidStatus; }
+  public Integer getRenewalCount() { return renewalCount == null ? 0 : renewalCount; }
+  public void setRenewalCount(Integer renewalCount) { this.renewalCount = renewalCount; }
+  public Timestamp getLastRenewedAt() { return lastRenewedAt; }
+  public void setLastRenewedAt(Timestamp lastRenewedAt) { this.lastRenewedAt = lastRenewedAt; }
 
 }

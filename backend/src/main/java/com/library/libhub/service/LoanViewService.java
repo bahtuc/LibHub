@@ -145,6 +145,8 @@ public class LoanViewService {
         response.setNote(ticket.getNote());
         response.setDepositAmount(ticket.getDepositAmount());
         response.setDepositPaidStatus(ticket.getDepositPaidStatus());
+        response.setRenewalCount(ticket.getRenewalCount());
+        response.setLastRenewedAt(ticket.getLastRenewedAt());
 
         List<BorrowedItemResponse> items = detailsByTicket
                 .getOrDefault(ticket.getTicketId(), List.of())

@@ -43,13 +43,39 @@ export default function LibrarianTickets() {
   const [renewingId, setRenewingId] = useState(null);
   const [actionNotice, setActionNotice] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.max(1, Math.ceil(tickets.length / PAGE_SIZE));
+  const [searchQuery, setSearchQuery] = useState("");
+  const normalizedQuery = searchQuery.trim().toLocaleLowerCase("vi");
+  const filteredTickets = normalizedQuery
+    ? tickets.filter((ticket) => {
+        const status = getTicketStatus(ticket);
+        const searchable = [
+          ticket.ticketId,
+          ticket.userId,
+          ticket.userName,
+          ticket.guestName,
+          ticket.guestPhone,
+          status,
+          STATUS_BADGE[status]?.text,
+          ticket.borrowDate,
+          ticket.dueDate,
+          ...(ticket.items ?? []).flatMap((item) => [item.bookTitle, item.barcode, item.copyId]),
+        ].filter(Boolean).join(" ").toLocaleLowerCase("vi");
+        return searchable.includes(normalizedQuery);
+      })
+    : tickets;
+  const totalPages = Math.max(1, Math.ceil(filteredTickets.length / PAGE_SIZE));
   const pageStart = (currentPage - 1) * PAGE_SIZE;
-  const paginatedTickets = tickets.slice(pageStart, pageStart + PAGE_SIZE);
+  const paginatedTickets = filteredTickets.slice(pageStart, pageStart + PAGE_SIZE);
 
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, totalPages));
   }, [totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+    setOpenTicketId(null);
+    setSelectedCopyIds([]);
+  }, [searchQuery]);
 
   function changePage(page) {
     setCurrentPage(page);
@@ -121,6 +147,19 @@ export default function LibrarianTickets() {
 
       {(error || actionError) && <p className="lh-auth-form__error">{actionError || error}</p>}
       {actionNotice && <p className="lh-auth-form__success">{actionNotice}</p>}
+
+      <div className="lh-admin-toolbar">
+        <label className="lh-admin-search">
+          <Icon name="search" size={17} />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Tìm theo mã phiếu, bạn đọc, sách, mã vạch hoặc trạng thái..."
+            aria-label="Tìm kiếm phiếu mượn và trả sách"
+          />
+        </label>
+      </div>
 
       <div className="lh-admin-table-wrap">
         <div className="lh-admin-table-scroll">
@@ -260,8 +299,8 @@ export default function LibrarianTickets() {
                   </Fragment>
                 );
               })}
-              {!loading && tickets.length === 0 && (
-                <tr><td colSpan={7} className="lh-admin-table__empty">Chưa có phiếu mượn nào.</td></tr>
+              {!loading && filteredTickets.length === 0 && (
+                <tr><td colSpan={7} className="lh-admin-table__empty">{tickets.length === 0 ? "Chưa có phiếu mượn nào." : "Không tìm thấy phiếu phù hợp."}</td></tr>
               )}
               {loading && (
                 <tr><td colSpan={7} className="lh-admin-table__empty">Đang tải...</td></tr>
@@ -269,10 +308,10 @@ export default function LibrarianTickets() {
             </tbody>
           </table>
         </div>
-        {!loading && tickets.length > 0 && (
+        {!loading && filteredTickets.length > 0 && (
           <div className="lh-admin-table-pagination">
             <p className="lh-admin-table-pagination__summary">
-              Hiển thị {pageStart + 1}–{Math.min(pageStart + PAGE_SIZE, tickets.length)} trong {tickets.length} phiếu mượn
+              Hiển thị {pageStart + 1}–{Math.min(pageStart + PAGE_SIZE, filteredTickets.length)} trong {filteredTickets.length} phiếu mượn
             </p>
             <Pagination
               currentPage={currentPage}

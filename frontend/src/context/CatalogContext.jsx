@@ -38,7 +38,12 @@ export function CatalogProvider({ children }) {
       });
     } catch (error) { setState({ books: [], categories: [], authors: [], loading: false, error: error.message }); }
   }
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    const handleBooksChanged = () => refresh();
+    refresh();
+    window.addEventListener("libhub:books-changed", handleBooksChanged);
+    return () => window.removeEventListener("libhub:books-changed", handleBooksChanged);
+  }, []);
   return <CatalogContext.Provider value={{ ...state, refresh }}>{children}</CatalogContext.Provider>;
 }
 

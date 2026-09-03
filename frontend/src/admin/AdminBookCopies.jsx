@@ -14,6 +14,15 @@ export default function AdminBookCopies() {
       subtitle="Mỗi đầu sách có thể có nhiều bản in — quản lý từng bản để biết bản nào còn, bản nào đang được mượn."
       store={copiesStore}
       idField="copy_id"
+      searchPlaceholder="Tìm theo sách, mã vạch, vị trí kệ hoặc trạng thái..."
+      searchText={(copy) => [
+        copy.copy_id,
+        copy.barcode,
+        copy.shelf_location,
+        copy.status,
+        ({ available: "Còn sách", borrowed: "Đang mượn", lost: "Thất lạc" })[copy.status],
+        books.find((book) => book.book_id === copy.book_id)?.title,
+      ].filter(Boolean).join(" ")}
       emptyItem={{
         book_id: bookOptions[0]?.value ?? "",
         barcode: "",

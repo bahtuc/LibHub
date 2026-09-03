@@ -30,6 +30,14 @@ export default function AdminBooks() {
       headerActions={<BookDataTools onImported={() => booksStore.refresh()} />}
       store={booksStore}
       idField="book_id"
+      searchPlaceholder="Tìm theo tên sách, ISBN, tác giả hoặc thể loại..."
+      searchText={(book) => [
+        book.title,
+        book.isbn,
+        authors.find((author) => author.author_id === book.author_id)?.author_name,
+        categories.find((category) => category.category_id === book.category_id)?.category_name,
+        publishers.find((publisher) => publisher.publisher_id === book.publisher_id)?.publisher_name,
+      ].filter(Boolean).join(" ")}
       emptyItem={{
         title: "",
         isbn: "",

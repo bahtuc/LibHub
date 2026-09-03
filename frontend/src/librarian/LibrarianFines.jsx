@@ -5,6 +5,7 @@ import { getBorrowTicketViews } from "../services/BorrowTicketService";
 import { updateFinePaidStatus } from "../services/FineService";
 import useLoanViews from "../hooks/useLoanViews";
 import { isFinePaid } from "../utils/loanViews";
+import Icon from "../components/Icon";
 
 const PAGE_SIZE = 10;
 
@@ -13,6 +14,7 @@ export default function LibrarianFines() {
   const [actionError, setActionError] = useState("");
   const [updatingId, setUpdatingId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fines = tickets
     .flatMap((ticket) =>
@@ -26,13 +28,31 @@ export default function LibrarianFines() {
         })),
     )
     .sort((left, right) => Number(right.fineId) - Number(left.fineId));
-  const totalPages = Math.max(1, Math.ceil(fines.length / PAGE_SIZE));
+  const normalizedQuery = searchQuery.trim().toLocaleLowerCase("vi");
+  const filteredFines = normalizedQuery
+    ? fines.filter((fine) => [
+        fine.fineId,
+        fine.ticketId,
+        fine.userId,
+        fine.userName,
+        fine.bookTitle,
+        fine.barcode,
+        fine.fineReason,
+        fine.fineAmount,
+        isFinePaid(fine) ? "đã thu paid" : "chưa thu unpaid",
+      ].filter(Boolean).join(" ").toLocaleLowerCase("vi").includes(normalizedQuery))
+    : fines;
+  const totalPages = Math.max(1, Math.ceil(filteredFines.length / PAGE_SIZE));
   const pageStart = (currentPage - 1) * PAGE_SIZE;
-  const paginatedFines = fines.slice(pageStart, pageStart + PAGE_SIZE);
+  const paginatedFines = filteredFines.slice(pageStart, pageStart + PAGE_SIZE);
 
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, totalPages));
   }, [totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   async function togglePaid(fine) {
     setUpdatingId(fine.fineId);
@@ -57,6 +77,19 @@ export default function LibrarianFines() {
       </div>
 
       {(error || actionError) && <p className="lh-auth-form__error">{actionError || error}</p>}
+
+      <div className="lh-admin-toolbar">
+        <label className="lh-admin-search">
+          <Icon name="search" size={17} />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Tìm theo mã phạt, phiếu, bạn đọc, sách hoặc lý do..."
+            aria-label="Tìm kiếm khoản phạt"
+          />
+        </label>
+      </div>
 
       <div className="lh-admin-table-wrap">
         <div className="lh-admin-table-scroll">
@@ -101,8 +134,8 @@ export default function LibrarianFines() {
                   </tr>
                 );
               })}
-              {!loading && fines.length === 0 && (
-                <tr><td colSpan={8} className="lh-admin-table__empty">Chưa có khoản phạt nào.</td></tr>
+              {!loading && filteredFines.length === 0 && (
+                <tr><td colSpan={8} className="lh-admin-table__empty">{fines.length === 0 ? "Chưa có khoản phạt nào." : "Không tìm thấy khoản phạt phù hợp."}</td></tr>
               )}
               {loading && (
                 <tr><td colSpan={8} className="lh-admin-table__empty">Đang tải...</td></tr>
@@ -110,10 +143,10 @@ export default function LibrarianFines() {
             </tbody>
           </table>
         </div>
-        {!loading && fines.length > 0 && (
+        {!loading && filteredFines.length > 0 && (
           <div className="lh-admin-table-pagination">
             <p className="lh-admin-table-pagination__summary">
-              Hiển thị {pageStart + 1}–{Math.min(pageStart + PAGE_SIZE, fines.length)} trong {fines.length} khoản phạt
+              Hiển thị {pageStart + 1}–{Math.min(pageStart + PAGE_SIZE, filteredFines.length)} trong {filteredFines.length} khoản phạt
             </p>
             <Pagination
               currentPage={currentPage}

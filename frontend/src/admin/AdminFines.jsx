@@ -14,6 +14,15 @@ export default function AdminFines() {
       subtitle="Tạo, cập nhật và theo dõi các khoản phạt phát sinh khi trả sách."
       store={finesStore}
       idField="fine_id"
+      searchPlaceholder="Tìm theo mã phạt, chi tiết trả, lý do hoặc trạng thái..."
+      searchText={(fine) => [
+        fine.fine_id,
+        fine.return_detail_id,
+        fine.amount,
+        fine.reason,
+        fine.paid_status,
+        STATUS[fine.paid_status]?.label,
+      ].filter(Boolean).join(" ")}
       emptyItem={{ return_detail_id: "", amount: 0, reason: "", paid_status: "Unpaid" }}
       columns={[
         { key: "fine_id", label: "Mã phạt", render: (item) => `#${item.fine_id}` },

@@ -24,6 +24,8 @@ export default function AdminCrudPage({
   headerActions,
   hideAdd = false,
   pageSize = 10,
+  searchText,
+  searchPlaceholder = "Tìm kiếm...",
 }) {
   const { t, translateLabel } = useLanguage();
   const items = store.useCollection();
@@ -32,18 +34,32 @@ export default function AdminCrudPage({
   const [confirmId, setConfirmId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const isNew = editing && !items.some((i) => i[idField] === editing[idField]);
   const visibleFields = fields.filter((field) =>
     (!field.createOnly || isNew)
     && (!field.editOnly || !isNew)
     && (!field.when || editing == null || field.when(editing, isNew)));
-  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const normalizedQuery = searchQuery.trim().toLocaleLowerCase("vi");
+  const filteredItems = normalizedQuery
+    ? items.filter((item) => {
+        const value = searchText
+          ? searchText(item)
+          : Object.values(item).filter((entry) => entry != null && typeof entry !== "object").join(" ");
+        return String(value ?? "").toLocaleLowerCase("vi").includes(normalizedQuery);
+      })
+    : items;
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
   const pageStart = (currentPage - 1) * pageSize;
-  const paginatedItems = items.slice(pageStart, pageStart + pageSize);
+  const paginatedItems = filteredItems.slice(pageStart, pageStart + pageSize);
 
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, totalPages));
   }, [totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   function openAdd() {
     setEditing({ ...emptyItem });
@@ -196,6 +212,19 @@ export default function AdminCrudPage({
 
       {error && <p className="lh-auth-form__error">{error}</p>}
 
+      <div className="lh-admin-toolbar">
+        <label className="lh-admin-search">
+          <Icon name="search" size={17} />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder={searchPlaceholder}
+            aria-label={searchPlaceholder}
+          />
+        </label>
+      </div>
+
       <div className="lh-admin-table-wrap">
         <div className="lh-admin-table-scroll">
         <table className="lh-admin-table">
@@ -253,20 +282,20 @@ export default function AdminCrudPage({
                 </tr>
               );
             })}
-            {items.length === 0 && (
+            {filteredItems.length === 0 && (
               <tr>
                 <td colSpan={columns.length + 1} className="lh-admin-table__empty">
-                  {t("admin.empty")}
+                  {items.length === 0 ? t("admin.empty") : "Không tìm thấy dữ liệu phù hợp."}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
         </div>
-        {items.length > 0 && (
+        {filteredItems.length > 0 && (
           <div className="lh-admin-table-pagination">
             <p className="lh-admin-table-pagination__summary">
-              {t("admin.summary", { from: pageStart + 1, to: Math.min(pageStart + pageSize, items.length), count: items.length })}
+              {t("admin.summary", { from: pageStart + 1, to: Math.min(pageStart + pageSize, filteredItems.length), count: filteredItems.length })}
             </p>
             <Pagination
               currentPage={currentPage}

@@ -24,6 +24,20 @@ export default function AdminBorrowTickets() {
       subtitle="Quản lý phiếu mượn và gán chính xác các bản sao bằng danh sách mã copy."
       store={borrowTicketsStore}
       idField="ticket_id"
+      searchPlaceholder="Tìm theo mã phiếu, người mượn, trạng thái hoặc ghi chú..."
+      searchText={(ticket) => {
+        const user = users.find((candidate) => Number(candidate.user_id) === Number(ticket.user_id));
+        return [
+          ticket.ticket_id,
+          ticket.guest_name,
+          ticket.guest_phone,
+          ticket.status,
+          STATUS[ticket.status]?.label,
+          ticket.note,
+          user?.full_name,
+          user?.username,
+        ].filter(Boolean).join(" ");
+      }}
       hideAdd
       emptyItem={{
         borrower_type: "member",

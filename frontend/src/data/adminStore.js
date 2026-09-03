@@ -14,7 +14,7 @@ import * as fineApi from "../services/FineService";
 import * as borrowTicketApi from "../services/BorrowTicketService";
 import { resolveCoverUrl } from "../utils/covers";
 
-function makeApiStore({ idField, loadAll, create, update, remove, fromApi, toApi }) {
+function makeApiStore({ idField, loadAll, create, update, remove, fromApi, toApi, onMutate }) {
   let cache = [];
   let pendingLoad = null;
   const listeners = new Set();
@@ -61,6 +61,7 @@ function makeApiStore({ idField, loadAll, create, update, remove, fromApi, toApi
     const saved = fromApi(await create(await toApi(item, true)));
     cache = [...cache, saved];
     notify();
+    onMutate?.();
     return saved;
   }
 
@@ -69,6 +70,7 @@ function makeApiStore({ idField, loadAll, create, update, remove, fromApi, toApi
     const saved = fromApi(await update(id, await toApi({ ...current, ...patch }, false)));
     cache = cache.map((item) => Number(item[idField]) === Number(id) ? saved : item);
     notify();
+    onMutate?.();
     return saved;
   }
 
@@ -76,6 +78,7 @@ function makeApiStore({ idField, loadAll, create, update, remove, fromApi, toApi
     await remove(id);
     cache = cache.filter((item) => Number(item[idField]) !== Number(id));
     notify();
+    onMutate?.();
   }
 
   return { useCollection, getAll, getById, refresh, add, update: updateItem, remove: removeItem };
@@ -251,6 +254,7 @@ export const booksStore = makeApiStore({
   remove: bookApi.deleteBook,
   fromApi: fromBook,
   toApi: toBook,
+  onMutate: () => window.dispatchEvent(new Event("libhub:books-changed")),
 });
 
 export const categoriesStore = makeApiStore({

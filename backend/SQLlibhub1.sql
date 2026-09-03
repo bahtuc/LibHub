@@ -4213,8 +4213,7 @@
     GO
 
     -- ============================================
-    -- 19 ĐẦU SÁCH TRIẾT HỌC BỔ SUNG
-    -- ISBN NULL: chưa tìm thấy ISBN của đúng ấn bản sách in; không dùng mã demo hoặc ISBN ebook.
+    -- 12 ĐẦU SÁCH TRIẾT HỌC BỔ SUNG CÓ ISBN
     -- ============================================
     INSERT INTO Authors (author_name, biography)
     SELECT seed.author_name, seed.biography
@@ -4224,18 +4223,13 @@
         (N'Will Durant', N'Sử gia và triết gia người Mỹ.'),
         (N'Aristotle', N'Triết gia Hy Lạp cổ đại, học trò của Plato.'),
         (N'Immanuel Kant', N'Triết gia Đức có ảnh hưởng lớn đến triết học hiện đại.'),
-        (N'Martin Heidegger', N'Triết gia Đức tiêu biểu của hiện tượng học và hiện sinh.'),
         (N'Albert Camus', N'Nhà văn và triết gia Pháp gắn với triết học phi lý.'),
         (N'Lão Tử', N'Triết gia Trung Hoa cổ đại, nhân vật trung tâm của Đạo gia.'),
         (N'Dương Bá Tuấn', N'Học giả Trung Quốc, tác giả bản chú giải Luận Ngữ.'),
-        (N'René Descartes', N'Triết gia và nhà toán học Pháp, người đặt nền móng cho chủ nghĩa duy lý.'),
         (N'Thomas Hobbes', N'Triết gia Anh nổi tiếng về triết học chính trị.'),
         (N'John Stuart Mill', N'Triết gia Anh tiêu biểu của chủ nghĩa tự do và chủ nghĩa vị lợi.'),
         (N'Jean-Paul Sartre', N'Triết gia và nhà văn Pháp tiêu biểu của chủ nghĩa hiện sinh.'),
-        (N'Ludwig Wittgenstein', N'Triết gia Áo - Anh có ảnh hưởng lớn đến triết học ngôn ngữ.'),
-        (N'C. Mác', N'Nhà triết học và kinh tế chính trị học, người sáng lập chủ nghĩa xã hội khoa học.'),
-        (N'Ph. Ăng-ghen', N'Nhà triết học, đồng sáng lập chủ nghĩa Mác và cộng sự của C. Mác.'),
-        (N'C. Mác và Ph. Ăng-ghen', N'Đồng tác giả các công trình nền tảng của chủ nghĩa Mác.')
+        (N'Ludwig Wittgenstein', N'Triết gia Áo - Anh có ảnh hưởng lớn đến triết học ngôn ngữ.')
     ) seed(author_name, biography)
     WHERE NOT EXISTS (SELECT 1 FROM Authors a WHERE a.author_name=seed.author_name);
     GO
@@ -4250,20 +4244,13 @@
         (N'Câu chuyện triết học','9786043922578',2023,N'Will Durant giới thiệu cuộc đời, tư tưởng và ảnh hưởng của những triết gia lớn trong lịch sử phương Tây.',NULL,N'Tiếng Việt',733,(SELECT category_id FROM Categories WHERE category_name=N'Triết học'),(SELECT author_id FROM Authors WHERE author_name=N'Will Durant'),(SELECT publisher_id FROM Publishers WHERE publisher_name=N'Thế giới ; Công ty Văn hoá và Truyền thông Nhã Nam'),0,0,N'Câu chuyện triết học',N'Thế giới',N'Công ty Văn hoá và Truyền thông Nhã Nam',N'https://thuviendongten.net/PrintedBook/ShowInfo?id=43525'),
         (N'Luân lý học','9786048469603',2022,N'Aristotle khảo sát đức hạnh, hạnh phúc và cách con người xây dựng một đời sống tốt đẹp.',NULL,N'Tiếng Việt',320,(SELECT category_id FROM Categories WHERE category_name=N'Triết học'),(SELECT author_id FROM Authors WHERE author_name=N'Aristotle'),(SELECT publisher_id FROM Publishers WHERE publisher_name=N'Đà Nẵng'),0,0,N'Luân lý học - Nicomachean Ethics',N'Đà Nẵng',N'Book Hunter',N'https://bookhunterlyceum.org/tai-ban-tac-pham-triet-hoc-kinh-dien-luan-ly-hoc-cua-aristotle/'),
         (N'Phê phán lý tính thuần túy - Tập 1','9786046913818',2014,N'Immanuel Kant phân tích cấu trúc, năng lực và giới hạn của lý tính trong quá trình hình thành tri thức.',NULL,N'Tiếng Việt',584,(SELECT category_id FROM Categories WHERE category_name=N'Triết học'),(SELECT author_id FROM Authors WHERE author_name=N'Immanuel Kant'),(SELECT publisher_id FROM Publishers WHERE publisher_name=N'Văn học'),0,0,N'Phê phán lý tính thuần túy - Tập 1',N'Văn học',NULL,N'https://thuvien.thongtinxuanloc.com/sach/phe-phan-ly-tinh-thuan-tuy-t1-immanuel-kant-bui-van-nam-son-dich-va-chu-giai-0015683'),
-        (N'Hữu thể và thời gian',NULL,2016,N'Martin Heidegger đặt lại câu hỏi về ý nghĩa của hữu thể thông qua phân tích sự tồn tại của con người.',NULL,N'Tiếng Việt',640,(SELECT category_id FROM Categories WHERE category_name=N'Triết học'),(SELECT author_id FROM Authors WHERE author_name=N'Martin Heidegger'),(SELECT publisher_id FROM Publishers WHERE publisher_name=N'Tri thức'),0,0,N'Hữu thể và thời gian',N'Tri thức',NULL,N'https://thuvien.dcvphanxicoxavie.com/index.php/thuvien/catalog_product/view/id/3335/'),
         (N'Thần thoại Sisyphus','9786041204676',2022,N'Albert Camus suy tư về cái phi lý, tự do và lựa chọn tiếp tục sống trong một thế giới không có ý nghĩa sẵn.',NULL,N'Tiếng Việt',204,(SELECT category_id FROM Categories WHERE category_name=N'Triết học'),(SELECT author_id FROM Authors WHERE author_name=N'Albert Camus'),(SELECT publisher_id FROM Publishers WHERE publisher_name=N'Nxb. Trẻ'),1,0,N'Thần thoại Sisyphus',N'Nxb. Trẻ',NULL,N'https://www.nxbtre.com.vn/sach/than-thoai-sisyphus-146679.html'),
         (N'Đạo Đức Kinh','9786047744015',2024,N'Tác phẩm nền tảng của Đạo gia bàn về Đạo, đức, vô vi và sự hài hòa giữa con người với tự nhiên.',NULL,N'Tiếng Việt',210,(SELECT category_id FROM Categories WHERE category_name=N'Triết học'),(SELECT author_id FROM Authors WHERE author_name=N'Lão Tử'),(SELECT publisher_id FROM Publishers WHERE publisher_name=N'Thế giới'),0,0,N'Đạo Đức Kinh',N'Thế giới',NULL,N'https://www.emiclib.com/Item/ItemDetail/1834967'),
         (N'Luận Ngữ chú giải','9786049767791',2019,N'Dương Bá Tuấn chú giải những lời dạy và đối thoại trong Luận Ngữ về đạo đức, học tập, trị quốc và cách đối nhân xử thế.',NULL,N'Tiếng Việt',467,(SELECT category_id FROM Categories WHERE category_name=N'Triết học'),(SELECT author_id FROM Authors WHERE author_name=N'Dương Bá Tuấn'),(SELECT publisher_id FROM Publishers WHERE publisher_name=N'Văn học'),0,0,N'Luận Ngữ chú giải',N'Văn học',NULL,N'https://thuviendongten.net/PrintedBook/ShowInfo?id=36996'),
-        (N'Phương pháp luận',NULL,1973,N'René Descartes trình bày phương pháp hoài nghi và những nguyên tắc sử dụng lý trí để tìm kiếm chân lý.',NULL,N'Tiếng Việt',224,(SELECT category_id FROM Categories WHERE category_name=N'Triết học'),(SELECT author_id FROM Authors WHERE author_name=N'René Descartes'),(SELECT publisher_id FROM Publishers WHERE publisher_name=N'Chưa xác định'),0,0,N'Phương pháp luận',N'Nam Chi Tùng Thư',NULL,N'https://thuvien.stellamaris.edu.vn/index.php/thuvien/catalog_product/view/id/1555/'),
         (N'Leviathan - Tác phẩm triết học kinh điển','9786048472771',2023,N'Thomas Hobbes phân tích trạng thái tự nhiên, khế ước xã hội và cơ sở hình thành quyền lực nhà nước.',NULL,N'Tiếng Việt',612,(SELECT category_id FROM Categories WHERE category_name=N'Triết học'),(SELECT author_id FROM Authors WHERE author_name=N'Thomas Hobbes'),(SELECT publisher_id FROM Publishers WHERE publisher_name=N'Đà Nẵng'),0,0,N'Leviathan - Tác phẩm triết học kinh điển',N'Đà Nẵng',NULL,N'https://thuviendongten.net/PrintedBook/ShowInfo?id=42732'),
         (N'Bàn về tự do','9786043126976',2021,N'John Stuart Mill bảo vệ tự do tư tưởng và hành động của cá nhân trước áp lực của nhà nước và số đông.',NULL,N'Tiếng Việt',206,(SELECT category_id FROM Categories WHERE category_name=N'Triết học'),(SELECT author_id FROM Authors WHERE author_name=N'John Stuart Mill'),(SELECT publisher_id FROM Publishers WHERE publisher_name=N'Nxb. Tổng hợp Tp. Hồ Chí Minh'),0,0,N'Bàn về tự do',N'Nxb. Tổng hợp Tp. Hồ Chí Minh',NULL,N'https://phucvu.thuvientphcm.gov.vn/Item/ItemDetail/733821'),
         (N'Thuyết hiện sinh là một thuyết nhân bản','9786049438271',2018,N'Jean-Paul Sartre giải thích tự do, trách nhiệm và quan niệm con người tự tạo nên bản chất của mình.',NULL,N'Tiếng Việt',178,(SELECT category_id FROM Categories WHERE category_name=N'Triết học'),(SELECT author_id FROM Authors WHERE author_name=N'Jean-Paul Sartre'),(SELECT publisher_id FROM Publishers WHERE publisher_name=N'Tri thức'),0,0,N'Thuyết hiện sinh là một thuyết nhân bản',N'Tri thức',NULL,N'https://thuviendongten.net/PrintedBook/ShowInfo?id=36949'),
-        (N'Luận văn Logic - Triết học','9786048429126',2018,N'Ludwig Wittgenstein khảo sát quan hệ giữa ngôn ngữ, tư tưởng, logic và giới hạn của điều có thể diễn đạt.',NULL,N'Tiếng Việt',283,(SELECT category_id FROM Categories WHERE category_name=N'Triết học'),(SELECT author_id FROM Authors WHERE author_name=N'Ludwig Wittgenstein'),(SELECT publisher_id FROM Publishers WHERE publisher_name=N'Đà Nẵng'),0,0,N'Luận văn Logic - Triết học',N'Đà Nẵng',NULL,N'https://thuviendongten.net/PrintedBook/ShowInfo?id=22904'),
-        (N'Lịch sử triết học Tây phương',NULL,2024,N'Bertrand Russell dẫn dắt người đọc qua các trường phái triết học phương Tây từ Hy Lạp cổ đại đến thời hiện đại.',NULL,N'Tiếng Việt',809,(SELECT category_id FROM Categories WHERE category_name=N'Triết học'),(SELECT author_id FROM Authors WHERE author_name=N'Bertrand Russell'),(SELECT publisher_id FROM Publishers WHERE publisher_name=N'Tri thức'),1,0,N'Lịch sử triết học Tây phương',N'Tri thức',NULL,N'https://nlv.gov.vn/dmdocuments/tmqg-07-2024.pdf'),
-        (N'Tuyên ngôn của Đảng Cộng sản',NULL,2017,N'C. Mác và Ph. Ăng-ghen trình bày lịch sử đấu tranh giai cấp, vai trò của giai cấp công nhân và mục tiêu của phong trào cộng sản.',NULL,N'Tiếng Việt',154,(SELECT category_id FROM Categories WHERE category_name=N'Triết học'),(SELECT author_id FROM Authors WHERE author_name=N'C. Mác và Ph. Ăng-ghen'),(SELECT publisher_id FROM Publishers WHERE publisher_name=N'Chính trị quốc gia Sự thật'),1,0,N'Tuyên ngôn của Đảng Cộng sản',N'Chính trị quốc gia Sự thật',NULL,N'https://sachquocgia.vn/tuyen-ngon-cua-dang-cong-san-b12417.html'),
-        (N'Tư bản - Phê phán khoa kinh tế chính trị - Quyển I',NULL,2021,N'C. Mác phân tích hàng hóa, giá trị thặng dư, tích lũy tư bản và quy luật vận động của phương thức sản xuất tư bản chủ nghĩa.',NULL,N'Tiếng Việt',1236,(SELECT category_id FROM Categories WHERE category_name=N'Triết học'),(SELECT author_id FROM Authors WHERE author_name=N'C. Mác'),(SELECT publisher_id FROM Publishers WHERE publisher_name=N'Chính trị quốc gia Sự thật'),1,0,N'Tư bản - Tập thứ nhất, Quyển I',N'Chính trị quốc gia Sự thật',NULL,N'https://sachquocgia.vn/tu-ban-phe-phan-khoa-kinh-te-chinh-tri-tap-thu-nhat-quyen-i-qua-trinh-san-xuat-cua-tu-ban-b14995.html'),
-        (N'Chống Đuy-rinh',NULL,1971,N'Ph. Ăng-ghen trình bày có hệ thống các quan điểm về triết học, kinh tế chính trị và chủ nghĩa xã hội khoa học.',NULL,N'Tiếng Việt',560,(SELECT category_id FROM Categories WHERE category_name=N'Triết học'),(SELECT author_id FROM Authors WHERE author_name=N'Ph. Ăng-ghen'),(SELECT publisher_id FROM Publishers WHERE publisher_name=N'Chính trị quốc gia Sự thật'),0,0,N'Chống Đuy-rinh',N'Sự thật',NULL,NULL),
-        (N'Biện chứng của tự nhiên',NULL,2004,N'Ph. Ăng-ghen vận dụng phép biện chứng duy vật để khảo sát sự phát triển của tự nhiên và những thành tựu khoa học.',NULL,N'Tiếng Việt',618,(SELECT category_id FROM Categories WHERE category_name=N'Triết học'),(SELECT author_id FROM Authors WHERE author_name=N'Ph. Ăng-ghen'),(SELECT publisher_id FROM Publishers WHERE publisher_name=N'Chính trị quốc gia Sự thật'),0,0,N'Biện chứng của tự nhiên - Tái bản',N'Chính trị quốc gia',NULL,N'https://lib.ajc.edu.vn/Opac/DmdInfo.aspx?dmd_id=655&mnuid=141&search_field=SUBJECT&search_id=292');
+        (N'Luận văn Logic - Triết học','9786048429126',2018,N'Ludwig Wittgenstein khảo sát quan hệ giữa ngôn ngữ, tư tưởng, logic và giới hạn của điều có thể diễn đạt.',NULL,N'Tiếng Việt',283,(SELECT category_id FROM Categories WHERE category_name=N'Triết học'),(SELECT author_id FROM Authors WHERE author_name=N'Ludwig Wittgenstein'),(SELECT publisher_id FROM Publishers WHERE publisher_name=N'Đà Nẵng'),0,0,N'Luận văn Logic - Triết học',N'Đà Nẵng',NULL,N'https://thuviendongten.net/PrintedBook/ShowInfo?id=22904');
     GO
 
     INSERT INTO BookCopies (book_id,barcode,shelf_location,status,acquired_date)
@@ -4273,18 +4260,11 @@
         ((SELECT book_id FROM Books WHERE isbn='9786043922578'),'BC000434',N'TRH-10','Available',CAST(GETDATE() AS DATE)),
         ((SELECT book_id FROM Books WHERE isbn='9786048469603'),'BC000435',N'TRH-11','Available',CAST(GETDATE() AS DATE)),
         ((SELECT book_id FROM Books WHERE isbn='9786046913818'),'BC000436',N'TRH-12','Available',CAST(GETDATE() AS DATE)),
-        ((SELECT TOP (1) book_id FROM Books WHERE title=N'Hữu thể và thời gian' ORDER BY book_id DESC),'BC000437',N'TRH-13','Available',CAST(GETDATE() AS DATE)),
-        ((SELECT book_id FROM Books WHERE isbn='9786041204676'),'BC000438',N'TRH-14','Available',CAST(GETDATE() AS DATE)),
-        ((SELECT book_id FROM Books WHERE isbn='9786047744015'),'BC000439',N'TRH-15','Available',CAST(GETDATE() AS DATE)),
-        ((SELECT book_id FROM Books WHERE isbn='9786049767791'),'BC000440',N'TRH-16','Available',CAST(GETDATE() AS DATE)),
-        ((SELECT TOP (1) book_id FROM Books WHERE title=N'Phương pháp luận' ORDER BY book_id DESC),'BC000441',N'TRH-17','Available',CAST(GETDATE() AS DATE)),
-        ((SELECT book_id FROM Books WHERE isbn='9786048472771'),'BC000442',N'TRH-18','Available',CAST(GETDATE() AS DATE)),
-        ((SELECT book_id FROM Books WHERE isbn='9786043126976'),'BC000443',N'TRH-19','Available',CAST(GETDATE() AS DATE)),
-        ((SELECT book_id FROM Books WHERE isbn='9786049438271'),'BC000444',N'TRH-20','Available',CAST(GETDATE() AS DATE)),
-        ((SELECT book_id FROM Books WHERE isbn='9786048429126'),'BC000445',N'TRH-21','Available',CAST(GETDATE() AS DATE)),
-        ((SELECT TOP (1) book_id FROM Books WHERE title=N'Lịch sử triết học Tây phương' ORDER BY book_id DESC),'BC000446',N'TRH-22','Available',CAST(GETDATE() AS DATE)),
-        ((SELECT TOP (1) book_id FROM Books WHERE title=N'Tuyên ngôn của Đảng Cộng sản' ORDER BY book_id DESC),'BC000447',N'TRH-23','Available',CAST(GETDATE() AS DATE)),
-        ((SELECT TOP (1) book_id FROM Books WHERE title=N'Tư bản - Phê phán khoa kinh tế chính trị - Quyển I' ORDER BY book_id DESC),'BC000448',N'TRH-24','Available',CAST(GETDATE() AS DATE)),
-        ((SELECT TOP (1) book_id FROM Books WHERE title=N'Chống Đuy-rinh' ORDER BY book_id DESC),'BC000449',N'TRH-25','Available',CAST(GETDATE() AS DATE)),
-        ((SELECT TOP (1) book_id FROM Books WHERE title=N'Biện chứng của tự nhiên' ORDER BY book_id DESC),'BC000450',N'TRH-26','Available',CAST(GETDATE() AS DATE));
+        ((SELECT book_id FROM Books WHERE isbn='9786041204676'),'BC000437',N'TRH-13','Available',CAST(GETDATE() AS DATE)),
+        ((SELECT book_id FROM Books WHERE isbn='9786047744015'),'BC000438',N'TRH-14','Available',CAST(GETDATE() AS DATE)),
+        ((SELECT book_id FROM Books WHERE isbn='9786049767791'),'BC000439',N'TRH-15','Available',CAST(GETDATE() AS DATE)),
+        ((SELECT book_id FROM Books WHERE isbn='9786048472771'),'BC000440',N'TRH-16','Available',CAST(GETDATE() AS DATE)),
+        ((SELECT book_id FROM Books WHERE isbn='9786043126976'),'BC000441',N'TRH-17','Available',CAST(GETDATE() AS DATE)),
+        ((SELECT book_id FROM Books WHERE isbn='9786049438271'),'BC000442',N'TRH-18','Available',CAST(GETDATE() AS DATE)),
+        ((SELECT book_id FROM Books WHERE isbn='9786048429126'),'BC000443',N'TRH-19','Available',CAST(GETDATE() AS DATE));
     GO

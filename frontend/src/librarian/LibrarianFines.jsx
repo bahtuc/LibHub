@@ -1,14 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Badge from "../admin/Badge";
+import Pagination from "../components/Pagination";
 import { getBorrowTicketViews } from "../services/BorrowTicketService";
 import { updateFinePaidStatus } from "../services/FineService";
 import useLoanViews from "../hooks/useLoanViews";
 import { isFinePaid } from "../utils/loanViews";
 
+const PAGE_SIZE = 10;
+
 export default function LibrarianFines() {
   const { tickets, loading, error, refresh } = useLoanViews(getBorrowTicketViews);
   const [actionError, setActionError] = useState("");
   const [updatingId, setUpdatingId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fines = tickets
     .flatMap((ticket) =>
@@ -22,6 +26,13 @@ export default function LibrarianFines() {
         })),
     )
     .sort((left, right) => Number(right.fineId) - Number(left.fineId));
+  const totalPages = Math.max(1, Math.ceil(fines.length / PAGE_SIZE));
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const paginatedFines = fines.slice(pageStart, pageStart + PAGE_SIZE);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
   async function togglePaid(fine) {
     setUpdatingId(fine.fineId);
@@ -63,7 +74,7 @@ export default function LibrarianFines() {
               </tr>
             </thead>
             <tbody>
-              {fines.map((fine) => {
+              {paginatedFines.map((fine) => {
                 const paid = isFinePaid(fine);
                 return (
                   <tr key={fine.fineId}>
@@ -99,6 +110,19 @@ export default function LibrarianFines() {
             </tbody>
           </table>
         </div>
+        {!loading && fines.length > 0 && (
+          <div className="lh-admin-table-pagination">
+            <p className="lh-admin-table-pagination__summary">
+              Hiển thị {pageStart + 1}–{Math.min(pageStart + PAGE_SIZE, fines.length)} trong {fines.length} khoản phạt
+            </p>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              label="Phân trang khoản phạt"
+            />
+          </div>
+        )}
       </div>
     </div>
   );

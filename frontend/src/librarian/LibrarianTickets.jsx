@@ -1,5 +1,6 @@
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import Icon from "../components/Icon";
+import Pagination from "../components/Pagination";
 import Badge from "../admin/Badge";
 import { copiesStore } from "../data/adminStore";
 import { getBorrowTicketViews, renewBorrowTicket } from "../services/BorrowTicketService";
@@ -22,6 +23,8 @@ const CONDITION_OPTIONS = [
   { value: "Lost", label: "Mất" },
 ];
 
+const PAGE_SIZE = 10;
+
 function pendingItems(ticket) {
   if (["returned", "cancelled", "payment_pending"].includes(getTicketStatus(ticket))) return [];
   return (ticket.items ?? []).filter((item) => {
@@ -39,6 +42,20 @@ export default function LibrarianTickets() {
   const [submitting, setSubmitting] = useState(false);
   const [renewingId, setRenewingId] = useState(null);
   const [actionNotice, setActionNotice] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(tickets.length / PAGE_SIZE));
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const paginatedTickets = tickets.slice(pageStart, pageStart + PAGE_SIZE);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
+
+  function changePage(page) {
+    setCurrentPage(page);
+    setOpenTicketId(null);
+    setSelectedCopyIds([]);
+  }
 
   async function renew(ticket) {
     setRenewingId(ticket.ticketId);
@@ -120,7 +137,7 @@ export default function LibrarianTickets() {
               </tr>
             </thead>
             <tbody>
-              {tickets.map((ticket) => {
+              {paginatedTickets.map((ticket) => {
                 const status = getTicketStatus(ticket);
                 const badge = STATUS_BADGE[status] ?? STATUS_BADGE.borrowing;
                 const pending = pendingItems(ticket);
@@ -252,6 +269,19 @@ export default function LibrarianTickets() {
             </tbody>
           </table>
         </div>
+        {!loading && tickets.length > 0 && (
+          <div className="lh-admin-table-pagination">
+            <p className="lh-admin-table-pagination__summary">
+              Hiển thị {pageStart + 1}–{Math.min(pageStart + PAGE_SIZE, tickets.length)} trong {tickets.length} phiếu mượn
+            </p>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={changePage}
+              label="Phân trang phiếu mượn"
+            />
+          </div>
+        )}
       </div>
     </div>
   );
